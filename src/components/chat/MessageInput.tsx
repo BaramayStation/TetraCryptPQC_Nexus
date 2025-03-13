@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { PaperPlaneIcon, Lock } from "lucide-react";
+import { Send, Lock } from "lucide-react"; // Changed from PaperPlaneIcon to Send
 import { cn } from "@/lib/utils";
 
 interface MessageInputProps {
@@ -61,7 +61,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
           )}
           disabled={message.trim() === ""}
         >
-          <PaperPlaneIcon className="h-4 w-4" />
+          <Send className="h-4 w-4" /> {/* Changed from PaperPlaneIcon to Send */}
         </Button>
       </form>
     </div>

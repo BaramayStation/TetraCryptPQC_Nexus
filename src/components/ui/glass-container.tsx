@@ -11,6 +11,7 @@ interface GlassContainerProps {
   border?: boolean;
   hover?: boolean;
   animation?: "fade-in" | "slide-up" | "none";
+  style?: React.CSSProperties; // Added style prop
 }
 
 export const GlassContainer = ({
@@ -22,6 +23,7 @@ export const GlassContainer = ({
   border = true,
   hover = false,
   animation = "none",
+  style, // Added style prop
 }: GlassContainerProps) => {
   const blurClass = {
     sm: "backdrop-blur-sm",
@@ -43,6 +45,7 @@ export const GlassContainer = ({
 
   return (
     <div
+      style={style} // Added style prop
       className={cn(
         blurClass[blur],
         opacityClass[opacity],
