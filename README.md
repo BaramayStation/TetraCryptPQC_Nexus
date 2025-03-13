@@ -1,69 +1,87 @@
-# Welcome to your Lovable project
 
-## Project info
+# 🛡️ TetraCryptPQC: Quantum-Secure Web3 Messaging & Identity Framework
 
-**URL**: https://lovable.dev/projects/946151ce-7b0b-44f0-b0e3-082d99a7c91d
+## 📊 Project Overview
+TetraCryptPQC is a comprehensive **post-quantum cryptography framework** designed for secure, future-proof messaging and identity verification. It implements NIST FIPS 205/206 compliant cryptographic algorithms to protect against both classical and quantum computing threats.
 
-## How can I edit this code?
+## 🔐 Key Security Features
 
-There are several ways of editing your application.
+- **Post-Quantum Cryptography**
+  - ML-KEM-1024 (NIST FIPS 205) for key encapsulation
+  - SLH-DSA (NIST FIPS 205) for digital signatures
+  - Optional Falcon and Dilithium signature algorithms
+  
+- **Advanced Web3 Integration**
+  - Decentralized Identifiers (DIDs) for self-sovereign identity
+  - Zero-Knowledge Proofs for privacy-preserving verification
+  - Decentralized reputation and trust systems
+  
+- **Enhanced Security Measures**
+  - Homomorphic encryption for privacy-preserving computation
+  - Hardware Security Module (HSM) simulation
+  - Quantum Key Distribution (QKD) simulation
+  - Perfect forward secrecy for all communications
 
-**Use Lovable**
+## 🔧 Technology Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/946151ce-7b0b-44f0-b0e3-082d99a7c91d) and start prompting.
+- **Frontend**: React, TypeScript, TailwindCSS
+- **Cryptography**: NIST FIPS 205/206 compliant implementations
+- **Messaging**: End-to-end encrypted communication protocols
+- **Identity**: Web3 Decentralized Identity (DID) framework
+- **Privacy**: Zero-knowledge proofs and homomorphic encryption
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🔍 Real-World Applications
 
-**Use your preferred IDE**
+TetraCryptPQC is designed for implementation in:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Financial services requiring long-term security
+- Healthcare communications with strict privacy requirements
+- Government and defense secure messaging systems
+- Enterprise communications with forward security needs
+- Web3 applications requiring quantum-resistant protection
+- Personal privacy tools for the post-quantum era
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## 🚀 Getting Started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📝 Development Roadmap
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Phase 1** ✅ Post-Quantum Secure Messaging (ML-KEM, SLH-DSA)
+- **Phase 2** ✅ Decentralized Identity (DID + Web3)
+- **Phase 3** ✅ Privacy-Enhancing Technologies (Homomorphic Encryption, ZKPs)
+- **Phase 4** 🔄 Federated Secure Messaging Network
+- **Phase 5** 🔜 Quantum-Resistant Smart Contracts
 
-**Use GitHub Codespaces**
+## 🔒 Security Standards Compliance
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- NIST FIPS 205 (Post-Quantum Cryptography: Key-Establishment)
+- NIST FIPS 206 (Post-Quantum Cryptography: Digital Signatures)
+- NIST FIPS 197 (Advanced Encryption Standard)
+- W3C Decentralized Identifiers (DIDs) Specification
 
-## What technologies are used for this project?
+## 📜 License
 
-This project is built with .
+This project is open source and intended for real-world implementation and public use.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🌐 Deployment
 
-## How can I deploy this project?
+To deploy your TetraCryptPQC implementation:
+1. Open [Lovable](https://lovable.dev/projects/946151ce-7b0b-44f0-b0e3-082d99a7c91d) and click on Share -> Publish
+2. For custom domain deployments, we recommend using Netlify
 
-Simply open [Lovable](https://lovable.dev/projects/946151ce-7b0b-44f0-b0e3-082d99a7c91d) and click on Share -> Publish.
+## 🤝 Contributing
 
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+Contributions to improve TetraCryptPQC are welcome. Please feel free to submit pull requests, report issues, or suggest enhancements.
