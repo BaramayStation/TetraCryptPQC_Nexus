@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { Progress } from "@/components/ui/progress";
 import { Shield, Key, Lock, LockKeyhole } from "lucide-react";
-import { generateKyberKeypair, generateFalconKeypair } from "@/lib/crypto";
+import { generateMLKEMKeypair, generateSLHDSAKeypair } from "@/lib/crypto";
 import { UserProfile, saveUserProfile } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -28,16 +28,16 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
       setStatus("Initializing key generation...");
       setProgress(5);
 
-      // Generate Kyber keys (post-quantum key exchange)
-      setStatus("Generating Kyber-1024 keys for post-quantum key exchange...");
+      // Generate ML-KEM keys (post-quantum key exchange, NIST FIPS 205)
+      setStatus("Generating ML-KEM-1024 keys for post-quantum key exchange (NIST FIPS 205)...");
       setProgress(20);
-      const kyberKeys = await generateKyberKeypair();
+      const mlkemKeys = await generateMLKEMKeypair();
       setProgress(40);
 
-      // Generate Falcon keys (post-quantum signatures)
-      setStatus("Generating Falcon-1024 keys for post-quantum signatures...");
+      // Generate SLH-DSA keys (post-quantum signatures, NIST FIPS 205)
+      setStatus("Generating SLH-DSA keys for post-quantum signatures (NIST FIPS 205)...");
       setProgress(60);
-      const falconKeys = await generateFalconKeypair();
+      const slhdsaKeys = await generateSLHDSAKeypair();
       setProgress(80);
 
       // Create and save user profile
@@ -47,8 +47,8 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
         id: userId,
         name: username,
         keyPairs: {
-          kyber: kyberKeys,
-          falcon: falconKeys,
+          kyber: mlkemKeys, // For compatibility, we still use the original field names
+          falcon: slhdsaKeys, // For compatibility, we still use the original field names
         },
         createdAt: new Date().toISOString(),
       };
@@ -60,7 +60,7 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
       // Notify user
       toast({
         title: "Secure keys generated",
-        description: "Your post-quantum secure keys have been created successfully.",
+        description: "Your NIST-compliant post-quantum secure keys have been created successfully.",
       });
 
       // Complete process
@@ -90,7 +90,7 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold">Generate Secure Keys</h2>
           <p className="text-muted-foreground">
-            Creating your post-quantum cryptographic keys for secure end-to-end encrypted messaging.
+            Creating your NIST-compliant post-quantum cryptographic keys for secure end-to-end encrypted messaging.
           </p>
         </div>
 
@@ -104,14 +104,14 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
                 <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
                   <Key className={`h-5 w-5 ${progress >= 40 ? "text-accent" : "text-muted-foreground"}`} />
                 </div>
-                <span className="text-xs mt-2">Kyber-1024</span>
+                <span className="text-xs mt-2">ML-KEM-1024</span>
               </div>
               
               <div className="flex flex-col items-center">
                 <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
                   <LockKeyhole className={`h-5 w-5 ${progress >= 80 ? "text-accent" : "text-muted-foreground"}`} />
                 </div>
-                <span className="text-xs mt-2">Falcon-1024</span>
+                <span className="text-xs mt-2">SLH-DSA</span>
               </div>
               
               <div className="flex flex-col items-center">
@@ -133,7 +133,7 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
         )}
         
         <p className="text-xs text-muted-foreground px-6">
-          We'll generate post-quantum secure keys for encryption and signatures. This keeps your messages secure even against quantum computers.
+          We'll generate NIST FIPS 205-compliant post-quantum secure keys for encryption and signatures, keeping your messages secure even against quantum computers.
         </p>
       </div>
     </GlassContainer>

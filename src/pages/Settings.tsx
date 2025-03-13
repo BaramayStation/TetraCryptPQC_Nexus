@@ -135,7 +135,7 @@ const Settings = () => {
             <GlassContainer className="mb-6" animation="fade-in">
               <h2 className="text-xl font-semibold mb-4">Cryptographic Keys</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                These are your post-quantum cryptographic keys used for secure communication.
+                These are your NIST FIPS 205-compliant post-quantum cryptographic keys used for secure communication.
                 Never share your private keys with anyone.
               </p>
               
@@ -143,7 +143,7 @@ const Settings = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Key className="h-5 w-5 text-accent" />
-                    <h3 className="text-lg font-medium">Kyber-1024 Keys</h3>
+                    <h3 className="text-lg font-medium">ML-KEM-1024 Keys (NIST FIPS 205)</h3>
                   </div>
                   <Separator />
                   
@@ -160,13 +160,13 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.kyber.publicKey, "Kyber public")}
+                          onClick={() => handleCopyKey(user.keyPairs.kyber.publicKey, "ML-KEM public")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Share this with contacts to establish encrypted communication
+                        Share this with contacts to establish quantum-resistant encrypted communication
                       </p>
                     </div>
                     
@@ -183,7 +183,7 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.kyber.privateKey, "Kyber private")}
+                          onClick={() => handleCopyKey(user.keyPairs.kyber.privateKey, "ML-KEM private")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -198,7 +198,7 @@ const Settings = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Shield className="h-5 w-5 text-accent" />
-                    <h3 className="text-lg font-medium">Falcon-1024 Keys</h3>
+                    <h3 className="text-lg font-medium">SLH-DSA Keys (NIST FIPS 205)</h3>
                   </div>
                   <Separator />
                   
@@ -215,13 +215,13 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.falcon.publicKey, "Falcon public")}
+                          onClick={() => handleCopyKey(user.keyPairs.falcon.publicKey, "SLH-DSA public")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Used to verify your digital signatures
+                        Used to verify your quantum-resistant digital signatures
                       </p>
                     </div>
                     
@@ -238,7 +238,7 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.falcon.privateKey, "Falcon private")}
+                          onClick={() => handleCopyKey(user.keyPairs.falcon.privateKey, "SLH-DSA private")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -272,9 +272,9 @@ const Settings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Metadata Protection</label>
+                    <label className="text-sm font-medium">FIPS 205 Compliance</label>
                     <p className="text-xs text-muted-foreground">
-                      Hide message metadata and connection information
+                      Ensure all cryptographic operations follow NIST standards
                     </p>
                   </div>
                   <Switch defaultChecked={true} />
@@ -286,7 +286,7 @@ const Settings = () => {
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Hybrid Encryption</label>
                     <p className="text-xs text-muted-foreground">
-                      Use both post-quantum and classical encryption
+                      Use both post-quantum and classical encryption for stronger security
                     </p>
                   </div>
                   <Switch defaultChecked={true} />

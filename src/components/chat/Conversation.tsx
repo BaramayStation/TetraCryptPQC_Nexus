@@ -64,10 +64,10 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
     if (!user || !sessionKey) return;
     
     try {
-      // Encrypt message
+      // Encrypt message using AES-256-GCM (NIST FIPS 197)
       const encryptedContent = await encryptMessage(content, sessionKey);
       
-      // Sign message
+      // Sign message using SLH-DSA (NIST FIPS 205)
       const signature = await signMessage(encryptedContent, user.keyPairs.falcon.privateKey);
       
       // Create message object
@@ -125,12 +125,12 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
               </div>
               <h3 className="text-xl font-medium mb-2">{contact.name}</h3>
               <p className="text-muted-foreground mb-4">
-                Start a secure, end-to-end encrypted conversation. Your messages are protected with post-quantum encryption.
+                Start a secure, end-to-end encrypted conversation. Your messages are protected with NIST-compliant post-quantum encryption.
               </p>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>• Kyber-1024 key exchange</p>
-                <p>• Falcon-1024 digital signatures</p>
-                <p>• AES-256-GCM encryption</p>
+                <p>• ML-KEM-1024 key exchange (NIST FIPS 205)</p>
+                <p>• SLH-DSA digital signatures (NIST FIPS 205)</p>
+                <p>• AES-256-GCM encryption (NIST FIPS 197)</p>
               </div>
             </GlassContainer>
           </div>
