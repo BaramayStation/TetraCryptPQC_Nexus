@@ -2,13 +2,22 @@
 import React, { useEffect, useRef, useState } from "react";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { Button } from "@/components/ui/button";
-import { User, Check, CheckCheck, ChevronLeft } from "lucide-react";
+import { User, Check, CheckCheck, ChevronLeft, Shield, Database, Fingerprint, Lock } from "lucide-react";
 import MessageInput from "./MessageInput";
 import { Contact, Message, getMessagesForContact, markMessagesAsRead, getUserProfile, addMessage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
-import { encryptMessage, signMessage, generateSessionKey } from "@/lib/crypto";
+import { 
+  encryptMessage, 
+  encryptMessageChaCha,
+  signMessage, 
+  generateSessionKey,
+  homomorphicEncrypt,
+  verifyDID
+} from "@/lib/crypto";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface ConversationProps {
   contact: Contact;
@@ -18,8 +27,15 @@ interface ConversationProps {
 const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [sessionKey, setSessionKey] = useState<string>("");
+  const [encryptionMode, setEncryptionMode] = useState<"aes" | "chacha" | "homomorphic">("aes");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  
+  // Get user profile to check for advanced features
+  const user = getUserProfile();
+  const hasWebDID = user && (user as any).didDocument;
+  const hasQKD = user && (user as any).qkdInfo;
+  const hasHSM = user && (user as any).hsmInfo;
   
   useEffect(() => {
     // Load messages
@@ -64,8 +80,21 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
     if (!user || !sessionKey) return;
     
     try {
-      // Encrypt message using AES-256-GCM (NIST FIPS 197)
-      const encryptedContent = await encryptMessage(content, sessionKey);
+      // Encrypt message based on selected encryption mode
+      let encryptedContent;
+      
+      switch (encryptionMode) {
+        case "chacha":
+          encryptedContent = await encryptMessageChaCha(content, sessionKey);
+          break;
+        case "homomorphic":
+          encryptedContent = await homomorphicEncrypt(content);
+          break;
+        case "aes":
+        default:
+          encryptedContent = await encryptMessage(content, sessionKey);
+          break;
+      }
       
       // Sign message using SLH-DSA (NIST FIPS 205)
       const signature = await signMessage(encryptedContent, user.keyPairs.falcon.privateKey);
@@ -81,6 +110,15 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
         status: 'sent',
         sessionKey,
       };
+      
+      // Add encryption mode metadata
+      (newMessage as any).encryptionMode = encryptionMode;
+      
+      // If we have Web3 DID, add verification info
+      if (hasWebDID) {
+        const didVerified = await verifyDID((user as any).didDocument);
+        (newMessage as any).didVerified = didVerified;
+      }
       
       // Add message to storage
       addMessage(newMessage);
@@ -110,7 +148,17 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
     });
   };
   
-  const user = getUserProfile();
+  const renderEncryptionBadge = (mode?: "aes" | "chacha" | "homomorphic") => {
+    switch (mode) {
+      case "chacha":
+        return <Badge variant="outline" className="text-xs py-0">ChaCha20</Badge>;
+      case "homomorphic":
+        return <Badge variant="outline" className="text-xs py-0">Homomorphic</Badge>;
+      case "aes":
+      default:
+        return <Badge variant="outline" className="text-xs py-0">AES-256</Badge>;
+    }
+  };
   
   const renderMessages = () => {
     if (!user) return null;
@@ -125,19 +173,51 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
               </div>
               <h3 className="text-xl font-medium mb-2">{contact.name}</h3>
               <p className="text-muted-foreground mb-4">
-                Start a secure, end-to-end encrypted conversation. Your messages are protected with NIST-compliant post-quantum encryption.
+                Start a secure, end-to-end encrypted conversation with TetraCryptPQC. Your messages are protected with NIST-compliant post-quantum encryption.
               </p>
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>• ML-KEM-1024 key exchange (NIST FIPS 205)</p>
                 <p>• SLH-DSA digital signatures (NIST FIPS 205)</p>
                 <p>• AES-256-GCM encryption (NIST FIPS 197)</p>
+                {hasWebDID && <p>• Web3 Decentralized Identity verification</p>}
+                {hasQKD && <p>• Quantum Key Distribution (QKD)</p>}
+                {hasHSM && <p>• Hardware Security Module (HSM) protection</p>}
               </div>
+              
+              {!isMobile && (
+                <div className="mt-4 flex justify-center space-x-2">
+                  <Button 
+                    size="sm" 
+                    variant={encryptionMode === "aes" ? "default" : "outline"}
+                    onClick={() => setEncryptionMode("aes")}
+                  >
+                    AES-256
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant={encryptionMode === "chacha" ? "default" : "outline"}
+                    onClick={() => setEncryptionMode("chacha")}
+                  >
+                    ChaCha20
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant={encryptionMode === "homomorphic" ? "default" : "outline"}
+                    onClick={() => setEncryptionMode("homomorphic")}
+                  >
+                    Homomorphic
+                  </Button>
+                </div>
+              )}
             </GlassContainer>
           </div>
         ) : (
           <>
             {messages.map((message) => {
               const isUserMessage = message.senderId === user.id;
+              const messageEncMode = (message as any).encryptionMode || "aes";
+              const didVerified = (message as any).didVerified;
+              
               return (
                 <div 
                   key={message.id} 
@@ -165,9 +245,27 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
                           : "text-muted-foreground"
                       )}
                     >
-                      <span className="text-xs">
+                      {renderEncryptionBadge(messageEncMode)}
+                      
+                      {didVerified && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="ml-1">
+                                <Database className="h-3 w-3" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">DID Verified</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      
+                      <span className="text-xs ml-1">
                         {formatTime(message.timestamp)}
                       </span>
+                      
                       {isUserMessage && renderMessageStatus(message.status)}
                     </div>
                   </div>
@@ -194,11 +292,49 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
         </div>
         <div>
           <div className="font-medium">{contact.name}</div>
-          <div className="text-xs text-muted-foreground">
-            Secure • End-to-End Encrypted
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <Shield className="h-3 w-3" /> TetraCryptPQC Secure
+            {hasWebDID && <Database className="h-3 w-3 ml-1" />}
+            {hasHSM && <Fingerprint className="h-3 w-3 ml-1" />}
+            {hasQKD && <Lock className="h-3 w-3 ml-1" />}
           </div>
         </div>
       </div>
+      
+      {isMobile && (
+        <Drawer>
+          <DrawerTrigger asChild>
+            <Button variant="ghost" size="sm">
+              Encryption
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <div className="p-4 space-y-4">
+              <h4 className="font-medium">Encryption Method</h4>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  variant={encryptionMode === "aes" ? "default" : "outline"}
+                  onClick={() => setEncryptionMode("aes")}
+                >
+                  AES-256-GCM (NIST)
+                </Button>
+                <Button 
+                  variant={encryptionMode === "chacha" ? "default" : "outline"}
+                  onClick={() => setEncryptionMode("chacha")}
+                >
+                  ChaCha20-Poly1305
+                </Button>
+                <Button 
+                  variant={encryptionMode === "homomorphic" ? "default" : "outline"}
+                  onClick={() => setEncryptionMode("homomorphic")}
+                >
+                  Homomorphic Encryption
+                </Button>
+              </div>
+            </div>
+          </DrawerContent>
+        </Drawer>
+      )}
     </div>
   );
   
