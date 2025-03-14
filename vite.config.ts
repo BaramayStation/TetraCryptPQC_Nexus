@@ -48,13 +48,13 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       minify: "terser", // Highly secure minification
       rollupOptions: {
+        external: ["@radix-ui/react-tooltip"], // Externalize the missing module
         output: {
           manualChunks: {
             vendor: ["ethers", "starknet"], // Splits Web3 dependencies
           },
         },
       },
-      chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
     },
     worker: {
       format: "es", // Ensures compatibility with modern ES module workers
