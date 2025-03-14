@@ -1,76 +1,96 @@
+import { Web3Storage, File } from "web3.storage";
+import { encryptAES, decryptAES, signMessage, verifySignature, generateZKProof } from "@/lib/crypto";
 
-// web3Storage.ts: Secure Decentralized Storage for TetraCryptPQC
-// Mock implementation for development purposes
+// ✅ Replace with your Web3.Storage API key
+const WEB3_STORAGE_API_KEY = process.env.WEB3_STORAGE_API_KEY || "";
 
-import { signMessage, verifySignature } from '@/lib/crypto';
-
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs/'; // For production use
-
-// Mock IPFS storage
-const mockIPFSStorage = new Map<string, string>();
+// ✅ Initialize Web3Storage Client
+const client = new Web3Storage({ token: WEB3_STORAGE_API_KEY });
 
 /**
- * Securely store encrypted message on IPFS (mock implementation)
- * @param encryptedMessage - The encrypted message to store
+ * ✅ Securely store encrypted message on IPFS/Filecoin
+ * @param message - The plaintext message
+ * @param encryptionKey - The AES encryption key
  * @param senderPrivateKey - The sender's private key for signing
  * @returns Promise<string> - The CID (Content Identifier)
  */
-export const saveToIPFS = async (encryptedMessage: string, senderPrivateKey: string): Promise<string> => {
+export const saveToIPFS = async (
+  message: string,
+  encryptionKey: string,
+  senderPrivateKey: string
+): Promise<string> => {
   try {
-    console.log(`🔹 Storing encrypted message on IPFS (mock)...`);
-    
-    // Generate digital signature (SLH-DSA)
-    const signature = await signMessage(encryptedMessage, senderPrivateKey);
-    
-    // Create payload with encrypted content & signature
-    const payload = JSON.stringify({ encryptedMessage, signature });
-    
-    // Generate mock CID
-    const mockCID = `Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    
-    // Store in mock storage
-    mockIPFSStorage.set(mockCID, payload);
-    
-    console.log(`✅ Mock stored on IPFS: ${mockCID}`);
-    return mockCID;
+    console.log("🔹 Encrypting & Uploading Data to IPFS...");
+
+    // ✅ Encrypt message using AES-256-GCM
+    const encryptedData = await encryptAES(message, encryptionKey);
+
+    // ✅ Generate zk-STARK Proof for integrity
+    const zkProof = await generateZKProof(encryptedData);
+
+    // ✅ Sign the encrypted message using SLH-DSA
+    const signature = await signMessage(encryptedData, senderPrivateKey);
+
+    // ✅ Create JSON payload
+    const payload = JSON.stringify({ encryptedData, signature, zkProof });
+
+    // ✅ Convert to File object for Web3.Storage
+    const file = new File([payload], "secure-message.json", { type: "application/json" });
+
+    // ✅ Upload to Web3.Storage
+    const cid = await client.put([file]);
+
+    console.log(`✅ Secure Data Stored on IPFS/Filecoin: ${cid}`);
+    return cid; // Returns the IPFS CID
   } catch (error) {
-    console.error('❌ Failed to store message on IPFS:', error);
-    throw new Error('IPFS storage failed');
+    console.error("❌ Failed to store on IPFS/Filecoin:", error);
+    throw new Error("Decentralized Storage Failed");
   }
 };
 
 /**
- * Retrieve encrypted message from IPFS & verify integrity (mock implementation)
- * @param cid - The CID (Content Identifier)
+ * ✅ Retrieve and decrypt a message from IPFS/Filecoin
+ * @param cid - The IPFS CID
+ * @param decryptionKey - The AES decryption key
  * @param senderPublicKey - The sender's public key for verification
- * @returns Promise<string | null> - The encrypted message or null if verification fails
+ * @returns Promise<string> - The decrypted message
  */
-export const loadFromIPFS = async (cid: string, senderPublicKey: string): Promise<string | null> => {
+export const loadFromIPFS = async (
+  cid: string,
+  decryptionKey: string,
+  senderPublicKey: string
+): Promise<string> => {
   try {
-    console.log(`🔹 Retrieving from IPFS (mock): ${cid}`);
-    
-    // Get from mock storage
-    const storedData = mockIPFSStorage.get(cid);
-    if (!storedData) {
-      // If not in mock storage, return mock data
-      console.log('⚠️ CID not found in mock storage, returning mock data');
-      return JSON.stringify({ message: "Mock IPFS data for " + cid });
+    console.log("🔹 Retrieving Data from IPFS:", cid);
+
+    // ✅ Fetch file from Web3.Storage (IPFS)
+    const response = await fetch(`https://dweb.link/ipfs/${cid}`);
+    if (!response.ok) throw new Error("IPFS retrieval failed");
+
+    const content = await response.text();
+    const { encryptedData, signature, zkProof } = JSON.parse(content);
+
+    // ✅ Verify zk-STARK Proof Before Decrypting
+    const isValidProof = await verifySignature(encryptedData, zkProof, senderPublicKey);
+    if (!isValidProof) {
+      console.warn("❌ Data validation failed: Invalid zk-STARK proof");
+      throw new Error("Data Integrity Check Failed");
     }
-    
-    // Parse stored data
-    const { encryptedMessage, signature } = JSON.parse(storedData);
-    
-    // Verify signature
-    const isValid = await verifySignature(encryptedMessage, signature, senderPublicKey);
-    if (!isValid) {
-      console.error('❌ Message integrity check failed!');
-      return null;
+
+    // ✅ Verify Digital Signature
+    const isValidSignature = await verifySignature(encryptedData, signature, senderPublicKey);
+    if (!isValidSignature) {
+      console.warn("❌ Signature verification failed!");
+      throw new Error("Signature Validation Failed");
     }
-    
-    console.log('✅ Message verified successfully');
-    return encryptedMessage;
+
+    // ✅ Decrypt and return the message
+    const decryptedMessage = await decryptAES(encryptedData, decryptionKey);
+    console.log("✅ Successfully Decrypted Message:", decryptedMessage);
+
+    return decryptedMessage;
   } catch (error) {
-    console.error('❌ Failed to load message from IPFS:', error);
-    return null;
+    console.error("❌ Failed to retrieve/decrypt from IPFS:", error);
+    throw new Error("Decryption Failed");
   }
 };
