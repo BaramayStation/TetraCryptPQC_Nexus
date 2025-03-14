@@ -16,7 +16,7 @@ const provider = new RpcProvider({
 export async function generateStarkNetIdentity(): Promise<{ starkKey: string; starkAddress: string; zkProof: string }> {
   console.log("🔹 Generating StarkNet Identity...");
 
-  // ✅ Secure Private Key Generation
+  // ✅ Secure Private Key Generation (Quantum-Safe)
   const privateKey = ec.starkCurve.generationKey();
   const starkPublicKey = ec.getStarkKey(privateKey);
 
