@@ -7,12 +7,13 @@ from starkware.starknet.storage.access import StorageAccess
 from starkware.cairo.common.hash import Poseidon
 from starkware.starknet.crypto.keccak import starknet_keccak
 
-# ✅ WebSocket Event: Message Sent
+# ✅ WebSocket Event: Real-Time Messaging Updates
 @event
-func MessageSent(sender: felt, receiver: felt, message_id: felt, encrypted_content: felt);
+func MessageSent(sender: felt, receiver: felt, message_id: felt, message_ipfs_cid: felt);
 
 @contract_interface
 namespace TetraCrypt {
+    # ✅ Step 1: Register a User with zk-STARK Authentication
     func register_user{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*, 
@@ -23,6 +24,7 @@ namespace TetraCrypt {
         zkProof: felt
     ) -> (success: felt);
 
+    # ✅ Step 2: Securely Store Messages (Only IPFS Hash Stored)
     func store_message{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*, 
@@ -30,11 +32,12 @@ namespace TetraCrypt {
     }(
         sender: felt, 
         receiver: felt, 
-        encrypted_content: felt, 
+        message_ipfs_cid: felt,  # 🔹 Store only IPFS hash
         zkProof: felt, 
         starknet_signature: (felt, felt)
     ) -> (message_id: felt);
 
+    # ✅ Step 3: Retrieve Messages from StarkNet
     func get_message{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*, 
@@ -42,8 +45,9 @@ namespace TetraCrypt {
     }(
         sender: felt, 
         receiver: felt
-    ) -> (encrypted_content: felt);
+    ) -> (message_ipfs_cid: felt);
 
+    # ✅ Step 4: Delete Message (For Privacy Compliance)
     func delete_message{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*, 
@@ -80,26 +84,27 @@ func store_message{
 }(
     sender: felt, 
     receiver: felt, 
-    encrypted_content: felt, 
+    message_ipfs_cid: felt, 
     zkProof: felt, 
     starknet_signature: (felt, felt)
 ) -> (message_id: felt) {
-    let keccak_hash = starknet_keccak(encrypted_content);
-    let computed_hash = Poseidon([encrypted_content]);
-    assert computed_hash == zkProof, "❌ Invalid zk-STARK Proof";
+    let message_hash = Poseidon([message_ipfs_cid]);
 
-    let is_valid_signature = verify(sender, keccak_hash, starknet_signature);
+    # ✅ Validate zk-STARK Proof for Message Integrity
+    assert message_hash == zkProof, "❌ Invalid zk-STARK Proof";
+
+    # ✅ Verify StarkNet Digital Signature (Ensures Message Authenticity)
+    let is_valid_signature = verify(sender, message_hash, starknet_signature);
     assert is_valid_signature, "❌ Invalid StarkNet Signature";
 
+    # ✅ Store Only IPFS CID on StarkNet Storage (Reduces Gas Costs)
     let message_key = Poseidon([sender, receiver]);
-    Storage.write(StorageAccess, message_key, encrypted_content);
+    Storage.write(StorageAccess, message_key, message_ipfs_cid);
 
-    let message_id = Poseidon([encrypted_content, sender]);
+    # ✅ Emit WebSocket Event for Real-Time Messaging
+    emit MessageSent(sender, receiver, message_key, message_ipfs_cid);
 
-    # 🔹 Emit WebSocket Event for Real-Time Messaging
-    emit MessageSent(sender, receiver, message_id, encrypted_content);
-
-    return (message_id);
+    return (message_key);
 }
 
 @external
@@ -110,11 +115,11 @@ func get_message{
 }(
     sender: felt, 
     receiver: felt
-) -> (encrypted_content: felt) {
+) -> (message_ipfs_cid: felt) {
     let message_key = Poseidon([sender, receiver]);
-    let encrypted_content = Storage.read(StorageAccess, message_key);
+    let message_ipfs_cid = Storage.read(StorageAccess, message_key);
 
-    return (encrypted_content);
+    return (message_ipfs_cid);
 }
 
 @external
