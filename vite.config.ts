@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react-swc";
 import wasm from "vite-plugin-wasm";  // Official WebAssembly support
 import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
-import viteInspect from "vite-plugin-inspect"; // Debugging & performance analysis
 
 export default defineConfig(({ mode }) => {
   const plugins = [
@@ -14,8 +13,8 @@ export default defineConfig(({ mode }) => {
 
   // Conditionally include viteInspect if installed
   try {
-    require.resolve("vite-plugin-inspect");
-    plugins.push(viteInspect());
+    const viteInspect = require("vite-plugin-inspect");
+    if (viteInspect) plugins.push(viteInspect.default());
   } catch (e) {
     console.warn("vite-plugin-inspect not installed, skipping...");
   }
