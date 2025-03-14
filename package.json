@@ -1,6 +1,6 @@
 {
   "name": "TetraCryptPQC",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -36,9 +36,7 @@
     "ethers": "^6.7.1",
     "ipfs-http-client": "^60.0.0",
     "wasm-feature-detect": "^1.3.1",
-    "kyber-crystals": "^1.0.0",
-    "falcon-js": "^1.0.0",
-    "sphincs-js": "^1.0.0",
+    "pqcrypto": "github:cyph/pqcrypto.js",
     "crypto-browserify": "^3.12.0",
     "buffer": "^6.0.3",
     "stream-browserify": "^3.0.0",
