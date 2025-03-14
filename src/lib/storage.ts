@@ -4,6 +4,7 @@ import wasm from "vite-plugin-wasm";  // Official WebAssembly support
 import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
 import { createHelia } from "helia"; // IPFS Helia integration
+import { blockstore } from "@helia/blockstore-memory"; // Future-proofed blockstore integration
 
 export default defineConfig(({ mode }) => {
   const plugins = [
@@ -66,10 +67,7 @@ export default defineConfig(({ mode }) => {
     },
     worker: {
       format: "es", // Ensures compatibility with modern ES module workers
-      plugins: [
-        wasm(),
-        topLevelAwait(),
-      ],
+      plugins: () => [wasm(), topLevelAwait()],
     },
     define: {
       global: "globalThis", // Ensures compatibility across all JS environments
@@ -78,27 +76,26 @@ export default defineConfig(({ mode }) => {
   };
 });
 
-// ✅ IPFS Helia Utility Functions for Secure Storage
-import { createHelia } from "helia";
+// ✅ Future-Proofed IPFS Helia Utility Functions for Secure Storage
 import { unixfs } from "@helia/unixfs";
 
-let heliaInstance: any = null;
+let heliaInstance = null;
 
 export async function getHeliaInstance() {
   if (!heliaInstance) {
-    heliaInstance = await createHelia();
+    heliaInstance = await createHelia({ blockstore: blockstore() });
   }
   return heliaInstance;
 }
 
-export async function addFileToIPFS(data: string) {
+export async function addFileToIPFS(data) {
   const helia = await getHeliaInstance();
   const fs = unixfs(helia);
   const cid = await fs.addBytes(new TextEncoder().encode(data));
   return cid.toString(); // Returns the CID
 }
 
-export async function getFileFromIPFS(cid: string) {
+export async function getFileFromIPFS(cid) {
   const helia = await getHeliaInstance();
   const fs = unixfs(helia);
   const data = [];
