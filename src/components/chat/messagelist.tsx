@@ -1,12 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { decryptAES, verifyZKProof } from "@/lib/crypto";
-import { Provider, Contract } from "starknet";
 import { getUserProfile } from "@/lib/storage";
 
-// ✅ Constants for Web3 Messaging
-const STARKNET_MESSAGING_CONTRACT = "0xYourStarkNetMessagingContractAddress";
-const WEBSOCKET_URL = "wss://starknet.io/events";
+const WEBSOCKET_URL = "ws://localhost:8080"; // ✅ Uses Free P2P WebSocket
 
 interface Message {
   sender: string;
@@ -21,56 +18,6 @@ const MessageList: React.FC = () => {
   const messagesRef = useRef<Message[]>([]); // Prevents stale state issues
   const user = getUserProfile();
 
-  // ✅ Fetch Messages from StarkNet (With Async Decryption)
-  const fetchMessages = async () => {
-    if (!user) return;
-
-    setLoading(true);
-
-    try {
-      const provider = new Provider({ rpc: { nodeUrl: "https://starknet-mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID" } });
-      const messagingContract = new Contract(
-        [
-          {
-            name: "get_message",
-            type: "function",
-            inputs: [
-              { name: "sender", type: "felt" },
-              { name: "receiver", type: "felt" },
-            ],
-            outputs: [{ name: "encrypted_content", type: "felt" }],
-          },
-        ],
-        STARKNET_MESSAGING_CONTRACT,
-        provider
-      );
-
-      const response = await messagingContract.call("get_message", [
-        user.starknetAddress,
-        "0xReceiverAddress", // Change dynamically based on chat partner
-      ]);
-
-      const encryptedContent = response.encrypted_content;
-
-      if (!(await verifyZKProof(encryptedContent))) {
-        console.warn("❌ Invalid zk-STARK proof. Ignoring message.");
-        return;
-      }
-
-      const decryptedMessage = await decryptAES(encryptedContent, user.sessionKey);
-
-      setMessages((prevMessages) => {
-        const updatedMessages = [...prevMessages, { sender: "You", content: decryptedMessage, timestamp: Date.now() }];
-        messagesRef.current = updatedMessages; // Keep ref updated
-        return updatedMessages;
-      });
-    } catch (error) {
-      console.error("❌ Failed to retrieve messages:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // ✅ WebSocket Real-Time Updates with Auto-Reconnect & Async Handling
   useEffect(() => {
     if (!user) return;
@@ -84,36 +31,36 @@ const MessageList: React.FC = () => {
       wsRef.current = websocket;
 
       websocket.onopen = () => {
-        console.log("🔹 WebSocket Connected");
-        websocket.send(JSON.stringify({ contract_address: STARKNET_MESSAGING_CONTRACT, event: "MessageSent" }));
+        console.log("🔹 WebSocket Connected to P2P Network");
       };
 
       websocket.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
 
-          if (data.event === "MessageSent") {
-            if (messagesRef.current.some((msg) => msg.content === data.encrypted_content)) {
-              console.warn("⚠️ Duplicate message detected. Skipping.");
-              return;
-            }
-
-            if (!(await verifyZKProof(data.encrypted_content))) {
-              console.warn("❌ Invalid zk-STARK proof detected. Ignoring message.");
-              return;
-            }
-
-            const decryptedContent = await decryptAES(data.encrypted_content, user.sessionKey);
-
-            setMessages((prevMessages) => {
-              const updatedMessages = [
-                ...prevMessages,
-                { sender: data.sender, content: decryptedContent, timestamp: Date.now() },
-              ];
-              messagesRef.current = updatedMessages;
-              return updatedMessages;
-            });
+          // Prevent duplicate messages
+          if (messagesRef.current.some((msg) => msg.content === data.encrypted_content)) {
+            console.warn("⚠️ Duplicate message detected. Skipping.");
+            return;
           }
+
+          // Validate zk-STARK Proof
+          if (!(await verifyZKProof(data.encrypted_content))) {
+            console.warn("❌ Invalid zk-STARK proof detected. Ignoring message.");
+            return;
+          }
+
+          // Decrypt the message
+          const decryptedContent = await decryptAES(data.encrypted_content, user.sessionKey);
+
+          setMessages((prevMessages) => {
+            const updatedMessages = [
+              ...prevMessages,
+              { sender: data.sender, content: decryptedContent, timestamp: Date.now() },
+            ];
+            messagesRef.current = updatedMessages;
+            return updatedMessages;
+          });
         } catch (error) {
           console.error("❌ Error processing WebSocket message:", error);
         }
@@ -155,7 +102,7 @@ const MessageList: React.FC = () => {
         )}
       </div>
 
-      <Button onClick={fetchMessages} className="mt-4 bg-blue-600 hover:bg-blue-700">
+      <Button onClick={() => console.log("Manually Fetching Messages")} className="mt-4 bg-blue-600 hover:bg-blue-700">
         🔄 Refresh Messages
       </Button>
     </div>
