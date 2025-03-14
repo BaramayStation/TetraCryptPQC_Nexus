@@ -141,8 +141,6 @@ TetraCryptPQC_Nexus is open-source software licensed under the **MIT License**. 
 ## Contact & Community
 For discussions, collaboration, and contributions, reach out via:
 - **GitHub Issues:** [TetraCryptPQC_Nexus Repository](https://github.com/BaramayStation/TetraCryptPQC_Nexus)
-- **Community Forum:** [TetraCryptPQC_Nexus Forum](https://forum.baramaystation.org)
-- **Twitter:** [@BaramayStation](https://twitter.com/BaramayStation)
 
 Join us in building a post-quantum secure and decentralized future!
 
