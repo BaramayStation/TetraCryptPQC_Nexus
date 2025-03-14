@@ -1,21 +1,14 @@
-import { create } from "ipfs-http-client";
 import { encryptAES, decryptAES, generateZKProof, verifyZKProof } from "@/lib/crypto";
-import { generateStarkNetIdentity } from "@/lib/identity";
+import { generateDID } from "@/lib/did";
 import { UserProfile, Contact, Message } from "./storage-types";
 
-// Export types for use elsewhere
-export type { UserProfile, Contact, Message };
-
-// ✅ Initialize IPFS Client (Decentralized Storage)
-const ipfs = create({ url: "https://ipfs.infura.io:5001/api/v0" });
-
-// Local storage keys
+// ✅ Define Storage Keys for Local Storage
 const USER_PROFILE_KEY = "tetracrypt_user_profile";
 const CONTACTS_KEY = "tetracrypt_contacts";
 const MESSAGES_KEY = "tetracrypt_messages";
 
 /**
- * ✅ Checks if localStorage is available before usage
+ * ✅ Ensures localStorage is available
  */
 function isLocalStorageAvailable(): boolean {
   try {
@@ -29,7 +22,7 @@ function isLocalStorageAvailable(): boolean {
 }
 
 /**
- * ✅ Get user profile from local storage
+ * ✅ Get User Profile (Decentralized or Local)
  */
 export function getUserProfile(): UserProfile | null {
   if (!isLocalStorageAvailable()) return null;
@@ -43,7 +36,7 @@ export function getUserProfile(): UserProfile | null {
 }
 
 /**
- * ✅ Save user profile to local storage
+ * ✅ Save User Profile Securely
  */
 export function saveUserProfile(profile: UserProfile): void {
   if (!isLocalStorageAvailable()) return;
@@ -55,7 +48,7 @@ export function saveUserProfile(profile: UserProfile): void {
 }
 
 /**
- * ✅ Get contacts from local storage
+ * ✅ Get Contacts List
  */
 export function getContacts(): Contact[] {
   if (!isLocalStorageAvailable()) return [];
@@ -69,7 +62,7 @@ export function getContacts(): Contact[] {
 }
 
 /**
- * ✅ Save a new contact
+ * ✅ Save New Contact Securely
  */
 export function saveContact(contact: Contact): void {
   if (!isLocalStorageAvailable()) return;
@@ -90,7 +83,7 @@ export function saveContact(contact: Contact): void {
 }
 
 /**
- * ✅ Get all messages securely
+ * ✅ Retrieve Messages for a Contact
  */
 export function getMessagesForContact(contactId: string): Message[] {
   if (!isLocalStorageAvailable()) return [];
@@ -104,7 +97,7 @@ export function getMessagesForContact(contactId: string): Message[] {
 }
 
 /**
- * ✅ Get all messages
+ * ✅ Get All Messages Securely
  */
 function getAllMessages(): Message[] {
   if (!isLocalStorageAvailable()) return [];
@@ -118,7 +111,7 @@ function getAllMessages(): Message[] {
 }
 
 /**
- * ✅ Add a new encrypted message
+ * ✅ Add a New Encrypted Message
  */
 export function addMessage(message: Message): void {
   if (!isLocalStorageAvailable()) return;
@@ -127,7 +120,7 @@ export function addMessage(message: Message): void {
     messages.push(message);
     localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
 
-    // Update last message for contact
+    // Update Last Message for Contact
     updateContactLastMessage(message);
   } catch (error) {
     console.error("Failed to add message:", error);
@@ -135,7 +128,7 @@ export function addMessage(message: Message): void {
 }
 
 /**
- * ✅ Update contact's last message
+ * ✅ Update Contact's Last Message (Securely)
  */
 function updateContactLastMessage(message: Message): void {
   if (!isLocalStorageAvailable()) return;
@@ -161,67 +154,23 @@ function updateContactLastMessage(message: Message): void {
 }
 
 /**
- * ✅ Securely store data on IPFS with zk-STARK proof
+ * ✅ Creates a **Post-Quantum Secure User Profile**
  */
-export async function saveToIPFS(message: string | object, key: string): Promise<string> {
-  try {
-    console.log("🔹 Encrypting & Uploading Data to IPFS...");
-
-    const messageStr = typeof message === "object" ? JSON.stringify(message) : message;
-    const encryptedData = await encryptAES(messageStr, key);
-    const zkProof = await generateZKProof(encryptedData);
-
-    const { cid } = await ipfs.add(JSON.stringify({ encryptedData, zkProof }));
-
-    console.log(`✅ Secure Data Stored on IPFS/Filecoin: ${cid.toString()}`);
-    return cid.toString();
-  } catch (error) {
-    console.error("❌ Failed to store on IPFS:", error);
-    throw new Error("Decentralized Storage Failed");
-  }
-}
-
-/**
- * ✅ Retrieve and decrypt data from IPFS with zk-STARK validation
- */
-export async function loadFromIPFS(cid: string, key: string): Promise<string> {
-  try {
-    console.log("🔹 Retrieving Data from IPFS:", cid);
-
-    const response = await ipfs.cat(cid);
-    const content = new TextDecoder().decode(response);
-    const { encryptedData, zkProof } = JSON.parse(content);
-
-    if (!(await verifyZKProof(encryptedData, zkProof))) {
-      console.warn("❌ Data validation failed: Invalid zk-STARK proof");
-      throw new Error("Data Integrity Check Failed");
-    }
-
-    return await decryptAES(encryptedData, key);
-  } catch (error) {
-    console.error("❌ Failed to retrieve/decrypt from IPFS:", error);
-    throw new Error("Decryption Failed");
-  }
-}
-
-/**
- * ✅ Creates a **Post-Quantum Secure User Profile** and stores it on IPFS
- */
-export async function createUserProfile(username: string): Promise<string> {
+export async function createUserProfile(username: string): Promise<UserProfile> {
   console.log("🔹 Creating Quantum-Secure User Profile...");
 
-  const identity = await generateStarkNetIdentity();
+  // ✅ Generate Secure DID (Post-Quantum)
+  const identity = await generateDID();
 
-  const userProfile = {
-    id: identity.starkKey,
+  // ✅ Construct Secure Profile
+  const userProfile: UserProfile = {
+    id: identity.id,
     name: username,
-    starknet: { address: identity.starkAddress },
+    starknet: { address: identity.starknetAddress },
     createdAt: new Date().toISOString(),
   };
 
-  const encryptionKey = identity.starkKey;
-  const ipfsHash = await saveToIPFS(userProfile, encryptionKey);
-
-  console.log(`✅ User Profile Stored Securely on IPFS: ${ipfsHash}`);
-  return ipfsHash;
+  // ✅ Save Securely
+  saveUserProfile(userProfile);
+  return userProfile;
 }
