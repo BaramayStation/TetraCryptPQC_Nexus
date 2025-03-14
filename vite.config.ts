@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import wasm from "@rollup/plugin-wasm";  // Replaced `vite-plugin-wasm` for stability
+import wasm from "@rollup/plugin-wasm"; // Replaced `vite-plugin-wasm` for stability
 import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
 import { componentTagger } from "lovable-tagger";
