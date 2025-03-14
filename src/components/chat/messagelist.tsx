@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { decryptAES, verifyZKProof } from "@/lib/crypto"; // Ensure zk-STARK proof validation
-import { Provider, Contract, hash } from "starknet";
+import { decryptAES, verifyZKProof } from "@/lib/crypto"; // Ensures zk-STARK proof validation
+import { Provider, Contract } from "starknet";
 import { getUserProfile } from "@/lib/storage";
 
 // ✅ StarkNet Messaging Contract Address
@@ -50,14 +50,13 @@ const MessageList: React.FC = () => {
       const encryptedContent = response.encrypted_content;
 
       // ✅ Validate zk-STARK Proof Before Decrypting
-      const isValidProof = await verifyZKProof(encryptedContent);
-      if (!isValidProof) {
+      if (!(await verifyZKProof(encryptedContent))) {
         console.warn("❌ Message validation failed: Invalid zk-STARK proof");
         return;
       }
 
       // ✅ Decrypt Messages
-      const decryptedMessage = decryptAES(encryptedContent, user.sessionKey);
+      const decryptedMessage = await decryptAES(encryptedContent, user.sessionKey);
 
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -92,21 +91,21 @@ const MessageList: React.FC = () => {
           console.log("📩 New message received:", data);
 
           if (data.event === "MessageSent") {
-            // ✅ Ensure Message is Not Duplicated
+            // ✅ Prevent Duplicates
             if (messages.some((msg) => msg.content === data.encrypted_content)) {
               console.warn("⚠️ Duplicate message detected. Skipping.");
               return;
             }
 
-            // ✅ Validate zk-STARK Proof Before Decrypting
-            const isValidProof = await verifyZKProof(data.encrypted_content);
-            if (!isValidProof) {
+            // ✅ Validate zk-STARK Proof
+            if (!(await verifyZKProof(data.encrypted_content))) {
               console.warn("❌ Invalid zk-STARK proof detected. Ignoring message.");
               return;
             }
 
-            // ✅ Decrypt and Append Message
-            const decryptedContent = decryptAES(data.encrypted_content, user.sessionKey);
+            // ✅ Decrypt Message
+            const decryptedContent = await decryptAES(data.encrypted_content, user.sessionKey);
+
             setMessages((prevMessages) => [
               ...prevMessages,
               {
