@@ -1,7 +1,6 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import wasm from "vite-plugin-wasm";  // Official WebAssembly support
+import wasm from "@rollup/plugin-wasm";  // Replaced `vite-plugin-wasm` for stability
 import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
 import { componentTagger } from "lovable-tagger";
@@ -11,14 +10,16 @@ export default defineConfig(({ mode }) => {
     react(), // Optimized React rendering with SWC
     wasm(), // Ensures WebAssembly ESM compatibility
     topLevelAwait(), // Enables async/await WebAssembly support
-    mode === 'development' && componentTagger(),
+    mode === "development" ? componentTagger() : null, // Only used in development
   ].filter(Boolean);
 
-  // Conditionally include viteInspect if installed
+  // Conditionally include vite-plugin-inspect if installed
   try {
-    const viteInspect = require("vite-plugin-inspect");
-    if (viteInspect) plugins.push(viteInspect.default());
-  } catch (e) {
+    const viteInspect = require.resolve("vite-plugin-inspect");
+    if (viteInspect) {
+      plugins.push(require("vite-plugin-inspect").default());
+    }
+  } catch {
     console.warn("vite-plugin-inspect not installed, skipping...");
   }
 
@@ -52,9 +53,9 @@ export default defineConfig(({ mode }) => {
       minify: "terser", // Highly secure minification
       rollupOptions: {
         external: [
-          "class-variance-authority",  // ✅ Fix Rollup Issue
-          "@radix-ui/react-tooltip",  // ✅ Ensure Radix Tooltip Works
-          "@radix-ui/react-popover",  // ✅ Prevent Rollup Failures
+          "class-variance-authority", // ✅ Fix Rollup Issue
+          "@radix-ui/react-tooltip", // ✅ Ensure Radix Tooltip Works
+          "@radix-ui/react-popover", // ✅ Prevent Rollup Failures
         ],
         output: {
           manualChunks: {
