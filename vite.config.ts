@@ -1,22 +1,22 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import wasm from "vite-plugin-wasm";
+import wasm from "vite-plugin-wasm"; // ✅ Correct package
 import topLevelAwait from "vite-plugin-top-level-await";
-import viteInspect from "vite-plugin-inspect"; // Debugging & visualization
+import viteInspect from "vite-plugin-inspect"; // Debugging & analysis
 import path from "path";
 
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::", // Enables IPv6 & dual-stack connectivity
+    host: "::",
     port: 8080,
-    strictPort: true, // Ensures no fallback ports
-    https: true, // Enforces TLS encryption during local development
+    strictPort: true,
+    https: true,
   },
   plugins: [
-    react(), // Optimized React rendering
-    wasm(), // Ensures WebAssembly ESM compatibility
-    topLevelAwait(), // Enables WebAssembly async/await support
-    viteInspect(), // Debugging & visualization plugin
+    react(),
+    wasm(), // ✅ Official working package
+    topLevelAwait(),
+    viteInspect(),
   ],
   resolve: {
     alias: {
@@ -24,12 +24,12 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    exclude: ["@syntect/wasm"], // Exclude problematic WebAssembly modules
+    exclude: ["@syntect/wasm"],
     esbuildOptions: {
-      target: "esnext", // Ensures support for latest JavaScript features
+      target: "esnext",
       supported: {
-        bigint: true, // Enables BigInt support for cryptographic ops
-        wasm: true, // Enables direct WebAssembly imports
+        bigint: true,
+        wasm: true,
       },
     },
   },
@@ -37,25 +37,25 @@ export default defineConfig(({ mode }) => ({
     target: "esnext",
     outDir: "dist",
     sourcemap: true,
-    minify: "terser", // Highly secure minification
+    minify: "terser",
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ["ethers", "starknet"], // Splits Web3 dependencies
+          vendor: ["ethers", "starknet"],
         },
       },
     },
-    chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
+    chunkSizeWarningLimit: 1500,
   },
   worker: {
-    format: "es", // Ensures compatibility with modern ES module workers
+    format: "es",
     plugins: [
       wasm(),
       topLevelAwait(),
     ],
   },
   define: {
-    global: "globalThis", // Ensures compatibility across all JS environments
-    "process.env": {}, // Prevents environment variable leakage
+    global: "globalThis",
+    "process.env": {},
   },
 }));
