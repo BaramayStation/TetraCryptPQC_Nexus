@@ -1,162 +1,36 @@
-import { encryptMessage, encryptMessageChaCha, decryptMessage, signMessage, verifySignature, homomorphicEncrypt } from "@/lib/crypto";
-import { saveToIPFS, loadFromIPFS } from "@/lib/web3Storage"; // Web3 decentralized storage
-import { getUserProfile } from "@/lib/storage";
+import { create } from "ipfs-http-client";
+import { generateMLKEMKeypair } from "@/lib/crypto";
+import { generateStarkNetIdentity } from "@/lib/identity";
 
-// 🔹 Secure Storage Keys
-const STORAGE_KEYS = {
-  USER_PROFILE: 'quantum_secure_user',
-  CONTACTS: 'quantum_secure_contacts',
-  MESSAGES: 'quantum_secure_messages',
-  SESSIONS: 'quantum_secure_sessions',
-};
+const ipfs = create({ url: "https://ipfs.infura.io:5001/api/v0" });
 
-// 🔹 Secure Local Storage Functions
-const secureStorage = {
-  set: (key: string, data: any) => {
-    const encryptedData = btoa(JSON.stringify(data)); // Base64 encoding (upgrade to AES-256-GCM in production)
-    localStorage.setItem(key, encryptedData);
-  },
-  get: (key: string) => {
-    const encryptedData = localStorage.getItem(key);
-    return encryptedData ? JSON.parse(atob(encryptedData)) : null;
-  },
-  remove: (key: string) => {
-    localStorage.removeItem(key);
-  },
-};
-
-// 🔹 Securely Save User Profile
-export const saveUserProfile = (profile: any): void => {
-  secureStorage.set(STORAGE_KEYS.USER_PROFILE, profile);
-};
-
-// 🔹 Get User Profile (with ML-KEM Secure Storage)
-export const getUserProfile = (): any | null => {
-  return secureStorage.get(STORAGE_KEYS.USER_PROFILE);
-};
-
-// 🔹 Secure Message Type
-export interface SecureMessage {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  encryptedContent: string;
-  encryptionMode: "aes" | "chacha" | "homomorphic";
-  signature: string;
-  timestamp: string;
-  didVerified?: boolean;
-  ipfsHash?: string; // If stored on IPFS
+export async function saveToIPFS(data: any): Promise<string> {
+  console.log("🔹 Storing data on IPFS...");
+  const { cid } = await ipfs.add(JSON.stringify(data));
+  return cid.toString();
 }
 
-// 🔹 Save Messages Securely (Supports IPFS)
-export const saveMessage = async (message: SecureMessage): Promise<void> => {
-  try {
-    console.log("🔹 Encrypting and Storing Message on IPFS...");
-    
-    // Store the encrypted message in IPFS & obtain a CID
-    const cid = await saveToIPFS(message.encryptedContent);
-
-    // Store only the CID instead of full message
-    const messages = getAllMessages();
-    messages.push({ ...message, encryptedContent: cid });
-
-    secureStorage.set(STORAGE_KEYS.MESSAGES, messages);
-  } catch (error) {
-    console.error("❌ Failed to store message:", error);
-  }
-};
-
-// 🔹 Retrieve Messages (with Quantum-Safe Decryption)
-export const getAllMessages = (): SecureMessage[] => {
-  return secureStorage.get(STORAGE_KEYS.MESSAGES) || [];
-};
-
-// 🔹 Fetch Messages for a Contact (Quantum-Secure Retrieval)
-export const getMessagesForContact = async (contactId: string): Promise<SecureMessage[]> => {
-  const user = getUserProfile();
-  if (!user) return [];
-
-  let messages = getAllMessages().filter(
-    message => 
-      (message.senderId === user.id && message.receiverId === contactId) || 
-      (message.senderId === contactId && message.receiverId === user.id)
-  );
-
-  // Fetch and decrypt messages from IPFS
-  return await Promise.all(
-    messages.map(async (message) => {
-      try {
-        if (message.encryptedContent.startsWith("Qm")) { // IPFS CID check
-          console.log(`🔹 Fetching message from IPFS: ${message.encryptedContent}`);
-          message.encryptedContent = await loadFromIPFS(message.encryptedContent);
-        }
-        return message;
-      } catch (error) {
-        console.error("❌ Failed to fetch message:", error);
-        return message;
-      }
-    })
-  );
-};
-
-// 🔹 Mark Messages as Read (Quantum-Secure Updates)
-export const markMessagesAsRead = (contactId: string): void => {
-  const messages = getAllMessages();
-  let updated = false;
-
-  messages.forEach(message => {
-    if (message.senderId === contactId && message.status !== 'read') {
-      message.status = 'read';
-      updated = true;
-    }
-  });
-
-  if (updated) secureStorage.set(STORAGE_KEYS.MESSAGES, messages);
-};
-
-// 🔹 Secure Sessions (with PFS - Perfect Forward Secrecy)
-export interface SecureSession {
-  contactId: string;
-  sessionKey: string;
-  lastRenewed: string;
+export async function loadFromIPFS(cid: string): Promise<any> {
+  console.log("🔹 Retrieving data from IPFS...");
+  const response = await ipfs.cat(cid);
+  return JSON.parse(new TextDecoder().decode(response));
 }
 
-// 🔹 Save Secure Session (Quantum-Resistant)
-export const saveSession = (session: SecureSession): void => {
-  const sessions = getSessions();
-  const existingIndex = sessions.findIndex(s => s.contactId === session.contactId);
+export async function createUserProfile(username: string) {
+  console.log("🔹 Creating new user profile...");
+  const keypair = await generateMLKEMKeypair();
+  const identity = await generateStarkNetIdentity();
 
-  if (existingIndex >= 0) {
-    sessions[existingIndex] = session;
-  } else {
-    sessions.push(session);
-  }
+  const userProfile = {
+    id: identity.starkKey,
+    name: username,
+    keyPairs: {
+      mlkem: keypair,
+    },
+    starknet: {
+      address: identity.starkAddress,
+    },
+  };
 
-  secureStorage.set(STORAGE_KEYS.SESSIONS, sessions);
-};
-
-// 🔹 Get Secure Session (with Quantum Key Rotation)
-export const getSessions = (): SecureSession[] => {
-  return secureStorage.get(STORAGE_KEYS.SESSIONS) || [];
-};
-
-// 🔹 Web3 Storage Methods (IPFS or Arweave)
-export const saveToIPFS = async (message: SecureMessage): Promise<string> => {
-  // Placeholder: Implement actual IPFS storage
-  console.log("Saving to IPFS:", message);
-  return "ipfsHashPlaceholder";
-};
-
-export const loadFromIPFS = async (hash: string): Promise<string | null> => {
-  // Placeholder: Implement actual IPFS retrieval
-  console.log("Loading from IPFS:", hash);
-  return null;
-};
-
-// 🔹 Clear All Secure Data (For Logout)
-export const clearAllData = (): void => {
-  secureStorage.remove(STORAGE_KEYS.USER_PROFILE);
-  secureStorage.remove(STORAGE_KEYS.CONTACTS);
-  secureStorage.remove(STORAGE_KEYS.MESSAGES);
-  secureStorage.remove(STORAGE_KEYS.SESSIONS);
-};
+  return await saveToIPFS(userProfile);
+}
