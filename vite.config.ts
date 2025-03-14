@@ -1,16 +1,18 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import wasm from "vite-plugin-wasm";  // Official WebAssembly support
 import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
-import { createHelia } from "helia"; // IPFS Helia integration
+import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => {
   const plugins = [
     react(), // Optimized React rendering with SWC
     wasm(), // Ensures WebAssembly ESM compatibility
     topLevelAwait(), // Enables async/await WebAssembly support
-  ];
+    mode === 'development' && componentTagger(),
+  ].filter(Boolean);
 
   // Conditionally include viteInspect if installed
   try {
