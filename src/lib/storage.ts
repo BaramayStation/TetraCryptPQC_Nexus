@@ -1,12 +1,13 @@
 import { create } from "ipfs-http-client";
 import { encryptAES, decryptAES, generateZKProof, verifyZKProof } from "@/lib/crypto";
 import { generateStarkNetIdentity } from "@/lib/identity";
+import crypto from "crypto-browserify";
 
-// ✅ Initialize IPFS & Filecoin Client (Using Infura for Public Gateway)
+// ✅ Initialize IPFS Client (Decentralized Storage)
 const ipfs = create({ url: "https://ipfs.infura.io:5001/api/v0" });
 
 /**
- * 🔹 Stores an **encrypted** message on IPFS/Filecoin with zk-STARK proof
+ * ✅ Stores an **encrypted** message on IPFS/Filecoin with zk-STARK proof
  * @param {string} message - The plaintext message
  * @param {string} key - The AES encryption key
  * @returns {Promise<string>} The IPFS CID (Content Identifier)
@@ -33,7 +34,7 @@ export async function saveToIPFS(message: string, key: string): Promise<string> 
 }
 
 /**
- * 🔹 Retrieves and decrypts a message from IPFS/Filecoin
+ * ✅ Retrieves and decrypts a message from IPFS/Filecoin
  * @param {string} cid - The IPFS CID
  * @param {string} key - The AES decryption key
  * @returns {Promise<string>} The decrypted message
@@ -65,7 +66,7 @@ export async function loadFromIPFS(cid: string, key: string): Promise<string> {
 }
 
 /**
- * 🔹 Creates a **Post-Quantum Secure User Profile** and stores it on IPFS
+ * ✅ Creates a **Post-Quantum Secure User Profile** and stores it on IPFS
  * @param {string} username - The user's chosen username
  * @returns {Promise<string>} The IPFS CID of the encrypted user profile
  */
