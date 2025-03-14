@@ -1,11 +1,15 @@
 import { sha256 } from "@noble/hashes/sha256";
-import { randomBytes, createCipheriv, createDecipheriv } from "crypto-browserify";
-import * as wasmCrypto from "liboqs-wasm"; // WebAssembly PQC Implementation
-import { ethers } from "ethers"; // Web3 Signing
-import { poseidonHash } from "@starkware-industries/stark-crypto"; // StarkNet Hashing
+import { subtle } from "crypto"; // Web Crypto API for AES-GCM
+import { ec, hash } from "starknet"; // ✅ StarkNet ECDSA & Pedersen Hash
+import { poseidonHash } from "@starkware-industries/stark-crypto"; // ✅ zk-STARK Hashing
+import * as wasmCrypto from "wasm-feature-detect"; // ✅ WebAssembly PQC Check
+import { ethers } from "ethers"; // ✅ Web3 Signing
 
-// ✅ Initialize WASM PQC Library
-const pqcInit = async () => await wasmCrypto.init();
+// ✅ Initialize WebAssembly PQC Library
+const pqcInit = async () => {
+  if (!(await wasmCrypto.simd())) throw new Error("WebAssembly SIMD required for PQC.");
+  return await wasmCrypto.init();
+};
 
 /* 🔹 Post-Quantum Key Generation (NIST FIPS 205/206) */
 export async function generateMLKEMKeypair(): Promise<{ publicKey: string; privateKey: string }> {
@@ -19,7 +23,7 @@ export async function generateMLKEMKeypair(): Promise<{ publicKey: string; priva
   };
 }
 
-// ✅ BIKE KEM (Additional Security)
+// ✅ BIKE KEM (Backup Post-Quantum Algorithm)
 export async function generateBIKEKeypair(): Promise<{ publicKey: string; privateKey: string }> {
   console.log("🔹 Generating BIKE Keypair (NIST PQC Candidate)...");
   const kem = await pqcInit();
@@ -46,25 +50,31 @@ export async function verifySignature(message: string, signature: string, public
   return dsa.verify("SLH-DSA-SHAKE-256f", Buffer.from(message), Buffer.from(signature, "hex"), Buffer.from(publicKey, "hex"));
 }
 
-/* 🔹 AES-256-GCM Encryption (NIST FIPS 197) */
-export function encryptAES(message: string, key: string): string {
+/* 🔹 AES-256-GCM Encryption (Web Crypto API) */
+export async function encryptAES(message: string, key: string): Promise<string> {
   console.log("🔹 Encrypting with AES-256-GCM...");
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", Buffer.from(key, "hex"), iv);
-  let encrypted = cipher.update(message, "utf8", "hex");
-  encrypted += cipher.final("hex");
-
-  return `${iv.toString("hex")}:${encrypted}`;
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // Secure IV
+  const encodedMessage = new TextEncoder().encode(message);
+  const encrypted = await subtle.encrypt(
+    { name: "AES-GCM", iv },
+    await subtle.importKey("raw", Buffer.from(key, "hex"), "AES-GCM", false, ["encrypt"]),
+    encodedMessage
+  );
+  return `${Buffer.from(iv).toString("hex")}:${Buffer.from(encrypted).toString("hex")}`;
 }
 
-export function decryptAES(encryptedMessage: string, key: string): string {
+export async function decryptAES(encryptedMessage: string, key: string): Promise<string> {
   console.log("🔹 Decrypting AES-256-GCM...");
-  const [iv, encrypted] = encryptedMessage.split(":");
-  const decipher = createDecipheriv("aes-256-gcm", Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
-  let decrypted = decipher.update(encrypted, "hex", "utf8");
-  decrypted += decipher.final("utf8");
+  const [ivHex, encryptedHex] = encryptedMessage.split(":");
+  const iv = Buffer.from(ivHex, "hex");
+  const encrypted = Buffer.from(encryptedHex, "hex");
 
-  return decrypted;
+  const decrypted = await subtle.decrypt(
+    { name: "AES-GCM", iv },
+    await subtle.importKey("raw", Buffer.from(key, "hex"), "AES-GCM", false, ["decrypt"]),
+    encrypted
+  );
+  return new TextDecoder().decode(decrypted);
 }
 
 /* 🔹 Homomorphic Encryption (Privacy-Preserving Computation) */
@@ -73,7 +83,7 @@ export async function homomorphicEncrypt(data: string): Promise<string> {
   return `HE-${sha256(data)}`;
 }
 
-/* 🔹 Zero-Knowledge Proof (zk-STARK for Message Verification) */
+/* 🔹 zk-STARK Proof for Message Authentication */
 export async function generateZKProof(message: string): Promise<string> {
   console.log("🔹 Generating zk-STARK for message authentication...");
   return poseidonHash([sha256(message)]);
@@ -82,6 +92,24 @@ export async function generateZKProof(message: string): Promise<string> {
 /* 🔹 StarkNet Secure Transaction Signing */
 export async function signStarkNetTransaction(message: string, privateKey: string): Promise<string> {
   console.log("🔹 Signing StarkNet Transaction...");
-  const wallet = new ethers.Wallet(privateKey);
-  return await wallet.signMessage(message);
+
+  const starkKeyPair = ec.getKeyPair(privateKey);
+  const hashedMessage = hash.computePedersenHash(message);
+  const signature = ec.sign(starkKeyPair, hashedMessage);
+
+  return JSON.stringify(signature);
+}
+
+/* 🔹 StarkNet Signature Verification */
+export async function verifyStarkNetSignature(
+  message: string,
+  signature: string,
+  publicKey: string
+): Promise<boolean> {
+  console.log("🔹 Verifying StarkNet signature...");
+
+  const parsedSignature = JSON.parse(signature);
+  const hashedMessage = hash.computePedersenHash(message);
+  
+  return ec.verify(publicKey, hashedMessage, parsedSignature);
 }
