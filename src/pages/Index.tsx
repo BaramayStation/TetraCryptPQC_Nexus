@@ -26,6 +26,12 @@ const Index: React.FC = () => {
 
   const scrollToFeatures = () => featuresRef.current?.scrollIntoView({ behavior: "smooth" });
 
+  // ✅ Open External Links Securely
+  const openSecureLink = (url: string) => {
+    const newWindow = window.open(url, "_blank", "noopener,noreferrer");
+    if (newWindow) newWindow.opener = null;
+  };
+
   const featureDelays = staggeredDelay(100, 100, 6);
 
   // ✅ Core Features (Quantum-Secure Cryptography)
@@ -109,7 +115,7 @@ const Index: React.FC = () => {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={() => window.open("https://github.com/BaramayStation/TetraCryptPQC-Nexus", "_blank", "noopener,noreferrer")}
+                onClick={() => openSecureLink("https://github.com/BaramayStation/TetraCryptPQC-Nexus")}
                 className="gap-2"
               >
                 GitHub Repository <ExternalLink className="h-4 w-4" />
