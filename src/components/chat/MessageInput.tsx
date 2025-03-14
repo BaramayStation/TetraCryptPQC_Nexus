@@ -5,6 +5,8 @@ import { Send, Lock, ShieldCheck, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { encryptMessage, encryptMessageChaCha, signMessage, homomorphicEncrypt } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
+import { saveToIPFS } from "@/lib/storage";
+import { registerUser, storeMessage } from "@/lib/starknet";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -17,16 +19,22 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
 
   const user = getUserProfile();
   const hasWebDID = user && (user as any).didDocument;
+  const starknetKey = user?.starknetKey; // Fetch StarkNet key
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!starknetKey) {
+      console.error("User not registered on StarkNet");
+      return;
+    }
 
     if (message.trim() === "") return;
 
     try {
       let encryptedContent;
 
-      // Encrypt message based on selected encryption mode
+      // 🔹 Encrypt message based on selected encryption mode
       switch (encryptionMode) {
         case "chacha":
           encryptedContent = await encryptMessageChaCha(message.trim(), user.sessionKey);
@@ -40,21 +48,33 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
           break;
       }
 
-      // Sign message using SLH-DSA (NIST FIPS 205)
+      // 🔹 Sign message using SLH-DSA (NIST FIPS 205)
       const signature = await signMessage(encryptedContent, user.keyPairs.signature.privateKey);
 
-      // Construct secure message
+      // 🔹 Store message on IPFS
+      const ipfsHash = await saveToIPFS({
+        sender: user.id,
+        receiver: "receiver_id_here", 
+        encryptedContent,
+        signature,
+      });
+
+      // 🔹 Store message hash on StarkNet blockchain
+      await storeMessage(user.id, "receiver_id_here", ipfsHash);
+
+      // 🔹 Construct secure message
       const secureMessage = {
         content: encryptedContent,
         encryptionMode,
         signature,
         didVerified: hasWebDID ? "✔ Verified" : "❌ Unverified",
+        ipfsHash,
       };
 
-      // Send message
+      // 🔹 Send message
       onSendMessage(JSON.stringify(secureMessage));
 
-      // Clear input
+      // 🔹 Clear input
       setMessage("");
     } catch (error) {
       console.error("Message encryption failed:", error);
