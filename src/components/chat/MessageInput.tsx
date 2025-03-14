@@ -1,14 +1,15 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Lock, ShieldCheck, Database } from "lucide-react"; 
-import { encryptAES, signMessage, homomorphicEncrypt, generateZKProof } from "@/lib/crypto";
+import { Send, Lock, ShieldCheck, Database } from "lucide-react";
+import { encryptAES, signMessage, generateZKProof } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 import { signDIDTransaction } from "@/lib/did";
 import { Account, Contract, hash } from "starknet";
 
 // ✅ Define StarkNet Contract Details
 const STARKNET_MESSAGING_CONTRACT = "0xYourStarkNetMessagingContractAddress";
+const WEBSOCKET_URL = "wss://starknet.io/events";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -18,24 +19,25 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const [message, setMessage] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [sending, setSending] = useState(false);
-
   const user = getUserProfile();
   const hasWebDID = user && (user as any).didDocument;
 
+  // ✅ Send Message
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() === "" || sending) return;
-    
     setSending(true);
 
     try {
-      // ✅ Encrypt Message (AES-256-GCM + Post-Quantum ML-KEM)
-      const encryptedContent = encryptAES(message.trim(), user.sessionKey);
+      console.log("🔹 Encrypting and Signing Message...");
+      
+      // ✅ Encrypt Message (AES-256-GCM + PQC)
+      const encryptedContent = await encryptAES(message.trim(), user.sessionKey);
 
-      // ✅ Sign Message using SLH-DSA (NIST FIPS 205)
+      // ✅ Sign Message using SLH-DSA
       const signature = await signMessage(encryptedContent, user.keyPairs.signature.privateKey);
 
-      // ✅ Generate zk-STARK Proof for Message Authenticity
+      // ✅ Generate zk-STARK Proof
       const zkProof = await generateZKProof(encryptedContent);
 
       // ✅ Sign Message on StarkNet (if DID is enabled)
@@ -47,7 +49,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
       // ✅ Construct Secure Message
       const secureMessage = {
         sender: user.starknetAddress,
-        receiver: "0xReceiverAddress", // Update dynamically for actual chat partner
+        receiver: "0xReceiverAddress", // Replace dynamically for actual chat partner
         content: encryptedContent,
         signature,
         zkProof,
@@ -56,6 +58,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
       };
 
       // ✅ Send Message to StarkNet
+      console.log("🔹 Sending Message to StarkNet...");
       const provider = new Account(user.provider, user.starknetAddress);
       const messagingContract = new Contract(
         [
@@ -92,10 +95,17 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
       // ✅ Send Secure Message to UI
       onSendMessage(JSON.stringify(secureMessage));
 
+      // ✅ Notify WebSocket Server for Real-time Updates
+      const ws = new WebSocket(WEBSOCKET_URL);
+      ws.onopen = () => {
+        ws.send(JSON.stringify({ event: "MessageSent", data: secureMessage }));
+        ws.close();
+      };
+
       // ✅ Clear Input
       setMessage("");
     } catch (error) {
-      console.error("Message encryption failed:", error);
+      console.error("❌ Message encryption failed:", error);
     } finally {
       setSending(false);
     }
