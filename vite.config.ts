@@ -1,20 +1,19 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import wasm from "@menci/vite-plugin-wasm"; // ✅ Corrected Import
-import topLevelAwait from "vite-plugin-top-level-await"; // ✅ Ensures top-level await works with WASM
+import { componentTagger } from "lovable-tagger";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   server: {
-    host: "0.0.0.0",
+    host: "::",
     port: 8080,
     strictPort: true,
   },
   plugins: [
     react(),
-    wasm(), // ✅ Enables WebAssembly using Menci's Vite WASM plugin
-    topLevelAwait(), // ✅ Ensures top-level await works for WASM
-  ],
+    mode === 'development' && componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -24,9 +23,6 @@ export default defineConfig({
     global: "globalThis",
     "process.env": {},
   },
-  optimizeDeps: {
-    exclude: ["pqcrypto", "wasm-feature-detect"],
-  },
   build: {
     target: "esnext",
     outDir: "dist",
@@ -34,4 +30,4 @@ export default defineConfig({
     sourcemap: true,
     chunkSizeWarningLimit: 500,
   },
-});
+}));

@@ -18,7 +18,19 @@ export const GlassContainer: React.FC<GlassContainerProps> = ({
   style,
   ...props
 }) => {
-  const animationClass = animation ? `animate-${animation}` : "";
+  const getAnimationClass = (anim?: string) => {
+    switch (anim) {
+      case "fade-in": return "animate-fade-in";
+      case "slide-up": return "animate-slide-up";
+      case "slide-down": return "animate-slide-down";
+      case "slide-left": return "animate-slide-left";
+      case "slide-right": return "animate-slide-right";
+      case "blur-in": return "animate-blur-in";
+      default: return "";
+    }
+  };
+  
+  const animationClass = animation ? getAnimationClass(animation) : "";
   
   const customStyles = delay 
     ? { ...style, animationDelay: `${delay}ms` } 
