@@ -12,67 +12,43 @@ const pqcInit = async () => {
   return await wasmCrypto.init();
 };
 
-/* 🔹 Post-Quantum Key Generation (NIST FIPS 205/206) */
-export async function generateMLKEMKeypair(): Promise<{ publicKey: string; privateKey: string }> {
-  console.log("🔹 Generating ML-KEM-1024 Keypair...");
-  const kem = await pqcInit();
-  const { publicKey, secretKey } = kem.kemKeypair("ML-KEM-1024");
-
-  return {
-    publicKey: Buffer.from(publicKey).toString("hex"),
-    privateKey: Buffer.from(secretKey).toString("hex"),
-  };
-}
-
-// ✅ BIKE KEM (Backup Post-Quantum Algorithm)
-export async function generateBIKEKeypair(): Promise<{ publicKey: string; privateKey: string }> {
-  console.log("🔹 Generating BIKE Keypair (NIST PQC Candidate)...");
-  const kem = await pqcInit();
-  const { publicKey, secretKey } = kem.kemKeypair("BIKE");
-
-  return {
-    publicKey: Buffer.from(publicKey).toString("hex"),
-    privateKey: Buffer.from(secretKey).toString("hex"),
-  };
-}
-
-// ✅ Kyber Key Generation (NIST Standard)
+/* 🔹 Post-Quantum Key Generation (NIST PQC Standards) */
 export async function generateKyberKeypair(): Promise<{ publicKey: string; privateKey: string }> {
-  console.log("🔹 Generating Kyber Keypair...");
-  return generateMLKEMKeypair();
+  console.log("🔹 Generating Kyber Keypair (PQC Standard)...");
+  const kem = await pqcInit();
+  const { publicKey, secretKey } = kem.kemKeypair("Kyber");
+
+  return {
+    publicKey: Buffer.from(publicKey).toString("hex"),
+    privateKey: Buffer.from(secretKey).toString("hex"),
+  };
 }
 
-// ✅ Dilithium Key Generation (Post-Quantum Signature)
+// ✅ Dilithium Key Generation (Post-Quantum Digital Signature)
 export async function generateDilithiumKeypair(): Promise<{ publicKey: string; privateKey: string }> {
   console.log("🔹 Generating Dilithium Keypair...");
-  return generateBIKEKeypair();
+  const kem = await pqcInit();
+  const { publicKey, secretKey } = kem.kemKeypair("Dilithium");
+
+  return {
+    publicKey: Buffer.from(publicKey).toString("hex"),
+    privateKey: Buffer.from(secretKey).toString("hex"),
+  };
 }
 
-// ✅ Falcon Key Generation
-export async function generateFalconKeypair(): Promise<{ publicKey: string; privateKey: string }> {
-  console.log("🔹 Generating Falcon Keypair...");
-  return generateBIKEKeypair();
-}
-
-// ✅ SLH-DSA Digital Signature Key Generation
-export async function generateSLHDSAKeypair(): Promise<{ publicKey: string; privateKey: string }> {
-  console.log("🔹 Generating SLH-DSA Keypair...");
-  return generateBIKEKeypair();
-}
-
-/* 🔹 Digital Signatures (NIST-Approved) */
+/* 🔹 Digital Signatures */
 export async function signMessage(message: string, privateKey: string): Promise<string> {
-  console.log("🔹 Signing message with SLH-DSA...");
+  console.log("🔹 Signing message with Dilithium...");
   const dsa = await pqcInit();
-  const signature = dsa.sign("SLH-DSA-SHAKE-256f", Buffer.from(message), Buffer.from(privateKey, "hex"));
+  const signature = dsa.sign("Dilithium", Buffer.from(message), Buffer.from(privateKey, "hex"));
 
   return Buffer.from(signature).toString("hex");
 }
 
 export async function verifySignature(message: string, signature: string, publicKey: string): Promise<boolean> {
-  console.log("🔹 Verifying signature...");
+  console.log("🔹 Verifying Dilithium signature...");
   const dsa = await pqcInit();
-  return dsa.verify("SLH-DSA-SHAKE-256f", Buffer.from(message), Buffer.from(signature, "hex"), Buffer.from(publicKey, "hex"));
+  return dsa.verify("Dilithium", Buffer.from(message), Buffer.from(signature, "hex"), Buffer.from(publicKey, "hex"));
 }
 
 /* 🔹 AES-256-GCM Encryption (Web Crypto API) */
@@ -138,28 +114,13 @@ export async function verifyStarkNetSignature(
   return ec.verify(publicKey, hashedMessage, parsedSignature);
 }
 
-// ✅ Additional Utility Functions
+// ✅ DID Generation (Post-Quantum Secure)
 export async function generateDID(): Promise<{ id: string; publicKey: string; privateKey: string }> {
-  console.log("🔹 Generating DID...");
-  const { publicKey, privateKey } = await generateMLKEMKeypair();
+  console.log("🔹 Generating Decentralized Identifier (DID)...");
+  const { publicKey, privateKey } = await generateKyberKeypair();
   return {
     id: `did:tetracrypt:${publicKey.substring(0, 16)}`,
     publicKey,
     privateKey
-  };
-}
-
-export async function simulateQKD(): Promise<{ key: string }> {
-  console.log("🔹 Simulating Quantum Key Distribution...");
-  return {
-    key: Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10)
-  };
-}
-
-export async function simulateHSM(): Promise<{ deviceId: string, status: string }> {
-  console.log("🔹 Simulating Hardware Security Module...");
-  return {
-    deviceId: "HSM-" + Math.random().toString(36).substring(2, 10),
-    status: "connected"
   };
 }
