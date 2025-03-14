@@ -1,14 +1,14 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "TetraCryptPQC",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "preview": "vite preview",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "start": "bun run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -59,7 +59,11 @@
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "ethers": "^6.7.1",
+    "oqs": "github:open-quantum-safe/liboqs-node",
+    "ipfs-http-client": "^60.0.0",
+    "node-polyfill-webpack-plugin": "^2.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -79,5 +83,10 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "browser": {
+    "crypto": false,
+    "fs": false,
+    "path": false
   }
 }
