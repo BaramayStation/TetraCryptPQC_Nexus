@@ -17,12 +17,14 @@ interface Message {
 const MessageList: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [ws, setWs] = useState<WebSocket | null>(null);
-  const user = getUserProfile();
+  const wsRef = useRef<WebSocket | null>(null);
   const messagesRef = useRef<Message[]>([]); // Prevents stale state issues
+  const user = getUserProfile();
 
   // ✅ Fetch Messages from StarkNet (With Async Decryption)
   const fetchMessages = async () => {
+    if (!user) return;
+
     setLoading(true);
 
     try {
@@ -74,7 +76,12 @@ const MessageList: React.FC = () => {
     if (!user) return;
 
     const connectWebSocket = () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+
       const websocket = new WebSocket(WEBSOCKET_URL);
+      wsRef.current = websocket;
 
       websocket.onopen = () => {
         console.log("🔹 WebSocket Connected");
@@ -116,14 +123,14 @@ const MessageList: React.FC = () => {
         console.log("🔴 WebSocket Disconnected. Reconnecting in 3s...");
         setTimeout(connectWebSocket, 3000);
       };
-
-      setWs(websocket);
     };
 
     connectWebSocket();
 
     return () => {
-      if (ws) ws.close();
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, [user]);
 
