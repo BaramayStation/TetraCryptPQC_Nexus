@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import wasm from "vite-plugin-wasm"; // ✅ Enables WebAssembly support
+import wasm from "@menci/vite-plugin-wasm"; // ✅ Correct Vite WASM Plugin
 import topLevelAwait from "vite-plugin-top-level-await"; // ✅ Ensures top-level async/await works with WASM
 
 export default defineConfig({
@@ -12,8 +12,8 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    wasm(), // ✅ Enables WASM
-    topLevelAwait(), // ✅ Ensures top-level await for WASM
+    wasm(), // ✅ Enables WebAssembly using Menci's Vite WASM plugin
+    topLevelAwait(), // ✅ Ensures top-level await works for WASM
   ],
   resolve: {
     alias: {
