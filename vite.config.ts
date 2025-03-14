@@ -5,57 +5,68 @@ import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAss
 import path from "path";
 import viteInspect from "vite-plugin-inspect"; // Debugging & performance analysis
 
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "0.0.0.0", // Allows external access (securely)
-    port: 8080,
-    strictPort: true, // Ensures no fallback ports
-    https: true, // Enforces TLS encryption during local development
-  },
-  plugins: [
+export default defineConfig(({ mode }) => {
+  const plugins = [
     react(), // Optimized React rendering with SWC
     wasm(), // Ensures WebAssembly ESM compatibility
     topLevelAwait(), // Enables async/await WebAssembly support
-    viteInspect(), // Debugging & visualization plugin
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+  ];
+
+  // Conditionally include viteInspect if installed
+  try {
+    require.resolve("vite-plugin-inspect");
+    plugins.push(viteInspect());
+  } catch (e) {
+    console.warn("vite-plugin-inspect not installed, skipping...");
+  }
+
+  return {
+    server: {
+      host: "0.0.0.0", // Allows external access (securely)
+      port: 8080,
+      strictPort: true, // Ensures no fallback ports
+      https: true, // Enforces TLS encryption during local development
     },
-  },
-  optimizeDeps: {
-    exclude: ["@syntect/wasm"], // Exclude problematic WebAssembly modules
-    esbuildOptions: {
-      target: "esnext", // Ensures support for latest JavaScript features
-      supported: {
-        bigint: true, // Enables BigInt support for cryptographic ops
-        wasm: true, // Enables direct WebAssembly imports
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
       },
     },
-  },
-  build: {
-    target: "esnext",
-    outDir: "dist",
-    sourcemap: true,
-    minify: "terser", // Highly secure minification
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ["ethers", "starknet"], // Splits Web3 dependencies
+    optimizeDeps: {
+      exclude: ["@syntect/wasm"], // Exclude problematic WebAssembly modules
+      esbuildOptions: {
+        target: "esnext", // Ensures support for latest JavaScript features
+        supported: {
+          bigint: true, // Enables BigInt support for cryptographic ops
+          wasm: true, // Enables direct WebAssembly imports
         },
       },
     },
-    chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
-  },
-  worker: {
-    format: "es", // Ensures compatibility with modern ES module workers
-    plugins: [
-      wasm(),
-      topLevelAwait(),
-    ],
-  },
-  define: {
-    global: "globalThis", // Ensures compatibility across all JS environments
-    "process.env": {}, // Prevents environment variable leakage
-  },
-}));
+    build: {
+      target: "esnext",
+      outDir: "dist",
+      sourcemap: true,
+      minify: "terser", // Highly secure minification
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ["ethers", "starknet"], // Splits Web3 dependencies
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
+    },
+    worker: {
+      format: "es", // Ensures compatibility with modern ES module workers
+      plugins: [
+        wasm(),
+        topLevelAwait(),
+      ],
+    },
+    define: {
+      global: "globalThis", // Ensures compatibility across all JS environments
+      "process.env": {}, // Prevents environment variable leakage
+    },
+  };
+});
