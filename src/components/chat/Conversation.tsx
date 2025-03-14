@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { Button } from "@/components/ui/button";
 import { User, Check, CheckCheck, ChevronLeft, Shield, Database, Fingerprint, Lock } from "lucide-react";
@@ -13,10 +13,8 @@ import {
   homomorphicEncrypt,
   verifyDID
 } from "@/lib/crypto";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ConversationProps {
   contact: Contact;
@@ -25,7 +23,7 @@ interface ConversationProps {
 
 const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [sessionKey, setSessionKey] = useState<string>("");
+  const [sessionKey, setSessionKey] = useState<string | null>(null);
   const [encryptionMode, setEncryptionMode] = useState<"aes" | "chacha" | "homomorphic">("aes");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -36,19 +34,19 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
   const hasQKD = user && (user as any).qkdInfo;
   const hasHSM = user && (user as any).hsmInfo;
 
+  // Load Messages on Mount and Listen for Updates
   useEffect(() => {
-    // Load messages
-    loadMessages();
+    const initializeSessionKey = async () => {
+      if (!sessionKey) {
+        const key = await generateSessionKey();
+        setSessionKey(key);
+      }
+    };
 
-    // Mark messages as read
+    initializeSessionKey();
+    loadMessages();
     markMessagesAsRead(contact.id);
 
-    // Generate session key if missing
-    if (!sessionKey) {
-      generateSessionKey().then(setSessionKey);
-    }
-
-    // Periodic refresh
     const interval = setInterval(loadMessages, 3000);
     return () => clearInterval(interval);
   }, [contact.id]);
@@ -57,10 +55,11 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
     scrollToBottom();
   }, [messages]);
 
-  const loadMessages = () => {
-    setMessages(getMessagesForContact(contact.id));
+  const loadMessages = useCallback(() => {
+    const fetchedMessages = getMessagesForContact(contact.id);
+    setMessages(fetchedMessages);
     markMessagesAsRead(contact.id);
-  };
+  }, [contact.id]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,7 +70,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
 
     try {
       // Encrypt message based on selected encryption mode
-      let encryptedContent;
+      let encryptedContent: string;
       switch (encryptionMode) {
         case "chacha":
           encryptedContent = await encryptMessageChaCha(content, sessionKey);
@@ -112,7 +111,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
       addMessage(newMessage);
       loadMessages();
     } catch (error) {
-      console.error("Message send failed:", error);
+      console.error("❌ Message Send Failed:", error);
     }
   };
 
