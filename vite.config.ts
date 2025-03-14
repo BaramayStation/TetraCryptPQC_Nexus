@@ -2,15 +2,15 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
-import viteInspect from "vite-plugin-inspect"; // Debugging & analysis
+import viteInspect from "vite-plugin-inspect"; // Debugging & Analysis
 import path from "path";
 
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::", // Enables IPv6 & dual-stack connectivity
+    host: "0.0.0.0", // Ensures cross-platform compatibility (IPv4 & IPv6)
     port: 8080,
     strictPort: true, // Ensures no fallback ports
-    https: true, // Enforces TLS encryption during local development
+    https: mode === "development", // Enforces HTTPS in local development
   },
   plugins: [
     react(), // Optimized React rendering
@@ -26,18 +26,18 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     exclude: ["@syntect/wasm"], // Exclude problematic WebAssembly modules
     esbuildOptions: {
-      target: "esnext", // Ensures support for latest JavaScript features
+      target: "esnext", // Ensures support for the latest JS features
       supported: {
-        bigint: true, // Enables BigInt support for cryptographic ops
-        wasm: true, // Enables direct WebAssembly imports
+        bigint: true, // Enables BigInt support for cryptographic operations
+        wasm: true, // Ensures direct WebAssembly imports
       },
     },
   },
   build: {
     target: "esnext",
     outDir: "dist",
-    sourcemap: true,
-    minify: "terser", // Highly secure minification
+    sourcemap: mode === "development", // Generates source maps only in dev mode
+    minify: mode === "production" ? "terser" : false, // Highly secure minification for production
     rollupOptions: {
       output: {
         manualChunks: {
@@ -45,7 +45,7 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
+    chunkSizeWarningLimit: 2000, // Avoid warnings for large cryptographic modules
   },
   worker: {
     format: "es", // Ensures compatibility with modern ES module workers
