@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { decryptAES, verifyZKProof } from "@/lib/crypto"; // Ensures zk-STARK proof validation
+import { decryptAES, verifyZKProof } from "@/lib/crypto";
 import { Provider, Contract } from "starknet";
 import { getUserProfile } from "@/lib/storage";
 
-// ✅ StarkNet Messaging Contract Address
+// ✅ Constants for Web3 Messaging
 const STARKNET_MESSAGING_CONTRACT = "0xYourStarkNetMessagingContractAddress";
-const WEBSOCKET_URL = "wss://starknet.io/events"; // WebSocket for real-time messages
+const WEBSOCKET_URL = "wss://starknet.io/events";
 
 interface Message {
   sender: string;
@@ -19,8 +19,9 @@ const MessageList: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const user = getUserProfile();
+  const messagesRef = useRef<Message[]>([]); // Prevents stale state issues
 
-  // ✅ Fetch Messages from StarkNet
+  // ✅ Fetch Messages from StarkNet (With Async Decryption)
   const fetchMessages = async () => {
     setLoading(true);
 
@@ -44,28 +45,23 @@ const MessageList: React.FC = () => {
 
       const response = await messagingContract.call("get_message", [
         user.starknetAddress,
-        "0xReceiverAddress", // Dynamically set based on chat partner
+        "0xReceiverAddress", // Change dynamically based on chat partner
       ]);
 
       const encryptedContent = response.encrypted_content;
 
-      // ✅ Validate zk-STARK Proof Before Decrypting
       if (!(await verifyZKProof(encryptedContent))) {
-        console.warn("❌ Message validation failed: Invalid zk-STARK proof");
+        console.warn("❌ Invalid zk-STARK proof. Ignoring message.");
         return;
       }
 
-      // ✅ Decrypt Messages
       const decryptedMessage = await decryptAES(encryptedContent, user.sessionKey);
 
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          sender: "You",
-          content: decryptedMessage,
-          timestamp: Date.now(),
-        },
-      ]);
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, { sender: "You", content: decryptedMessage, timestamp: Date.now() }];
+        messagesRef.current = updatedMessages; // Keep ref updated
+        return updatedMessages;
+      });
     } catch (error) {
       console.error("❌ Failed to retrieve messages:", error);
     } finally {
@@ -73,7 +69,7 @@ const MessageList: React.FC = () => {
     }
   };
 
-  // ✅ WebSocket Real-Time Updates with Reconnection
+  // ✅ WebSocket Real-Time Updates with Auto-Reconnect & Async Handling
   useEffect(() => {
     if (!user) return;
 
@@ -88,32 +84,28 @@ const MessageList: React.FC = () => {
       websocket.onmessage = async (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log("📩 New message received:", data);
 
           if (data.event === "MessageSent") {
-            // ✅ Prevent Duplicates
-            if (messages.some((msg) => msg.content === data.encrypted_content)) {
+            if (messagesRef.current.some((msg) => msg.content === data.encrypted_content)) {
               console.warn("⚠️ Duplicate message detected. Skipping.");
               return;
             }
 
-            // ✅ Validate zk-STARK Proof
             if (!(await verifyZKProof(data.encrypted_content))) {
               console.warn("❌ Invalid zk-STARK proof detected. Ignoring message.");
               return;
             }
 
-            // ✅ Decrypt Message
             const decryptedContent = await decryptAES(data.encrypted_content, user.sessionKey);
 
-            setMessages((prevMessages) => [
-              ...prevMessages,
-              {
-                sender: data.sender,
-                content: decryptedContent,
-                timestamp: Date.now(),
-              },
-            ]);
+            setMessages((prevMessages) => {
+              const updatedMessages = [
+                ...prevMessages,
+                { sender: data.sender, content: decryptedContent, timestamp: Date.now() },
+              ];
+              messagesRef.current = updatedMessages;
+              return updatedMessages;
+            });
           }
         } catch (error) {
           console.error("❌ Error processing WebSocket message:", error);
