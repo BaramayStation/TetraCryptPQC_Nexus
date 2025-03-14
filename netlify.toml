@@ -1,0 +1,13 @@
+[build]
+  command = "bun run build"
+  publish = "dist"
+  functions = "disabled" # Explicitly disable functions
+
+[build.environment]
+  NODE_VERSION = "20" # Ensure latest Node.js is used
+  BUN_VERSION = "1.0.30" # Ensure correct Bun version
+
+[dev]
+  command = "bun run dev"
+  publish = "dist"
+  port = 8080
