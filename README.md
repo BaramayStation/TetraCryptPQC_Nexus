@@ -86,8 +86,6 @@ To deploy your TetraCryptPQC implementation:
 
 Contributions to improve TetraCryptPQC are welcome. Please feel free to submit pull requests, report issues, or suggest enhancements.
 
-# A Web3 Post-Quantum Secure Messaging & Identity Framework**
-
 ## **Authors & Contributions**
 This white paper consolidates advancements in **post-quantum cryptography (PQC), Web3, decentralized identity (DID), and WebAssembly (WASM)**. The following projects and contributors deserve recognition for their pioneering work:
 
