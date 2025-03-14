@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassContainer } from "@/components/ui/glass-container";
@@ -33,7 +32,6 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
   const [status, setStatus] = useState<string>("idle");
   const [isGenerating, setIsGenerating] = useState(false);
   const [enableWeb3, setEnableWeb3] = useState(false);
-  const [enableAdvancedPQC, setEnableAdvancedPQC] = useState(false);
   const [enableQKD, setEnableQKD] = useState(false);
   const [enableHSM, setEnableHSM] = useState(false);
   const [selectedSignatureAlgo, setSelectedSignatureAlgo] = useState<"slh-dsa" | "falcon" | "dilithium">("slh-dsa");
@@ -41,98 +39,77 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
   const generateKeys = async () => {
     try {
       setIsGenerating(true);
-      setStatus("Initializing TetraCryptPQC key generation...");
-      setProgress(5);
+      setStatus("Initializing Secure Post-Quantum Key Generation...");
+      setProgress(10);
 
-      // Generate ML-KEM keys (post-quantum key exchange, NIST FIPS 205)
-      setStatus("Generating ML-KEM-1024 keys for post-quantum key exchange (NIST FIPS 205)...");
-      setProgress(15);
+      // ✅ Step 1: Generate ML-KEM-1024 (Post-Quantum Key Exchange)
+      setStatus("Generating ML-KEM-1024 keys (NIST FIPS 205)...");
       const mlkemKeys = await generateMLKEMKeypair();
-      setProgress(25);
+      setProgress(30);
 
-      // Generate signature keys based on selected algorithm
+      // ✅ Step 2: Generate Digital Signature Keypair
       let signatureKeys;
       if (selectedSignatureAlgo === "slh-dsa") {
-        setStatus("Generating SLH-DSA keys for post-quantum signatures (NIST FIPS 205)...");
+        setStatus("Generating SLH-DSA (NIST FIPS 205)...");
         signatureKeys = await generateSLHDSAKeypair();
       } else if (selectedSignatureAlgo === "falcon") {
-        setStatus("Generating Falcon-512 keys for post-quantum signatures...");
+        setStatus("Generating Falcon-512 (Lattice-Based)...");
         signatureKeys = await generateFalconKeypair();
       } else {
-        setStatus("Generating Dilithium-5 keys for post-quantum signatures...");
+        setStatus("Generating Dilithium-5 (Lattice-Based)...");
         signatureKeys = await generateDilithiumKeypair();
       }
-      setProgress(35);
+      setProgress(50);
 
-      // Additional security features based on user selection
+      // ✅ Step 3: Decentralized Identity (DID) Integration
       let didDocument = null;
-      let qkdInfo = null;
-      let hsmInfo = null;
-      
-      // Web3 DID Integration
       if (enableWeb3) {
         setStatus("Generating Web3 Decentralized Identity (DID)...");
         didDocument = await generateDID(mlkemKeys.publicKey, signatureKeys.publicKey);
-        setProgress(50);
-      } else {
-        setProgress(50);
       }
-      
-      // Quantum Key Distribution Simulation
+      setProgress(60);
+
+      // ✅ Step 4: Quantum Key Distribution (QKD) Simulation
+      let qkdInfo = null;
       if (enableQKD) {
         setStatus("Simulating Quantum Key Distribution (QKD)...");
         qkdInfo = await simulateQKD("server");
-        setProgress(65);
-      } else {
-        setProgress(65);
       }
-      
-      // Hardware Security Module Simulation
-      if (enableHSM) {
-        setStatus("Securing keys with Hardware Security Module (HSM)...");
-        hsmInfo = await simulateHSM(mlkemKeys.privateKey);
-        setProgress(80);
-      } else {
-        setProgress(80);
-      }
+      setProgress(75);
 
-      // Create and save user profile
-      setStatus("Finalizing secure TetraCryptPQC profile...");
+      // ✅ Step 5: Hardware Security Module (HSM) Simulation
+      let hsmInfo = null;
+      if (enableHSM) {
+        setStatus("Simulating HSM for Secure Key Storage...");
+        hsmInfo = await simulateHSM(mlkemKeys.privateKey);
+      }
+      setProgress(90);
+
+      // ✅ Step 6: Save Profile Securely
+      setStatus("Finalizing Secure Key Storage...");
       const userId = crypto.randomUUID();
       const userProfile: UserProfile = {
         id: userId,
         name: username,
         keyPairs: {
-          kyber: mlkemKeys, // For compatibility, we still use the original field names
-          falcon: signatureKeys, // For compatibility, we still use the original field names
+          pqkem: mlkemKeys, 
+          signature: signatureKeys, 
         },
+        didDocument,
+        qkdInfo,
+        hsmInfo,
         createdAt: new Date().toISOString(),
       };
 
-      // Add advanced features to user profile if enabled
-      if (enableWeb3 && didDocument) {
-        (userProfile as any).didDocument = didDocument;
-      }
-      
-      if (enableQKD && qkdInfo) {
-        (userProfile as any).qkdInfo = qkdInfo;
-      }
-      
-      if (enableHSM && hsmInfo) {
-        (userProfile as any).hsmInfo = hsmInfo;
-      }
-
       saveUserProfile(userProfile);
       setProgress(100);
-      setStatus("TetraCryptPQC key generation complete!");
+      setStatus("TetraCryptPQC Key Generation Complete!");
 
-      // Notify user
       toast({
-        title: "TetraCryptPQC keys generated",
-        description: `Your NIST-compliant post-quantum secure keys have been created successfully${enableWeb3 ? " with Web3 DID integration" : ""}.`,
+        title: "Secure Keys Generated!",
+        description: "Your quantum-resistant cryptographic keys have been created successfully.",
       });
 
-      // Complete process
       setTimeout(() => {
         onComplete(userProfile);
       }, 1000);
@@ -140,7 +117,7 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
       console.error("Key generation failed:", error);
       setStatus("Key generation failed. Please try again.");
       toast({
-        title: "Key generation failed",
+        title: "Key Generation Failed",
         description: "There was an error generating your secure keys. Please try again.",
         variant: "destructive",
       });
@@ -150,167 +127,24 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
   };
 
   return (
-    <GlassContainer className="max-w-md mx-auto" animation="slide-up">
+    <GlassContainer className="max-w-md mx-auto">
       <div className="flex flex-col items-center text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center">
-          <Shield className="h-8 w-8 text-accent" />
-        </div>
-        
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold">TetraCryptPQC</h2>
-          <p className="text-muted-foreground">
-            Creating your NIST-compliant post-quantum cryptographic keys with advanced security features.
-          </p>
-        </div>
+        <Shield className="h-8 w-8 text-accent" />
+        <h2 className="text-2xl font-semibold">TetraCryptPQC Key Generation</h2>
+        <p className="text-muted-foreground">
+          Generate your NIST-compliant post-quantum cryptographic keys.
+        </p>
 
         {isGenerating ? (
           <div className="w-full space-y-4">
             <Progress value={progress} className="h-2" />
             <p className="text-sm text-muted-foreground">{status}</p>
-            
-            <div className="flex justify-center space-x-4 mt-4">
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Key className={`h-5 w-5 ${progress >= 25 ? "text-accent" : "text-muted-foreground"}`} />
-                </div>
-                <span className="text-xs mt-2">ML-KEM-1024</span>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                  <LockKeyhole className={`h-5 w-5 ${progress >= 35 ? "text-accent" : "text-muted-foreground"}`} />
-                </div>
-                <span className="text-xs mt-2">{selectedSignatureAlgo.toUpperCase()}</span>
-              </div>
-              
-              {enableWeb3 && (
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                    <Database className={`h-5 w-5 ${progress >= 50 ? "text-accent" : "text-muted-foreground"}`} />
-                  </div>
-                  <span className="text-xs mt-2">Web3 DID</span>
-                </div>
-              )}
-              
-              {enableHSM && (
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                    <Fingerprint className={`h-5 w-5 ${progress >= 80 ? "text-accent" : "text-muted-foreground"}`} />
-                  </div>
-                  <span className="text-xs mt-2">HSM</span>
-                </div>
-              )}
-              
-              <div className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
-                  <Lock className={`h-5 w-5 ${progress >= 100 ? "text-accent" : "text-muted-foreground"}`} />
-                </div>
-                <span className="text-xs mt-2">Profile</span>
-              </div>
-            </div>
           </div>
         ) : (
-          <div className="w-full space-y-6">
-            <Tabs defaultValue="basic" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="basic">Basic</TabsTrigger>
-                <TabsTrigger value="advanced">Advanced</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="basic" className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    The basic configuration includes:
-                  </p>
-                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                    <li>ML-KEM-1024 for key exchange (NIST FIPS 205)</li>
-                    <li>SLH-DSA for digital signatures (NIST FIPS 205)</li>
-                    <li>AES-256-GCM for message encryption (NIST FIPS 197)</li>
-                  </ul>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="advanced" className="space-y-4 pt-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="web3-did">Web3 Decentralized Identity</Label>
-                      <p className="text-xs text-muted-foreground">Generate a W3C DID with zk-SNARKs</p>
-                    </div>
-                    <Switch 
-                      id="web3-did" 
-                      checked={enableWeb3} 
-                      onCheckedChange={setEnableWeb3} 
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="qkd">Quantum Key Distribution</Label>
-                      <p className="text-xs text-muted-foreground">Simulate QKD for ultra-secure key exchange</p>
-                    </div>
-                    <Switch 
-                      id="qkd" 
-                      checked={enableQKD} 
-                      onCheckedChange={setEnableQKD} 
-                    />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="hsm">Hardware Security Module</Label>
-                      <p className="text-xs text-muted-foreground">Simulate HSM for key protection</p>
-                    </div>
-                    <Switch 
-                      id="hsm" 
-                      checked={enableHSM} 
-                      onCheckedChange={setEnableHSM} 
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Signature Algorithm</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <Button 
-                        variant={selectedSignatureAlgo === "slh-dsa" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => setSelectedSignatureAlgo("slh-dsa")}
-                      >
-                        SLH-DSA
-                      </Button>
-                      <Button 
-                        variant={selectedSignatureAlgo === "falcon" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => setSelectedSignatureAlgo("falcon")}
-                      >
-                        Falcon
-                      </Button>
-                      <Button 
-                        variant={selectedSignatureAlgo === "dilithium" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => setSelectedSignatureAlgo("dilithium")}
-                      >
-                        Dilithium
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-            
-            <Button
-              onClick={generateKeys}
-              className="w-full"
-              size="lg"
-            >
-              Generate TetraCryptPQC Keys
-            </Button>
-          </div>
+          <Button onClick={generateKeys} className="w-full" size="lg">
+            Generate Secure Keys
+          </Button>
         )}
-        
-        <p className="text-xs text-muted-foreground px-6">
-          TetraCryptPQC uses NIST FIPS 205/206-compliant post-quantum cryptography to protect against quantum computing threats, with optional Web3 integration for decentralized identity verification.
-        </p>
       </div>
     </GlassContainer>
   );
