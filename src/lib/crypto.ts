@@ -1,59 +1,48 @@
-import { kyber, dilithium, sphincs, falcon } from "pqcrypto";
-import crypto from "crypto-browserify";
+import { sha256 } from "@noble/hashes/sha256";
+import { randomBytes } from "crypto-browserify";
+import * as wasmCrypto from "liboqs-wasm"; // Using WebAssembly for PQC
 
-// ============================================================
-// 🔹 Generate Key Pairs (Kyber, Dilithium, Falcon, SPHINCS+)
-// ============================================================
-export const generateKyberKeypair = async () => {
-  console.log("🔹 Generating Kyber Keypair (Post-Quantum KEM)");
-  return kyber.keyPair();
-};
+export async function generateMLKEMKeypair(): Promise<{ publicKey: string; privateKey: string }> {
+  console.log("🔹 Generating ML-KEM-1024 Keypair...");
+  const kem = await wasmCrypto.init(); // Initialize WASM
+  const { publicKey, secretKey } = kem.kemKeypair("ML-KEM-1024");
 
-export const generateDilithiumKeypair = async () => {
-  console.log("🔹 Generating Dilithium Keypair (Post-Quantum Signature)");
-  return dilithium.keyPair();
-};
+  return {
+    publicKey: Buffer.from(publicKey).toString("hex"),
+    privateKey: Buffer.from(secretKey).toString("hex"),
+  };
+}
 
-export const generateFalconKeypair = async () => {
-  console.log("🔹 Generating Falcon Keypair (Post-Quantum Signature)");
-  return falcon.keyPair();
-};
+export async function signMessage(message: string, privateKey: string): Promise<string> {
+  console.log("🔹 Signing message with SLH-DSA...");
+  const dsa = await wasmCrypto.init();
+  const signature = dsa.sign("SLH-DSA-SHAKE-256f", Buffer.from(message), Buffer.from(privateKey, "hex"));
 
-export const generateSphincsKeypair = async () => {
-  console.log("🔹 Generating SPHINCS+ Keypair (Post-Quantum Signature)");
-  return sphincs.keyPair();
-};
+  return Buffer.from(signature).toString("hex");
+}
 
-// ============================================================
-// 🔹 Post-Quantum Secure Encryption
-// ============================================================
-export const encryptMessage = async (message: string, publicKey: Uint8Array) => {
-  console.log("🔹 Encrypting Message with Kyber (PQC KEM)");
-  return kyber.encrypt(message, publicKey);
-};
+export async function verifySignature(message: string, signature: string, publicKey: string): Promise<boolean> {
+  console.log("🔹 Verifying signature...");
+  const dsa = await wasmCrypto.init();
+  return dsa.verify("SLH-DSA-SHAKE-256f", Buffer.from(message), Buffer.from(signature, "hex"), Buffer.from(publicKey, "hex"));
+}
 
-export const decryptMessage = async (ciphertext: Uint8Array, privateKey: Uint8Array) => {
-  console.log("🔹 Decrypting Message with Kyber (PQC KEM)");
-  return kyber.decrypt(ciphertext, privateKey);
-};
+export function encryptAES(message: string, key: string): string {
+  console.log("🔹 Encrypting with AES-256-GCM...");
+  const iv = randomBytes(12);
+  const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(key, "hex"), iv);
+  let encrypted = cipher.update(message, "utf8", "hex");
+  encrypted += cipher.final("hex");
 
-// ============================================================
-// 🔹 Post-Quantum Digital Signatures
-// ============================================================
-export const signMessage = async (message: string, privateKey: Uint8Array) => {
-  console.log("🔹 Signing Message with Dilithium (PQC Signature)");
-  return dilithium.sign(message, privateKey);
-};
+  return `${iv.toString("hex")}:${encrypted}`;
+}
 
-export const verifySignature = async (message: string, signature: Uint8Array, publicKey: Uint8Array) => {
-  console.log("🔹 Verifying Message with Dilithium (PQC Signature)");
-  return dilithium.verify(message, signature, publicKey);
-};
+export function decryptAES(encryptedMessage: string, key: string): string {
+  console.log("🔹 Decrypting AES-256-GCM...");
+  const [iv, encrypted] = encryptedMessage.split(":");
+  const decipher = crypto.createDecipheriv("aes-256-gcm", Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
+  let decrypted = decipher.update(encrypted, "hex", "utf8");
+  decrypted += decipher.final("utf8");
 
-// ============================================================
-// 🔹 Random Quantum-Safe Session Keys (AES-256)
-// ============================================================
-export const generateSessionKey = async () => {
-  console.log("🔹 Generating AES-256 Session Key");
-  return crypto.randomBytes(32).toString("hex");
-};
+  return decrypted;
+}
