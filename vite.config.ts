@@ -49,10 +49,14 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       minify: "terser", // Highly secure minification
       rollupOptions: {
-        external: ["@radix-ui/react-tooltip"], // Externalize the missing module
+        external: [
+          "class-variance-authority",  // ✅ Fix Rollup Issue
+          "@radix-ui/react-tooltip",  // ✅ Ensure Radix Tooltip Works
+          "@radix-ui/react-popover",  // ✅ Prevent Rollup Failures
+        ],
         output: {
           manualChunks: {
-            vendor: ["ethers", "starknet"], // Splits Web3 dependencies
+            vendor: ["ethers", "starknet", "helia"], // Splits Web3 & IPFS dependencies
           },
         },
       },
