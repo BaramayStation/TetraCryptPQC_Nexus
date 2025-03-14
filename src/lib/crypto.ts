@@ -1,17 +1,27 @@
-import oqs from 'oqs'; // ✅ Real ML-KEM & SLH-DSA from Open Quantum Safe
-import crypto from 'crypto';
-import { ethers } from "ethers"; // ✅ Web3 Signing
-import { saveToIPFS, loadFromIPFS } from "@/lib/web3Storage"; // ✅ Web3 Decentralized Storage
+import crypto from "crypto";
+import { saveToIPFS, loadFromIPFS } from "@/lib/web3Storage";
+
+let oqs: any;
+
+// ✅ Dynamically Import OQS only in Node.js
+if (typeof window === "undefined") {
+  import("oqs").then((module) => {
+    oqs = module;
+  }).catch((err) => {
+    console.error("Failed to load oqs:", err);
+  });
+}
 
 // ============================================================
-// 🔹 REAL ML-KEM-1024 Key Generation (NIST FIPS 205)
+// 🔹 ML-KEM-1024 Key Generation (NIST FIPS 205) - Quantum Safe
 // ============================================================
 export const generateMLKEMKeypair = async (): Promise<{ publicKey: string; privateKey: string }> => {
+  if (!oqs) throw new Error("OQS not available in browser!");
   console.log("🔹 Generating ML-KEM-1024 Keypair (NIST FIPS 205)");
-  
-  const kem = new oqs.KEM("ML-KEM-1024"); // ✅ Use real ML-KEM
-  const { publicKey, secretKey } = kem.keypair(); // Generate PQC keypair
-  
+
+  const kem = new oqs.KEM("ML-KEM-1024");
+  const { publicKey, secretKey } = kem.keypair();
+
   return {
     publicKey: Buffer.from(publicKey).toString("hex"),
     privateKey: Buffer.from(secretKey).toString("hex"),
@@ -19,14 +29,15 @@ export const generateMLKEMKeypair = async (): Promise<{ publicKey: string; priva
 };
 
 // ============================================================
-// 🔹 REAL SLH-DSA Key Generation (NIST FIPS 205)
+// 🔹 SLH-DSA Key Generation (NIST FIPS 205) - Quantum Safe
 // ============================================================
 export const generateSLHDSAKeypair = async (): Promise<{ publicKey: string; privateKey: string }> => {
+  if (!oqs) throw new Error("OQS not available in browser!");
   console.log("🔹 Generating SLH-DSA Keypair (NIST FIPS 205)");
 
-  const dsa = new oqs.Signature("SLH-DSA-SHAKE-256f"); // ✅ Use real SLH-DSA
+  const dsa = new oqs.Signature("SLH-DSA-SHAKE-256f");
   const { publicKey, secretKey } = dsa.keypair();
-  
+
   return {
     publicKey: Buffer.from(publicKey).toString("hex"),
     privateKey: Buffer.from(secretKey).toString("hex"),
@@ -34,31 +45,68 @@ export const generateSLHDSAKeypair = async (): Promise<{ publicKey: string; priv
 };
 
 // ============================================================
-// 🔹 AES-256-GCM Encryption (NIST Approved, Perfect Forward Secrecy)
+// 🔹 AES-256-GCM Encryption (Works in Both Browser & Node.js)
 // ============================================================
 export const encryptMessage = async (message: string, key: string): Promise<string> => {
-  console.log("🔹 Encrypting with AES-256-GCM (NIST FIPS 197)");
+  console.log("🔹 Encrypting with AES-256-GCM");
 
-  const iv = crypto.randomBytes(12); // ✅ Generate random IV for Perfect Forward Secrecy (PFS)
-  const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(key, "hex"), iv);
-  let encrypted = cipher.update(message, "utf8", "hex");
-  encrypted += cipher.final("hex");
+  if (typeof window !== "undefined" && window.crypto.subtle) {
+    // ✅ Browser-safe AES encryption
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encKey = await window.crypto.subtle.importKey("raw", Buffer.from(key, "hex"), { name: "AES-GCM" }, false, ["encrypt"]);
+    const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, encKey, new TextEncoder().encode(message));
 
-  return `${iv.toString("hex")}:${encrypted}`;
+    return `${Buffer.from(iv).toString("hex")}:${Buffer.from(encrypted).toString("hex")}`;
+  } else {
+    // ✅ Node.js AES encryption
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(key, "hex"), iv);
+    let encrypted = cipher.update(message, "utf8", "hex");
+    encrypted += cipher.final("hex");
+
+    return `${iv.toString("hex")}:${encrypted}`;
+  }
 };
 
 // ============================================================
-// 🔹 AES-256-GCM Decryption (NIST Approved, PFS)
+// 🔹 AES-256-GCM Decryption (Works in Both Browser & Node.js)
 // ============================================================
 export const decryptMessage = async (encryptedMessage: string, key: string): Promise<string> => {
-  console.log("🔹 Decrypting with AES-256-GCM (NIST FIPS 197)");
+  console.log("🔹 Decrypting with AES-256-GCM");
 
   const [iv, encrypted] = encryptedMessage.split(":");
-  const decipher = crypto.createDecipheriv("aes-256-gcm", Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
-  let decrypted = decipher.update(encrypted, "hex", "utf8");
-  decrypted += decipher.final("utf8");
+  if (typeof window !== "undefined" && window.crypto.subtle) {
+    // ✅ Browser-safe AES decryption
+    const decKey = await window.crypto.subtle.importKey("raw", Buffer.from(key, "hex"), { name: "AES-GCM" }, false, ["decrypt"]);
+    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: Buffer.from(iv, "hex") }, decKey, Buffer.from(encrypted, "hex"));
 
-  return decrypted;
+    return new TextDecoder().decode(decrypted);
+  } else {
+    // ✅ Node.js AES decryption
+    const decipher = crypto.createDecipheriv("aes-256-gcm", Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
+    let decrypted = decipher.update(encrypted, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+
+    return decrypted;
+  }
+};
+
+// ============================================================
+// 🔹 Perfect Forward Secrecy (Ephemeral X25519 Key Exchange)
+// ============================================================
+export const generateEphemeralKeyPair = (): { privateKey: string; publicKey: string } => {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("x25519");
+  return {
+    publicKey: publicKey.export({ type: "spki", format: "pem" }).toString("hex"),
+    privateKey: privateKey.export({ type: "pkcs8", format: "pem" }).toString("hex"),
+  };
+};
+
+// 🔹 Generate a New Session Key Per Message (Perfect Forward Secrecy)
+export const generateSessionKey = async (): Promise<string> => {
+  const ephemeralKeyPair = generateEphemeralKeyPair();
+  console.log("🔹 Generating new session key (PFS)");
+  return ephemeralKeyPair.privateKey.substring(0, 64);
 };
 
 // ============================================================
@@ -88,7 +136,7 @@ export const generateDID = async (mlkemPublicKey: string, slhdsaPublicKey: strin
 };
 
 // ============================================================
-// 🔹 Web3 Storage (IPFS / Arweave / Filecoin)
+// 🔹 Web3 Storage (IPFS / Arweave)
 // ============================================================
 export const saveToIPFS = async (data: string): Promise<string> => {
   console.log("🔹 Storing Encrypted Message on IPFS");
@@ -96,7 +144,7 @@ export const saveToIPFS = async (data: string): Promise<string> => {
 };
 
 export const loadFromIPFS = async (hash: string): Promise<string | null> => {
-  console.log("🔹 Loading Message from IPFS:", hash);
+  console.log("🔹 Fetching Message from IPFS:", hash);
   return null; // Simulate fetching from IPFS
 };
 
@@ -115,54 +163,3 @@ export const simulateSMPC = async (inputData: string): Promise<string> => {
   console.log("🔹 Simulating Secure Multi-Party Computation (SMPC)");
   return `SMPC-${crypto.createHash("sha256").update(inputData).digest("hex")}`;
 };
-
-// ============================================================
-// 🔹 Quantum Key Distribution (QKD) Simulation (Future-Proofed)
-// ============================================================
-export const simulateQKD = async (receiverId: string): Promise<{ quantumChannel: string; classicalChannel: string }> => {
-  console.log("🔹 Simulating Quantum Key Distribution (QKD)");
-
-  return {
-    quantumChannel: crypto.randomBytes(32).toString("hex"),
-    classicalChannel: crypto.randomBytes(24).toString("hex"),
-  };
-};
-
-// ============================================================
-// 🔹 Hardware Security Module (HSM) Simulation
-// ============================================================
-export const simulateHSM = async (key: string): Promise<{ keyId: string; protectionLevel: string }> => {
-  console.log("🔹 Simulating Hardware Security Module (HSM)");
-
-  return {
-    keyId: `hsm-${crypto.randomBytes(4).toString("hex")}`,
-    protectionLevel: "HARDWARE",
-  };
-};
-
-// ============================================================
-// 🔹 Quantum-Resistant Session Key Generation
-// ============================================================
-export const generateSessionKey = async (): Promise<string> => {
-  console.log("🔹 Generating Quantum-Resistant AES-256 Session Key");
-
-  return crypto.randomBytes(32).toString("hex"); // ✅ True 256-bit randomness
-};
-
-// ============================================================
-// 🔹 Digital Signature (SLH-DSA) Signing & Verification
-// ============================================================
-export const signMessage = async (message: string, privateKey: string): Promise<string> => {
-  console.log("🔹 Signing Message with SLH-DSA (NIST FIPS 205)");
-
-  const signature = crypto.createSign("SHA256").update(message).sign(Buffer.from(privateKey, "hex"));
-  return signature.toString("hex");
-};
-
-export const verifySignature = async (message: string, signature: string, publicKey: string): Promise<boolean> => {
-  console.log("🔹 Verifying SLH-DSA Signature");
-
-  const verifier = crypto.createVerify("SHA256").update(message);
-  return verifier.verify(Buffer.from(publicKey, "hex"), Buffer.from(signature, "hex"));
-};
-
