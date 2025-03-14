@@ -1,5 +1,5 @@
 import { Web3Storage, File } from "web3.storage";
-import { encryptAES, decryptAES, signMessage, verifySignature, generateZKProof } from "@/lib/crypto";
+import { encryptAES, decryptAES, signMessage, verifySignature, generateZKProof, verifyZKProof } from "@/lib/crypto";
 
 // ✅ Replace with your Web3.Storage API key
 const WEB3_STORAGE_API_KEY = process.env.WEB3_STORAGE_API_KEY || "";
@@ -28,7 +28,7 @@ export const saveToIPFS = async (
     // ✅ Generate zk-STARK Proof for integrity
     const zkProof = await generateZKProof(encryptedData);
 
-    // ✅ Sign the encrypted message using SLH-DSA
+    // ✅ Sign the encrypted message using SLH-DSA (Post-Quantum Secure)
     const signature = await signMessage(encryptedData, senderPrivateKey);
 
     // ✅ Create JSON payload
@@ -71,15 +71,13 @@ export const loadFromIPFS = async (
     const { encryptedData, signature, zkProof } = JSON.parse(content);
 
     // ✅ Verify zk-STARK Proof Before Decrypting
-    const isValidProof = await verifySignature(encryptedData, zkProof, senderPublicKey);
-    if (!isValidProof) {
+    if (!(await verifyZKProof(encryptedData, zkProof))) {
       console.warn("❌ Data validation failed: Invalid zk-STARK proof");
       throw new Error("Data Integrity Check Failed");
     }
 
-    // ✅ Verify Digital Signature
-    const isValidSignature = await verifySignature(encryptedData, signature, senderPublicKey);
-    if (!isValidSignature) {
+    // ✅ Verify Digital Signature (SLH-DSA)
+    if (!(await verifySignature(encryptedData, signature, senderPublicKey))) {
       console.warn("❌ Signature verification failed!");
       throw new Error("Signature Validation Failed");
     }
