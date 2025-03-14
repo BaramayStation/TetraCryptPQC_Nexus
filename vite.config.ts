@@ -4,16 +4,16 @@ import path from "path";
 import wasm from "vite-plugin-wasm"; // ✅ Enables WebAssembly support
 import topLevelAwait from "vite-plugin-top-level-await"; // ✅ Ensures top-level async/await works with WASM
 
-// https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    host: "::",
+    host: "0.0.0.0", // ✅ Ensures it runs on all network interfaces
     port: 8080,
+    strictPort: true, // ✅ Prevents random port selection
   },
   plugins: [
     react(),
-    wasm(), // 🔹 Enables WASM for pqcrypto.js
-    topLevelAwait(), // 🔹 Allows top-level await needed for WASM
+    wasm(), // ✅ Enables WASM
+    topLevelAwait(), // ✅ Ensures top-level await for WASM
   ],
   resolve: {
     alias: {
@@ -21,16 +21,17 @@ export default defineConfig({
     },
   },
   define: {
-    global: "window", // ✅ Fixes missing 'global' in browser environment
-    "process.env": {}, // ✅ Ensures compatibility with Web3 libraries
+    global: "globalThis", // ✅ Fixes missing 'global' in browser
+    "process.env": {}, // ✅ Ensures Web3 compatibility
   },
   optimizeDeps: {
-    exclude: ["pqcrypto"], // ✅ Ensures WASM modules are not pre-bundled (needed for WebAssembly)
+    exclude: ["pqcrypto", "wasm-feature-detect"], // ✅ Prevents pre-bundling PQC libraries
   },
   build: {
-    target: "esnext", // ✅ Supports modern JS & WASM features
+    target: "esnext", // ✅ Supports latest JavaScript & WASM features
     outDir: "dist",
     minify: "esbuild",
-    sourcemap: true, // 🔹 Debugging support
+    sourcemap: true, // ✅ Enables debugging
+    chunkSizeWarningLimit: 500, // ✅ Prevents large module warnings
   },
 });
