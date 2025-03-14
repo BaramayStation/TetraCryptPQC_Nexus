@@ -11,7 +11,7 @@ const pqcInit = async () => {
   return await wasmCrypto.init();
 };
 
-/* 🔹 Post-Quantum Key Generation (NIST FIPS 205/206) */
+/* 🔹 **Step 1: Post-Quantum Key Generation (NIST FIPS 205/206)** */
 export async function generateMLKEMKeypair(): Promise<{ publicKey: string; privateKey: string }> {
   console.log("🔹 Generating ML-KEM-1024 Keypair...");
   const kem = await pqcInit();
@@ -23,7 +23,7 @@ export async function generateMLKEMKeypair(): Promise<{ publicKey: string; priva
   };
 }
 
-// ✅ BIKE KEM (Backup Post-Quantum Algorithm)
+// ✅ **BIKE KEM** (Backup Post-Quantum Algorithm)
 export async function generateBIKEKeypair(): Promise<{ publicKey: string; privateKey: string }> {
   console.log("🔹 Generating BIKE Keypair (NIST PQC Candidate)...");
   const kem = await pqcInit();
@@ -35,7 +35,7 @@ export async function generateBIKEKeypair(): Promise<{ publicKey: string; privat
   };
 }
 
-/* 🔹 Digital Signatures (NIST-Approved) */
+/* 🔹 **Step 2: Digital Signatures (NIST-Approved)** */
 export async function signMessage(message: string, privateKey: string): Promise<string> {
   console.log("🔹 Signing message with SLH-DSA...");
   const dsa = await pqcInit();
@@ -50,7 +50,7 @@ export async function verifySignature(message: string, signature: string, public
   return dsa.verify("SLH-DSA-SHAKE-256f", Buffer.from(message), Buffer.from(signature, "hex"), Buffer.from(publicKey, "hex"));
 }
 
-/* 🔹 AES-256-GCM Encryption (Web Crypto API) */
+/* 🔹 **Step 3: AES-256-GCM Encryption (Web Crypto API)** */
 export async function encryptAES(message: string, key: string): Promise<string> {
   console.log("🔹 Encrypting with AES-256-GCM...");
   const iv = crypto.getRandomValues(new Uint8Array(12)); // Secure IV
@@ -77,19 +77,19 @@ export async function decryptAES(encryptedMessage: string, key: string): Promise
   return new TextDecoder().decode(decrypted);
 }
 
-/* 🔹 Homomorphic Encryption (Privacy-Preserving Computation) */
+/* 🔹 **Step 4: Homomorphic Encryption (Privacy-Preserving Computation)** */
 export async function homomorphicEncrypt(data: string): Promise<string> {
   console.log("🔹 Applying Homomorphic Encryption...");
   return `HE-${sha256(data)}`;
 }
 
-/* 🔹 zk-STARK Proof for Message Authentication */
+/* 🔹 **Step 5: zk-STARK Proof for Message Authentication** */
 export async function generateZKProof(message: string): Promise<string> {
   console.log("🔹 Generating zk-STARK for message authentication...");
   return poseidonHash([sha256(message)]);
 }
 
-/* 🔹 StarkNet Secure Transaction Signing */
+/* 🔹 **Step 6: StarkNet Secure Transaction Signing** */
 export async function signStarkNetTransaction(message: string, privateKey: string): Promise<string> {
   console.log("🔹 Signing StarkNet Transaction...");
 
@@ -100,7 +100,7 @@ export async function signStarkNetTransaction(message: string, privateKey: strin
   return JSON.stringify(signature);
 }
 
-/* 🔹 StarkNet Signature Verification */
+/* 🔹 **Step 7: StarkNet Signature Verification** */
 export async function verifyStarkNetSignature(
   message: string,
   signature: string,
