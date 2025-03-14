@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { decryptAES, verifyZKProof } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
+import { addFileToIPFS, getFileFromIPFS } from "@/lib/helia";
 
 const WEBSOCKET_URL = "ws://localhost:8080"; // ✅ Uses Free P2P WebSocket
 
@@ -9,11 +10,11 @@ interface Message {
   sender: string;
   content: string;
   timestamp: number;
+  cid?: string; // ✅ Stores message in IPFS
 }
 
 const MessageList: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const messagesRef = useRef<Message[]>([]); // Prevents stale state issues
   const user = getUserProfile();
@@ -39,7 +40,7 @@ const MessageList: React.FC = () => {
           const data = JSON.parse(event.data);
 
           // Prevent duplicate messages
-          if (messagesRef.current.some((msg) => msg.content === data.encrypted_content)) {
+          if (messagesRef.current.some((msg) => msg.cid === data.cid)) {
             console.warn("⚠️ Duplicate message detected. Skipping.");
             return;
           }
@@ -50,13 +51,14 @@ const MessageList: React.FC = () => {
             return;
           }
 
-          // Decrypt the message
-          const decryptedContent = await decryptAES(data.encrypted_content, user.sessionKey);
+          // Retrieve encrypted message from IPFS
+          const encryptedMessage = await getFileFromIPFS(data.cid);
+          const decryptedContent = await decryptAES(encryptedMessage, user.sessionKey);
 
           setMessages((prevMessages) => {
             const updatedMessages = [
               ...prevMessages,
-              { sender: data.sender, content: decryptedContent, timestamp: Date.now() },
+              { sender: data.sender, content: decryptedContent, timestamp: Date.now(), cid: data.cid },
             ];
             messagesRef.current = updatedMessages;
             return updatedMessages;
@@ -84,8 +86,6 @@ const MessageList: React.FC = () => {
   return (
     <div className="p-4 border rounded-lg shadow-lg bg-gray-900 text-white">
       <h2 className="text-xl font-semibold">📩 Secure Messages</h2>
-
-      {loading && <p className="text-gray-400">🔄 Loading messages...</p>}
 
       <div className="mt-4 space-y-2">
         {messages.length === 0 ? (
