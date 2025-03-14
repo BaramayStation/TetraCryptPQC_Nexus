@@ -9,7 +9,7 @@ from starkware.starknet.crypto.keccak import starknet_keccak
 
 @contract_interface
 namespace TetraCrypt {
-    # ✅ Step 1: Register a User on StarkNet with zk-STARK Authentication
+    # ✅ Step 1: Register a User with zk-STARK Authentication
     func register_user{
         syscall_ptr: felt*, 
         pedersen_ptr: HashBuiltin*, 
@@ -42,6 +42,16 @@ namespace TetraCrypt {
         sender: felt, 
         receiver: felt
     ) -> (encrypted_content: felt);
+
+    # ✅ Step 4: Delete Message (For Privacy & Compliance)
+    func delete_message{
+        syscall_ptr: felt*, 
+        pedersen_ptr: HashBuiltin*, 
+        range_check_ptr
+    }(
+        sender: felt, 
+        receiver: felt
+    ) -> (success: felt);
 }
 
 @external
@@ -111,4 +121,22 @@ func get_message{
     let encrypted_content = Storage.read(StorageAccess, message_key)
 
     return (encrypted_content)
+}
+
+@external
+func delete_message{
+    syscall_ptr: felt*, 
+    pedersen_ptr: HashBuiltin*, 
+    range_check_ptr
+}(
+    sender: felt, 
+    receiver: felt
+) -> (success: felt) {
+    # ✅ Generate Message Key
+    let message_key = Poseidon([sender, receiver])
+
+    # ✅ Remove Message from Storage
+    Storage.write(StorageAccess, message_key, 0)
+
+    return (success=1)
 }
