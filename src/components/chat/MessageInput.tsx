@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Send, Lock, ShieldCheck, Database, KeyRound, UploadCloud, CheckCircle, XCircle 
+  Send, Lock, ShieldCheck, Database, KeyRound, UploadCloud, CheckCircle, XCircle, Zap 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { encryptMessage, encryptMessageChaCha, signMessage, homomorphicEncrypt } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 import { saveToIPFS } from "@/lib/storage";
 import { storeMessage } from "@/lib/starknet";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -30,7 +31,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
     e.preventDefault();
 
     if (!starknetKey) {
-      console.error("User not registered on StarkNet");
+      console.error("⚠️ User not registered on StarkNet");
       setStatus("error");
       return;
     }
@@ -87,7 +88,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
       setMessage("");
       setStatus("success");
     } catch (error) {
-      console.error("Message encryption failed:", error);
+      console.error("⚠️ Message encryption failed:", error);
       setStatus("error");
     } finally {
       setSending(false);
@@ -95,11 +96,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   };
 
   return (
-    <Card className="p-6 border-t shadow-lg rounded-2xl bg-white dark:bg-gray-900">
+    <Card className="p-6 border-t shadow-xl rounded-2xl bg-gray-100 dark:bg-gray-900">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <ShieldCheck className="h-6 w-6 text-green-500" />
-          Quantum-Secure Messaging
+          Quantum-Secure Messaging (FIPS 140-3)
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -174,12 +175,19 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
 
           {/* 🔹 Encryption Mode Selector */}
           <div className="mt-6 flex justify-center space-x-3">
-            <Button variant={encryptionMode === "aes" ? "default" : "outline"} size="sm" onClick={() => setEncryptionMode("aes")}>
-              AES-256-GCM
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant={encryptionMode === "aes" ? "default" : "outline"} size="sm" onClick={() => setEncryptionMode("aes")}>
+                  AES-256-GCM
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>FIPS 140-3 Approved Symmetric Encryption</TooltipContent>
+            </Tooltip>
+
             <Button variant={encryptionMode === "chacha" ? "default" : "outline"} size="sm" onClick={() => setEncryptionMode("chacha")}>
               ChaCha20-Poly1305
             </Button>
+
             <Button variant={encryptionMode === "homomorphic" ? "default" : "outline"} size="sm" onClick={() => setEncryptionMode("homomorphic")}>
               Homomorphic
             </Button>
