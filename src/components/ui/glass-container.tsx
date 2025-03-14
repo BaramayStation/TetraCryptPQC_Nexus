@@ -2,60 +2,39 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-interface GlassContainerProps {
+interface GlassContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  className?: string;
-  blur?: "sm" | "md" | "lg";
-  opacity?: "light" | "medium" | "heavy";
-  padding?: boolean;
-  border?: boolean;
   hover?: boolean;
-  animation?: "fade-in" | "slide-up" | "none";
-  style?: React.CSSProperties; // Added style prop
+  animation?: "fade-in" | "slide-up" | "slide-down" | "slide-left" | "slide-right" | "blur-in";
+  delay?: number;
 }
 
-export const GlassContainer = ({
+export const GlassContainer: React.FC<GlassContainerProps> = ({
   children,
   className,
-  blur = "md",
-  opacity = "medium",
-  padding = true,
-  border = true,
   hover = false,
-  animation = "none",
-  style, // Added style prop
-}: GlassContainerProps) => {
-  const blurClass = {
-    sm: "backdrop-blur-sm",
-    md: "backdrop-blur-md",
-    lg: "backdrop-blur-lg",
-  };
-
-  const opacityClass = {
-    light: "bg-white/30 dark:bg-slate-900/30",
-    medium: "bg-white/70 dark:bg-slate-900/70",
-    heavy: "bg-white/90 dark:bg-slate-900/90",
-  };
-
-  const animationClass = {
-    "fade-in": "animate-fade-in",
-    "slide-up": "animate-slide-up",
-    "none": "",
-  };
+  animation,
+  delay,
+  style,
+  ...props
+}) => {
+  const animationClass = animation ? `animate-${animation}` : "";
+  
+  const customStyles = delay 
+    ? { ...style, animationDelay: `${delay}ms` } 
+    : style;
 
   return (
     <div
-      style={style} // Added style prop
       className={cn(
-        blurClass[blur],
-        opacityClass[opacity],
-        padding && "p-4 md:p-6",
-        border && "border border-white/20 dark:border-slate-800/50",
-        hover && "transition-all hover:bg-white/80 dark:hover:bg-slate-800/80",
-        "rounded-2xl shadow-sm",
-        animationClass[animation],
+        "glass-container rounded-xl",
+        hover && "glass-container-hover",
+        animationClass,
+        animation && "opacity-0", // Start with opacity 0 if animating
         className
       )}
+      style={customStyles}
+      {...props}
     >
       {children}
     </div>
