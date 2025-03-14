@@ -2,15 +2,18 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "@/components/ui/toast";
 import { 
-  Send, Lock, ShieldCheck, Database, KeyRound, UploadCloud, CheckCircle, XCircle, Zap 
+  Send, Lock, ShieldCheck, Database, UploadCloud, CheckCircle, XCircle, Zap, Moon, Sun 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { encryptMessage, encryptMessageChaCha, signMessage, homomorphicEncrypt } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 import { saveToIPFS } from "@/lib/storage";
 import { storeMessage } from "@/lib/starknet";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useTheme } from "next-themes";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -21,7 +24,9 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [encryptionMode, setEncryptionMode] = useState<"aes" | "chacha" | "homomorphic">("aes");
   const [sending, setSending] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const { theme, setTheme } = useTheme();
 
   const user = getUserProfile();
   const hasWebDID = user && (user as any).didDocument;
@@ -31,7 +36,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
     e.preventDefault();
 
     if (!starknetKey) {
-      console.error("⚠️ User not registered on StarkNet");
+      toast({
+        title: "Error",
+        description: "User not registered on StarkNet.",
+        variant: "destructive",
+      });
       setStatus("error");
       return;
     }
@@ -40,11 +49,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
 
     setSending(true);
     setStatus("sending");
+    setProgress(20);
 
     try {
       let encryptedContent;
-
-      // 🔹 Encrypt message based on selected encryption mode
       switch (encryptionMode) {
         case "chacha":
           encryptedContent = await encryptMessageChaCha(message.trim(), user.sessionKey);
@@ -58,10 +66,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
           break;
       }
 
-      // 🔹 Sign message using SLH-DSA (NIST FIPS 205)
-      const signature = await signMessage(encryptedContent, user.keyPairs.signature.privateKey);
+      setProgress(50);
 
-      // 🔹 Store message on IPFS
+      const signature = await signMessage(encryptedContent, user.keyPairs.signature.privateKey);
+      setProgress(75);
+
       const ipfsHash = await saveToIPFS({
         sender: user.id,
         receiver: "receiver_id_here",
@@ -69,10 +78,9 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         signature,
       });
 
-      // 🔹 Store message hash on StarkNet blockchain
       await storeMessage(user.id, "receiver_id_here", ipfsHash);
+      setProgress(100);
 
-      // 🔹 Construct secure message
       const secureMessage = {
         content: encryptedContent,
         encryptionMode,
@@ -81,14 +89,23 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         ipfsHash,
       };
 
-      // 🔹 Send message
       onSendMessage(JSON.stringify(secureMessage));
 
-      // 🔹 Clear input
       setMessage("");
       setStatus("success");
+
+      toast({
+        title: "Message Sent!",
+        description: "Your message has been securely encrypted and sent.",
+        variant: "success",
+      });
+
     } catch (error) {
-      console.error("⚠️ Message encryption failed:", error);
+      toast({
+        title: "Encryption Failed",
+        description: "Something went wrong while encrypting the message.",
+        variant: "destructive",
+      });
       setStatus("error");
     } finally {
       setSending(false);
@@ -96,12 +113,17 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   };
 
   return (
-    <Card className="p-6 border-t shadow-xl rounded-2xl bg-gray-100 dark:bg-gray-900">
+    <Card className="p-6 border shadow-2xl rounded-xl bg-gradient-to-br from-gray-100 via-gray-200 to-gray-300 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 transition-all">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <ShieldCheck className="h-6 w-6 text-green-500" />
-          Quantum-Secure Messaging (FIPS 140-3)
-        </CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center gap-2 text-lg font-bold">
+            <ShieldCheck className="h-6 w-6 text-green-500" />
+            Secure Messaging (FIPS 205)
+          </CardTitle>
+          <Button variant="outline" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="relative">
@@ -110,8 +132,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type a secure message..."
             className={cn(
-              "pr-14 py-3 min-h-[60px] max-h-[160px] rounded-lg transition-all duration-200",
-              isFocused ? "border border-blue-500 shadow-lg" : "border border-gray-300"
+              "pr-14 py-3 min-h-[60px] max-h-[160px] rounded-lg transition-all duration-300 shadow-md",
+              isFocused ? "border border-blue-500 shadow-xl" : "border border-gray-300"
             )}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
@@ -121,7 +143,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
           {isFocused && (
             <div className="absolute bottom-3 left-3 flex items-center text-xs text-muted-foreground">
               <Lock className="h-4 w-4 mr-1" />
-              <span>End-to-End Post-Quantum Encryption Enabled</span>
+              <span>Post-Quantum Encryption Enabled</span>
             </div>
           )}
 
@@ -137,12 +159,13 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
             {sending ? <UploadCloud className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
 
-          {/* 🔹 Status Feedback */}
+          <Progress value={progress} className="mt-4" />
+
           <div className="mt-4 flex items-center gap-2 text-sm">
             {status === "sending" && (
               <div className="flex items-center gap-1 text-yellow-500">
                 <UploadCloud className="h-5 w-5 animate-spin" />
-                <span>Sending Securely...</span>
+                <span>Encrypting & Sending...</span>
               </div>
             )}
             {status === "success" && (
@@ -159,8 +182,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
             )}
           </div>
 
-          {/* 🔹 Security Indicators */}
-          <div className="mt-4 flex justify-between text-xs text-muted-foreground">
+          <div className="mt-6 flex justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-2">
               <ShieldCheck className="h-5 w-5 text-green-500" />
               <span>NIST FIPS 205 PQC Secure</span>
@@ -171,26 +193,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
                 <span>DID Verified</span>
               </div>
             )}
-          </div>
-
-          {/* 🔹 Encryption Mode Selector */}
-          <div className="mt-6 flex justify-center space-x-3">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant={encryptionMode === "aes" ? "default" : "outline"} size="sm" onClick={() => setEncryptionMode("aes")}>
-                  AES-256-GCM
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>FIPS 140-3 Approved Symmetric Encryption</TooltipContent>
-            </Tooltip>
-
-            <Button variant={encryptionMode === "chacha" ? "default" : "outline"} size="sm" onClick={() => setEncryptionMode("chacha")}>
-              ChaCha20-Poly1305
-            </Button>
-
-            <Button variant={encryptionMode === "homomorphic" ? "default" : "outline"} size="sm" onClick={() => setEncryptionMode("homomorphic")}>
-              Homomorphic
-            </Button>
           </div>
         </form>
       </CardContent>
