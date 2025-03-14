@@ -1,10 +1,11 @@
 import { create } from "ipfs-http-client";
 
+// 🔹 Configure IPFS Client (Using Infura Gateway for Decentralization)
 const IPFS_GATEWAY = "https://ipfs.infura.io:5001";
 const ipfs = create({ host: "ipfs.infura.io", port: 5001, protocol: "https" });
 
 /**
- * 🔹 Store a message securely on IPFS
+ * 🔹 Store an encrypted message on IPFS
  * @param encryptedMessage - The encrypted message string
  * @returns {string} - IPFS Content Identifier (CID)
  */
@@ -20,7 +21,7 @@ export const saveToIPFS = async (encryptedMessage: string): Promise<string> => {
 };
 
 /**
- * 🔹 Retrieve a message securely from IPFS
+ * 🔹 Retrieve an encrypted message from IPFS
  * @param cid - The IPFS Content Identifier (CID)
  * @returns {string} - The encrypted message
  */
