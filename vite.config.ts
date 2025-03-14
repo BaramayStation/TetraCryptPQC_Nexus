@@ -2,30 +2,30 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import polyfillNode from "rollup-plugin-polyfill-node";
 
-// ✅ Future-Proofing Netlify Build
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: "0.0.0.0",
     port: 8080,
   },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    polyfillNode(), // ✅ Fixes missing crypto in browser
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  define: {
-    "process.env": {}, // ✅ Fixes "process is not defined" error
-  },
   build: {
     rollupOptions: {
-      external: ["crypto"], // ✅ Ensures crypto is properly polyfilled
+      external: [
+        "oqs", // ✅ Ensures OQS is treated correctly
+        "crypto", // ✅ Prevents Vite from treating it as a browser module
+      ],
     },
+  },
+  optimizeDeps: {
+    include: ["crypto"], // ✅ Ensures `crypto` is included for use in both Node.js and browser
   },
 }));
