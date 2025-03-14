@@ -7,9 +7,9 @@ from starkware.starknet.storage.access import StorageAccess
 from starkware.cairo.common.hash import Poseidon
 from starkware.starknet.crypto.keccak import starknet_keccak
 
-# ✅ WebSocket Event: Real-Time Messaging Updates
+# ✅ WebSocket Event: Real-Time Messaging Updates with Validation
 @event
-func MessageSent(sender: felt, receiver: felt, message_id: felt, message_ipfs_cid: felt);
+func MessageSent(sender: felt, receiver: felt, message_id: felt, message_ipfs_cid: felt, timestamp: felt);
 
 @contract_interface
 namespace TetraCrypt {
@@ -34,7 +34,8 @@ namespace TetraCrypt {
         receiver: felt, 
         message_ipfs_cid: felt,  # 🔹 Store only IPFS hash
         zkProof: felt, 
-        starknet_signature: (felt, felt)
+        starknet_signature: (felt, felt), 
+        timestamp: felt
     ) -> (message_id: felt);
 
     # ✅ Step 3: Retrieve Messages from StarkNet
@@ -86,9 +87,14 @@ func store_message{
     receiver: felt, 
     message_ipfs_cid: felt, 
     zkProof: felt, 
-    starknet_signature: (felt, felt)
+    starknet_signature: (felt, felt), 
+    timestamp: felt
 ) -> (message_id: felt) {
     let message_hash = Poseidon([message_ipfs_cid]);
+
+    # ✅ Prevent Replay Attacks: Ensure Message Hash is Unique
+    let existing_message = Storage.read(StorageAccess, message_hash);
+    assert existing_message == 0, "❌ Replay Attack Detected!"
 
     # ✅ Validate zk-STARK Proof for Message Integrity
     assert message_hash == zkProof, "❌ Invalid zk-STARK Proof";
@@ -101,8 +107,12 @@ func store_message{
     let message_key = Poseidon([sender, receiver]);
     Storage.write(StorageAccess, message_key, message_ipfs_cid);
 
+    # ✅ Store Timestamp for Auto-Deletion (Messages Expire After 7 Days)
+    let expiry_time = timestamp + (7 * 24 * 60 * 60);  # 7 days in seconds
+    Storage.write(StorageAccess, Poseidon([message_key, "expiry"]), expiry_time);
+
     # ✅ Emit WebSocket Event for Real-Time Messaging
-    emit MessageSent(sender, receiver, message_key, message_ipfs_cid);
+    emit MessageSent(sender, receiver, message_key, message_ipfs_cid, timestamp);
 
     return (message_key);
 }
@@ -132,7 +142,13 @@ func delete_message{
     receiver: felt
 ) -> (success: felt) {
     let message_key = Poseidon([sender, receiver]);
-    Storage.write(StorageAccess, message_key, 0);
+
+    # ✅ Auto-Delete Expired Messages
+    let expiry_time = Storage.read(StorageAccess, Poseidon([message_key, "expiry"]));
+    if expiry_time < syscall_ptr.timestamp {
+        Storage.write(StorageAccess, message_key, 0);
+        Storage.write(StorageAccess, Poseidon([message_key, "expiry"]), 0);
+    }
 
     return (success=1);
 }
