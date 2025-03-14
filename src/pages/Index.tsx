@@ -109,7 +109,7 @@ const Index: React.FC = () => {
               <Button
                 variant="outline"
                 size="lg"
-                onClick={() => window.open("https://github.com/BaramayStation/TetraCryptPQC-Nexus", "_blank")}
+                onClick={() => window.open("https://github.com/BaramayStation/TetraCryptPQC-Nexus", "_blank", "noopener,noreferrer")}
                 className="gap-2"
               >
                 GitHub Repository <ExternalLink className="h-4 w-4" />
