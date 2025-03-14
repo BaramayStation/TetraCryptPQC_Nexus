@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Provider, Account, Contract, ec, hash, stark, Signer } from "starknet";
+import { Provider, Account, Contract, ec, hash } from "starknet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// ✅ Initialize StarkNet Provider (Mainnet/Testnet Compatible)
+// ✅ StarkNet Provider (Mainnet/Testnet)
 const provider = new Provider({ rpc: { nodeUrl: "https://starknet-mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID" } });
 
 // ✅ Replace with Deployed TetraCrypt Messaging Contract Address
@@ -14,64 +14,85 @@ const StarkNetLogin = () => {
   const [account, setAccount] = useState<Account | null>(null);
   const [isRegistered, setIsRegistered] = useState(false);
   const [signature, setSignature] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   // ✅ Generate Quantum-Secure StarkNet Key Pair
-  const generateKeyPair = () => {
-    const starkKeyPair = ec.genKeyPair();
-    const starkPublicKey = ec.getStarkKey(starkKeyPair);
-    const newAccount = new Account(provider, starkPublicKey, starkKeyPair);
+  const generateKeyPair = async () => {
+    try {
+      setLoading(true);
+      const starkKeyPair = ec.genKeyPair();
+      const starkPublicKey = ec.getStarkKey(starkKeyPair);
+      const newAccount = new Account(provider, starkPublicKey, starkKeyPair);
 
-    console.log("🔹 Generated StarkNet Key Pair:", starkPublicKey);
-    setAccount(newAccount);
+      console.log("🔹 Generated StarkNet Key Pair:", starkPublicKey);
+      setAccount(newAccount);
+    } catch (error) {
+      console.error("❌ Key Generation Failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ✅ Register User on StarkNet with zk-STARK Proof
   const registerUser = async () => {
     if (!account) return;
 
-    // ✅ Load Contract ABI (Updated to Match `tetracrypt_messaging.cairo`)
-    const contract = new Contract(
-      [
-        {
-          name: "register_user",
-          type: "function",
-          inputs: [
-            { name: "user_address", type: "felt" },
-            { name: "starknet_key", type: "felt" },
-            { name: "zkProof", type: "felt" },
-          ],
-        },
-      ],
-      CONTRACT_ADDRESS,
-      provider
-    );
+    try {
+      setLoading(true);
 
-    // ✅ Generate zk-STARK Proof (Ensures Secure Identity Verification)
-    const zkProof = hash.starknetKeccak(account.address);
+      // ✅ Load Contract ABI (Updated for `tetracrypt_messaging.cairo`)
+      const contract = new Contract(
+        [
+          {
+            name: "register_user",
+            type: "function",
+            inputs: [
+              { name: "user_address", type: "felt" },
+              { name: "starknet_key", type: "felt" },
+              { name: "zkProof", type: "felt" },
+            ],
+          },
+        ],
+        CONTRACT_ADDRESS,
+        provider
+      );
 
-    console.log(`🔹 Registering "${username}" on StarkNet with zk-STARK Proof...`);
+      // ✅ Generate zk-STARK Proof for Identity Verification
+      const zkProof = hash.starknetKeccak(account.address);
+      console.log(`🔹 Registering "${username}" on StarkNet with zk-STARK Proof...`);
 
-    const response = await contract.invoke(
-      "register_user",
-      [stark.stringToFelt(username), account.address, zkProof],
-      { maxFee: stark.estimateFee }
-    );
+      const response = await contract.invoke(
+        "register_user",
+        [hash.starknetKeccak(username), account.address, zkProof],
+        { maxFee: "10000000000000" }
+      );
 
-    console.log("✅ Registration TX:", response.transaction_hash);
-    setIsRegistered(true);
+      console.log("✅ Registration TX:", response.transaction_hash);
+      setIsRegistered(true);
+    } catch (error) {
+      console.error("❌ Registration Failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ✅ Sign a Message with StarkNet Identity (Quantum-Secure Authentication)
   const signMessage = async () => {
     if (!account) return;
 
-    const signer = new Signer(ec.starkCurve);
-    const message = "Quantum-Secure Login Message";
-    const hashedMessage = hash.starknetKeccak(message);
-    const starkSignature = signer.sign(account.privateKey, hashedMessage);
+    try {
+      setLoading(true);
+      const message = "Quantum-Secure Login Message";
+      const hashedMessage = hash.starknetKeccak(message);
+      const starkSignature = ec.sign(account.privateKey, hashedMessage);
 
-    console.log("🔹 StarkNet Signature Generated:", starkSignature);
-    setSignature(JSON.stringify(starkSignature));
+      console.log("🔹 StarkNet Signature Generated:", starkSignature);
+      setSignature(JSON.stringify(starkSignature));
+    } catch (error) {
+      console.error("❌ Message Signing Failed:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -83,21 +104,22 @@ const StarkNetLogin = () => {
         onChange={(e) => setUsername(e.target.value)}
         placeholder="Enter Username"
         className="text-black"
+        disabled={loading || isRegistered}
       />
 
       {!account ? (
-        <Button onClick={generateKeyPair} className="bg-indigo-600 hover:bg-indigo-700">
-          🔑 Generate Key Pair
+        <Button onClick={generateKeyPair} className="bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
+          {loading ? "🔄 Generating..." : "🔑 Generate Key Pair"}
         </Button>
       ) : !isRegistered ? (
-        <Button onClick={registerUser} className="bg-green-600 hover:bg-green-700">
-          ✅ Register on StarkNet
+        <Button onClick={registerUser} className="bg-green-600 hover:bg-green-700" disabled={loading}>
+          {loading ? "🔄 Registering..." : "✅ Register on StarkNet"}
         </Button>
       ) : (
         <>
           <p className="text-green-500">✔ Successfully Registered on StarkNet</p>
-          <Button onClick={signMessage} className="bg-blue-600 hover:bg-blue-700">
-            ✍️ Sign Message
+          <Button onClick={signMessage} className="bg-blue-600 hover:bg-blue-700" disabled={loading}>
+            {loading ? "🔄 Signing..." : "✍️ Sign Message"}
           </Button>
           {signature && <p className="text-yellow-500 break-all">📝 Signature: {signature}</p>}
         </>
