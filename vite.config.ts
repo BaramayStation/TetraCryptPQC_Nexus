@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import wasm from "vite-plugin-wasm";  // Official WebAssembly support
 import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
+import { createHelia } from "helia"; // IPFS Helia integration
 
 export default defineConfig(({ mode }) => {
   const plugins = [
@@ -55,6 +56,7 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
+      chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
     },
     worker: {
       format: "es", // Ensures compatibility with modern ES module workers
