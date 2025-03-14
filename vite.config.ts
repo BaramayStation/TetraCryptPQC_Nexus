@@ -1,8 +1,9 @@
-
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import react from "@vitejs/plugin-react";
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
+import componentTagger from "lovely-component-tagger";
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -12,6 +13,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    wasm(),
+    topLevelAwait(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
@@ -19,15 +22,18 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  define: {
-    global: "globalThis",
-    "process.env": {},
+  optimizeDeps: {
+    exclude: ["@syntect/wasm"] // Exclude problematic wasm modules if any
   },
   build: {
     target: "esnext",
-    outDir: "dist",
-    minify: "esbuild",
+    chunkSizeWarningLimit: 1000,
     sourcemap: true,
-    chunkSizeWarningLimit: 500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["ethers", "starknet"],
+        },
+      },
   },
 }));
