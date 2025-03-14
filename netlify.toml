@@ -11,6 +11,7 @@
   BUN_VERSION = "1.0.30"          # Ensure correct Bun version
   VITE_WASM_ENABLED = "true"      # Enables WebAssembly support in Vite
   VITE_OPTIMIZE_WASM = "true"     # Ensures optimized WebAssembly handling
+  NPM_FLAGS = "--legacy-peer-deps" # Fixes potential dependency resolution issues
 
 # ✅ Development Server Configuration (Local Testing)
 [dev]
@@ -47,4 +48,14 @@
 [[redirects]]
   from = "/*"
   to = "/index.html"
+  status = 200
+
+# ✅ Debugging & Build Logging
+[build.processing]
+  skip_processing = false # Ensures all Netlify optimizations run correctly
+
+# ✅ Set Default Fallback for API Calls
+[[redirects]]
+  from = "/api/*"
+  to = "/api/index.js"
   status = 200
