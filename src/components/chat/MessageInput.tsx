@@ -6,13 +6,13 @@ import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/toast";
 import { 
-  Send, Lock, ShieldCheck, Database, UploadCloud, CheckCircle, XCircle, Zap, Moon, Sun 
+  Send, Lock, ShieldCheck, Database, UploadCloud, CheckCircle, XCircle, Zap, Moon, Sun, RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { encryptMessage, encryptMessageChaCha, signMessage, homomorphicEncrypt } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 import { saveToIPFS } from "@/lib/storage";
-import { storeMessage } from "@/lib/starknet";
+import { storeMessage, getMessageStatus } from "@/lib/starknet";
 import { useTheme } from "next-themes";
 
 interface MessageInputProps {
@@ -26,6 +26,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const [sending, setSending] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [starknetStatus, setStarknetStatus] = useState<"pending" | "confirmed" | "failed">("pending");
   const { theme, setTheme } = useTheme();
 
   const user = getUserProfile();
@@ -93,12 +94,15 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
 
       setMessage("");
       setStatus("success");
+      setStarknetStatus("pending");
 
       toast({
         title: "Message Sent!",
         description: "Your message has been securely encrypted and sent.",
         variant: "success",
       });
+
+      checkStarknetStatus(ipfsHash);
 
     } catch (error) {
       toast({
@@ -109,6 +113,15 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
       setStatus("error");
     } finally {
       setSending(false);
+    }
+  };
+
+  const checkStarknetStatus = async (txHash: string) => {
+    try {
+      const status = await getMessageStatus(txHash);
+      setStarknetStatus(status);
+    } catch (error) {
+      setStarknetStatus("failed");
     }
   };
 
@@ -140,59 +153,30 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
             disabled={sending}
           />
 
-          {isFocused && (
-            <div className="absolute bottom-3 left-3 flex items-center text-xs text-muted-foreground">
-              <Lock className="h-4 w-4 mr-1" />
-              <span>Post-Quantum Encryption Enabled</span>
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            size="icon"
-            className={cn(
-              "absolute right-2 bottom-2 transition-opacity",
-              message.trim() === "" || sending ? "opacity-50 cursor-not-allowed" : "opacity-100"
-            )}
-            disabled={message.trim() === "" || sending}
-          >
+          <Button type="submit" size="icon" disabled={message.trim() === "" || sending}>
             {sending ? <UploadCloud className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
 
           <Progress value={progress} className="mt-4" />
 
           <div className="mt-4 flex items-center gap-2 text-sm">
-            {status === "sending" && (
-              <div className="flex items-center gap-1 text-yellow-500">
-                <UploadCloud className="h-5 w-5 animate-spin" />
-                <span>Encrypting & Sending...</span>
-              </div>
-            )}
-            {status === "success" && (
-              <div className="flex items-center gap-1 text-green-500">
-                <CheckCircle className="h-5 w-5" />
-                <span>Message Sent Successfully</span>
-              </div>
-            )}
-            {status === "error" && (
-              <div className="flex items-center gap-1 text-red-500">
-                <XCircle className="h-5 w-5" />
-                <span>Message Failed</span>
-              </div>
-            )}
+            {status === "sending" && <UploadCloud className="h-5 w-5 animate-spin text-yellow-500" />}
+            {status === "success" && <CheckCircle className="h-5 w-5 text-green-500" />}
+            {status === "error" && <XCircle className="h-5 w-5 text-red-500" />}
           </div>
 
           <div className="mt-6 flex justify-between text-xs text-muted-foreground">
             <div className="flex items-center space-x-2">
               <ShieldCheck className="h-5 w-5 text-green-500" />
-              <span>NIST FIPS 205 PQC Secure</span>
+              <span>PQC Secure</span>
             </div>
-            {hasWebDID && (
-              <div className="flex items-center space-x-2">
-                <Database className="h-5 w-5 text-blue-500" />
-                <span>DID Verified</span>
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              <Database className="h-5 w-5 text-blue-500" />
+              <span>StarkNet: {starknetStatus.toUpperCase()}</span>
+              <Button variant="ghost" size="icon" onClick={() => checkStarknetStatus("latest_tx_hash")}>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>
