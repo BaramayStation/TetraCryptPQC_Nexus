@@ -1,16 +1,30 @@
 %lang cairo
 
+from starkware.cairo.common.hash import Poseidon
+from starkware.cairo.common.math_utils import assert_nn
 from starkware.crypto.signature.signature import verify
 from starkware.starknet.common.storage import Storage
-from starkware.starknet.core.storage import write
 
 @contract
-def send_secure_message(sender: felt, receiver: felt, encrypted_content: felt, zkProof: felt, starknet_signature: felt):
-    # Verify zk-STARK Proof
-    assert poseidon_hash([encrypted_content]) == zkProof, "Invalid zk-STARK Proof"
+func send_secure_message{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    sender: felt, 
+    receiver: felt, 
+    encrypted_content: felt, 
+    zkProof: felt, 
+    starknet_signature: felt
+) -> (success: felt):
+    # ✅ Step 1: Verify zk-STARK Proof
+    let hashed_content = Poseidon(encrypted_content)
+    assert hashed_content == zkProof, "❌ Invalid zk-STARK Proof"
 
-    # Store Message on StarkNet
-    Storage.write(keccak(sender, receiver), encrypted_content)
+    # ✅ Step 2: Verify StarkNet Signature
+    let valid_signature = verify(sender, hashed_content, starknet_signature)
+    assert_nn(valid_signature, "❌ Invalid StarkNet Signature")
 
-    # Return success
-    return 1
+    # ✅ Step 3: Store Message on StarkNet Blockchain
+    let message_key = Poseidon([sender, receiver])
+    Storage.write(message_key, encrypted_content)
+
+    # ✅ Step 4: Return Success Confirmation
+    return (success=1)
+end
