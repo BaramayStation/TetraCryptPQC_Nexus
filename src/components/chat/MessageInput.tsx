@@ -5,11 +5,9 @@ import { Send, Lock, ShieldCheck, Database } from "lucide-react";
 import { encryptAES, signMessage, generateZKProof } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 import { signDIDTransaction } from "@/lib/did";
-import { Account, Contract, hash } from "starknet";
 
-// ✅ Define StarkNet Contract Details
-const STARKNET_MESSAGING_CONTRACT = "0xYourStarkNetMessagingContractAddress";
-const WEBSOCKET_URL = "wss://starknet.io/events";
+// ✅ Decentralized WebSocket Server
+const WEBSOCKET_URL = "ws://localhost:8080";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -22,7 +20,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const user = getUserProfile();
   const hasWebDID = user && (user as any).didDocument;
 
-  // ✅ Send Message
+  // ✅ Send Secure Message
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() === "" || sending) return;
@@ -40,10 +38,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
       // ✅ Generate zk-STARK Proof
       const zkProof = await generateZKProof(encryptedContent);
 
-      // ✅ Sign Message on StarkNet (if DID is enabled)
-      let starknetSignature = null;
+      // ✅ Sign Message with Decentralized Identity (DID)
+      let didSignature = null;
       if (hasWebDID) {
-        starknetSignature = await signDIDTransaction(user.didDocument, encryptedContent);
+        didSignature = await signDIDTransaction(user.didDocument, encryptedContent);
       }
 
       // ✅ Construct Secure Message
@@ -53,54 +51,21 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
         content: encryptedContent,
         signature,
         zkProof,
-        starknetSignature,
+        didSignature,
         didVerified: hasWebDID ? "✔ Verified" : "❌ Unverified",
+        timestamp: Date.now(),
       };
 
-      // ✅ Send Message to StarkNet
-      console.log("🔹 Sending Message to StarkNet...");
-      const provider = new Account(user.provider, user.starknetAddress);
-      const messagingContract = new Contract(
-        [
-          {
-            name: "store_message",
-            type: "function",
-            inputs: [
-              { name: "sender", type: "felt" },
-              { name: "receiver", type: "felt" },
-              { name: "encrypted_content", type: "felt" },
-              { name: "zkProof", type: "felt" },
-              { name: "starknet_signature", type: "(felt, felt)" },
-            ],
-          },
-        ],
-        STARKNET_MESSAGING_CONTRACT,
-        provider
-      );
-
-      const response = await messagingContract.invoke(
-        "store_message",
-        [
-          secureMessage.sender,
-          secureMessage.receiver,
-          hash.starknetKeccak(secureMessage.content),
-          secureMessage.zkProof,
-          secureMessage.starknetSignature || [0, 0],
-        ],
-        { maxFee: "10000000000000" } // Adjust based on network fees
-      );
-
-      console.log("✅ StarkNet TX:", response.transaction_hash);
-
-      // ✅ Send Secure Message to UI
-      onSendMessage(JSON.stringify(secureMessage));
-
-      // ✅ Notify WebSocket Server for Real-time Updates
+      // ✅ Send Message to P2P WebSocket Network
+      console.log("🔹 Sending Message via WebSocket...");
       const ws = new WebSocket(WEBSOCKET_URL);
       ws.onopen = () => {
         ws.send(JSON.stringify({ event: "MessageSent", data: secureMessage }));
         ws.close();
       };
+
+      // ✅ Send Secure Message to UI
+      onSendMessage(JSON.stringify(secureMessage));
 
       // ✅ Clear Input
       setMessage("");
@@ -153,7 +118,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
           {hasWebDID && (
             <div className="flex items-center space-x-2">
               <Database className="h-3 w-3 text-accent" />
-              <span>DID Verified on StarkNet</span>
+              <span>DID Verified</span>
             </div>
           )}
         </div>
