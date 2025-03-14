@@ -1,10 +1,10 @@
 # ✅ Netlify Build Configuration for TetraCryptPQC_Nexus
-# ✅ Netlify Build Configuration for TetraCryptPQC_Nexus
 
 [build]
   command = "bun run build"      # Ensure Bun builds the project correctly
   publish = "dist"               # Correct publish directory for Netlify
   functions = "disabled"          # Explicitly disable Netlify Functions
+  timeout = 1800                  # Increases timeout to prevent build failures on large projects
 
 # ✅ Ensure Secure Build Environment
 [build.environment]
@@ -61,7 +61,3 @@
   from = "/api/*"
   to = "/api/index.js"
   status = 200
-
-# ✅ Increase Netlify Timeout for Large Builds
-[build]
-  timeout = 1800 # Increases timeout to prevent build failures on large projects
