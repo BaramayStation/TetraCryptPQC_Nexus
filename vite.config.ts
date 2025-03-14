@@ -1,14 +1,14 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import wasm from "@menci/vite-plugin-wasm"; // ✅ Correct Vite WASM Plugin
-import topLevelAwait from "vite-plugin-top-level-await"; // ✅ Ensures top-level async/await works with WASM
+import wasm from "@menci/vite-plugin-wasm"; // ✅ Corrected Import
+import topLevelAwait from "vite-plugin-top-level-await"; // ✅ Ensures top-level await works with WASM
 
 export default defineConfig({
   server: {
-    host: "0.0.0.0", // ✅ Ensures it runs on all network interfaces
+    host: "0.0.0.0",
     port: 8080,
-    strictPort: true, // ✅ Prevents random port selection
+    strictPort: true,
   },
   plugins: [
     react(),
@@ -21,17 +21,17 @@ export default defineConfig({
     },
   },
   define: {
-    global: "globalThis", // ✅ Fixes missing 'global' in browser
-    "process.env": {}, // ✅ Ensures Web3 compatibility
+    global: "globalThis",
+    "process.env": {},
   },
   optimizeDeps: {
-    exclude: ["pqcrypto", "wasm-feature-detect"], // ✅ Prevents pre-bundling PQC libraries
+    exclude: ["pqcrypto", "wasm-feature-detect"],
   },
   build: {
-    target: "esnext", // ✅ Supports latest JavaScript & WASM features
+    target: "esnext",
     outDir: "dist",
     minify: "esbuild",
-    sourcemap: true, // ✅ Enables debugging
-    chunkSizeWarningLimit: 500, // ✅ Prevents large module warnings
+    sourcemap: true,
+    chunkSizeWarningLimit: 500,
   },
 });
