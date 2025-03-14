@@ -45,7 +45,7 @@ TetraCryptPQC is designed for implementation in:
 
 ```sh
 # Clone the repository
-git clone <YOUR_GIT_URL>
+git clone https://github.com/BaramayStation/TetraCryptPQC-Nexus
 
 # Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
