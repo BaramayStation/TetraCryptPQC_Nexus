@@ -50,14 +50,20 @@ export interface SecureMessage {
 
 // 🔹 Save Messages Securely (Supports IPFS)
 export const saveMessage = async (message: SecureMessage): Promise<void> => {
-  const messages = getAllMessages();
-  messages.push(message);
+  try {
+    console.log("🔹 Encrypting and Storing Message on IPFS...");
+    
+    // Store the encrypted message in IPFS & obtain a CID
+    const cid = await saveToIPFS(message.encryptedContent);
 
-  if (message.ipfsHash) {
-    await saveToIPFS(message); // Store encrypted message in Web3 storage
+    // Store only the CID instead of full message
+    const messages = getAllMessages();
+    messages.push({ ...message, encryptedContent: cid });
+
+    secureStorage.set(STORAGE_KEYS.MESSAGES, messages);
+  } catch (error) {
+    console.error("❌ Failed to store message:", error);
   }
-
-  secureStorage.set(STORAGE_KEYS.MESSAGES, messages);
 };
 
 // 🔹 Retrieve Messages (with Quantum-Safe Decryption)
@@ -76,15 +82,21 @@ export const getMessagesForContact = async (contactId: string): Promise<SecureMe
       (message.senderId === contactId && message.receiverId === user.id)
   );
 
-  // Attempt to fetch missing messages from IPFS
-  for (let message of messages) {
-    if (message.ipfsHash) {
-      const decryptedMessage = await loadFromIPFS(message.ipfsHash);
-      if (decryptedMessage) message.encryptedContent = decryptedMessage;
-    }
-  }
-
-  return messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  // Fetch and decrypt messages from IPFS
+  return await Promise.all(
+    messages.map(async (message) => {
+      try {
+        if (message.encryptedContent.startsWith("Qm")) { // IPFS CID check
+          console.log(`🔹 Fetching message from IPFS: ${message.encryptedContent}`);
+          message.encryptedContent = await loadFromIPFS(message.encryptedContent);
+        }
+        return message;
+      } catch (error) {
+        console.error("❌ Failed to fetch message:", error);
+        return message;
+      }
+    })
+  );
 };
 
 // 🔹 Mark Messages as Read (Quantum-Secure Updates)
