@@ -1,22 +1,22 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import wasm from "vite-plugin-wasm"; // ✅ Correct package
-import topLevelAwait from "vite-plugin-top-level-await";
-import viteInspect from "vite-plugin-inspect"; // Debugging & analysis
+import wasm from "vite-plugin-wasm";  // Official WebAssembly support
+import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
+import viteInspect from "vite-plugin-inspect"; // Debugging & performance analysis
 
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: "0.0.0.0", // Allows external access (securely)
     port: 8080,
-    strictPort: true,
-    https: true,
+    strictPort: true, // Ensures no fallback ports
+    https: true, // Enforces TLS encryption during local development
   },
   plugins: [
-    react(),
-    wasm(), // ✅ Official working package
-    topLevelAwait(),
-    viteInspect(),
+    react(), // Optimized React rendering
+    wasm(), // Ensures WebAssembly ESM compatibility
+    topLevelAwait(), // Enables async/await WebAssembly support
+    viteInspect(), // Debugging & visualization plugin
   ],
   resolve: {
     alias: {
@@ -24,12 +24,12 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    exclude: ["@syntect/wasm"],
+    exclude: ["@syntect/wasm"], // Exclude problematic WebAssembly modules
     esbuildOptions: {
-      target: "esnext",
+      target: "esnext", // Ensures support for latest JavaScript features
       supported: {
-        bigint: true,
-        wasm: true,
+        bigint: true, // Enables BigInt support for cryptographic ops
+        wasm: true, // Enables direct WebAssembly imports
       },
     },
   },
@@ -37,25 +37,25 @@ export default defineConfig(({ mode }) => ({
     target: "esnext",
     outDir: "dist",
     sourcemap: true,
-    minify: "terser",
+    minify: "terser", // Highly secure minification
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ["ethers", "starknet"],
+          vendor: ["ethers", "starknet"], // Splits Web3 dependencies
         },
       },
     },
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
   },
   worker: {
-    format: "es",
+    format: "es", // Ensures compatibility with modern ES module workers
     plugins: [
       wasm(),
       topLevelAwait(),
     ],
   },
   define: {
-    global: "globalThis",
-    "process.env": {},
+    global: "globalThis", // Ensures compatibility across all JS environments
+    "process.env": {}, // Prevents environment variable leakage
   },
 }));
