@@ -1,112 +1,59 @@
-import { KeyEncapsulation, Signature } from "liboqs-wasm"; // ✅ WebAssembly PQC
-import crypto from "crypto-browserify"; // ✅ Secure RNG for browsers
-import { saveToIPFS, loadFromIPFS } from "@/lib/web3Storage"; // ✅ Web3 Decentralized Storage
+import { kyber, dilithium, sphincs, falcon } from "pqcrypto";
+import crypto from "crypto-browserify";
 
 // ============================================================
-// 🔹 ML-KEM-1024 Key Generation (Post-Quantum Secure) - WebAssembly
+// 🔹 Generate Key Pairs (Kyber, Dilithium, Falcon, SPHINCS+)
 // ============================================================
-export const generateMLKEMKeypair = async (): Promise<{ publicKey: string; privateKey: string }> => {
-  console.log("🔹 Generating ML-KEM-1024 Keypair (Post-Quantum Secure)");
-  
-  const kem = new KeyEncapsulation("ML-KEM-1024");
-  return {
-    publicKey: kem.publicKey.toString("hex"),
-    privateKey: kem.secretKey.toString("hex"),
-  };
+export const generateKyberKeypair = async () => {
+  console.log("🔹 Generating Kyber Keypair (Post-Quantum KEM)");
+  return kyber.keyPair();
+};
+
+export const generateDilithiumKeypair = async () => {
+  console.log("🔹 Generating Dilithium Keypair (Post-Quantum Signature)");
+  return dilithium.keyPair();
+};
+
+export const generateFalconKeypair = async () => {
+  console.log("🔹 Generating Falcon Keypair (Post-Quantum Signature)");
+  return falcon.keyPair();
+};
+
+export const generateSphincsKeypair = async () => {
+  console.log("🔹 Generating SPHINCS+ Keypair (Post-Quantum Signature)");
+  return sphincs.keyPair();
 };
 
 // ============================================================
-// 🔹 SLH-DSA Key Generation (Post-Quantum Signatures) - WebAssembly
+// 🔹 Post-Quantum Secure Encryption
 // ============================================================
-export const generateSLHDSAKeypair = async (): Promise<{ publicKey: string; privateKey: string }> => {
-  console.log("🔹 Generating SLH-DSA Keypair (Post-Quantum Secure)");
+export const encryptMessage = async (message: string, publicKey: Uint8Array) => {
+  console.log("🔹 Encrypting Message with Kyber (PQC KEM)");
+  return kyber.encrypt(message, publicKey);
+};
 
-  const sign = new Signature("SLH-DSA-SHAKE-256f");
-  return {
-    publicKey: sign.publicKey.toString("hex"),
-    privateKey: sign.secretKey.toString("hex"),
-  };
+export const decryptMessage = async (ciphertext: Uint8Array, privateKey: Uint8Array) => {
+  console.log("🔹 Decrypting Message with Kyber (PQC KEM)");
+  return kyber.decrypt(ciphertext, privateKey);
 };
 
 // ============================================================
-// 🔹 AES-256-GCM Encryption (NIST Approved)
+// 🔹 Post-Quantum Digital Signatures
 // ============================================================
-export const encryptMessage = async (message: string, key: string): Promise<string> => {
-  console.log("🔹 Encrypting with AES-256-GCM (NIST FIPS 197)");
+export const signMessage = async (message: string, privateKey: Uint8Array) => {
+  console.log("🔹 Signing Message with Dilithium (PQC Signature)");
+  return dilithium.sign(message, privateKey);
+};
 
-  const iv = crypto.randomBytes(12); // ✅ Secure IV
-  const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(key, "hex"), iv);
-  let encrypted = cipher.update(message, "utf8", "hex");
-  encrypted += cipher.final("hex");
-
-  return `${iv.toString("hex")}:${encrypted}`;
+export const verifySignature = async (message: string, signature: Uint8Array, publicKey: Uint8Array) => {
+  console.log("🔹 Verifying Message with Dilithium (PQC Signature)");
+  return dilithium.verify(message, signature, publicKey);
 };
 
 // ============================================================
-// 🔹 AES-256-GCM Decryption (NIST Approved)
+// 🔹 Random Quantum-Safe Session Keys (AES-256)
 // ============================================================
-export const decryptMessage = async (encryptedMessage: string, key: string): Promise<string> => {
-  console.log("🔹 Decrypting with AES-256-GCM (NIST FIPS 197)");
-
-  const [iv, encrypted] = encryptedMessage.split(":");
-  const decipher = crypto.createDecipheriv("aes-256-gcm", Buffer.from(key, "hex"), Buffer.from(iv, "hex"));
-  let decrypted = decipher.update(encrypted, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-
-  return decrypted;
-};
-
-// ============================================================
-// 🔹 zk-SNARKs Zero-Knowledge Proof for Identity Verification
-// ============================================================
-export const generateZKProof = async (claim: string): Promise<string> => {
-  console.log("🔹 Generating zk-SNARK for identity verification");
-  const hash = crypto.createHash("sha256").update(claim).digest("hex");
-  return `zkp-${hash}`;
-};
-
-// ============================================================
-// 🔹 Web3 Decentralized Identity (DID) Generation
-// ============================================================
-export const generateDID = async (mlkemPublicKey: string, slhdsaPublicKey: string): Promise<any> => {
-  console.log("🔹 Generating Web3 Decentralized Identity (DID)");
-
-  const id = `did:tetrapqc:${crypto.randomUUID()}`;
-  const zkProof = await generateZKProof(id);
-
-  return {
-    id,
-    publicKey: { type: "ML-KEM-1024", key: mlkemPublicKey },
-    signature: { type: "SLH-DSA", value: slhdsaPublicKey },
-    authentication: [{ type: "zk-SNARK", proof: zkProof }],
-  };
-};
-
-// ============================================================
-// 🔹 Web3 Storage (IPFS / Arweave / Filecoin)
-// ============================================================
-export const saveToIPFS = async (data: string): Promise<string> => {
-  console.log("🔹 Storing Encrypted Message on IPFS");
-  return `ipfs://${crypto.createHash("sha256").update(data).digest("hex")}`;
-};
-
-export const loadFromIPFS = async (hash: string): Promise<string | null> => {
-  console.log("🔹 Loading Message from IPFS:", hash);
-  return null; // Simulate fetching from IPFS
-};
-
-// ============================================================
-// 🔹 Homomorphic Encryption (Privacy-Preserving Computation)
-// ============================================================
-export const homomorphicEncrypt = async (data: string): Promise<string> => {
-  console.log("🔹 Applying Homomorphic Encryption");
-  return `HE-${crypto.createHash("sha256").update(data).digest("hex")}`;
-};
-
-// ============================================================
-// 🔹 Secure Multi-Party Computation (SMPC) Simulation
-// ============================================================
-export const simulateSMPC = async (inputData: string): Promise<string> => {
-  console.log("🔹 Simulating Secure Multi-Party Computation (SMPC)");
-  return `SMPC-${crypto.createHash("sha256").update(inputData).digest("hex")}`;
+export const generateSessionKey = async () => {
+  console.log("🔹 Generating AES-256 Session Key");
+  return crypto.randomBytes(32).toString("hex");
 };
