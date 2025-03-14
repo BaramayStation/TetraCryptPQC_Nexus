@@ -1,17 +1,17 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
+import NodePolyfillPlugin from "node-polyfill-webpack-plugin";
 
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "0.0.0.0",
+    host: "::",
     port: 8080,
   },
   plugins: [
     react(),
-    mode === "development" && componentTagger(),
-  ].filter(Boolean),
+    new NodePolyfillPlugin(), // ✅ Fixes missing crypto/fs/path modules for Web3 & PQC
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -19,13 +19,10 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      external: [
-        "oqs", // ✅ Ensures OQS is treated correctly
-        "crypto", // ✅ Prevents Vite from treating it as a browser module
-      ],
+      external: ["oqs", "crypto"], // ✅ Ensures oqs & crypto don't break Vite builds
     },
   },
   optimizeDeps: {
-    include: ["crypto"], // ✅ Ensures `crypto` is included for use in both Node.js and browser
+    include: ["oqs", "ethers", "ipfs-http-client"], // ✅ Ensures Web3 & PQC libraries work
   },
 }));
