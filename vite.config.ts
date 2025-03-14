@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react-swc";
 import wasm from "vite-plugin-wasm";  // Official WebAssembly support
 import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     https: true, // Enforces TLS encryption during local development
   },
   plugins: [
-    react(), // Optimized React rendering
+    react(), // Optimized React rendering with SWC
     wasm(), // Ensures WebAssembly ESM compatibility
     topLevelAwait(), // Enables async/await WebAssembly support
     viteInspect(), // Debugging & visualization plugin
