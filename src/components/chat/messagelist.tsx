@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Lock, Database } from "lucide-react";
 import { decryptAES } from "@/lib/crypto";
-import { Account, Contract, hash } from "starknet";
+import { Provider, Contract, hash } from "starknet";
 import { getUserProfile } from "@/lib/storage";
 
 // ✅ StarkNet Messaging Contract Address
 const STARKNET_MESSAGING_CONTRACT = "0xYourStarkNetMessagingContractAddress";
+const WEBSOCKET_URL = "wss://starknet.io/events"; // WebSocket for real-time messages
 
 interface Message {
   sender: string;
@@ -14,10 +15,10 @@ interface Message {
   timestamp: number;
 }
 
-// ✅ MessageList Component
 const MessageList: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [ws, setWs] = useState<WebSocket | null>(null);
   const user = getUserProfile();
 
   // ✅ Fetch Messages from StarkNet
@@ -25,7 +26,7 @@ const MessageList: React.FC = () => {
     setLoading(true);
 
     try {
-      const provider = new Account(user.provider, user.starknetAddress);
+      const provider = new Provider({ rpc: { nodeUrl: "https://starknet-mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID" } });
       const messagingContract = new Contract(
         [
           {
@@ -44,7 +45,7 @@ const MessageList: React.FC = () => {
 
       const response = await messagingContract.call("get_message", [
         user.starknetAddress,
-        "0xReceiverAddress", // Change dynamically based on chat partner
+        "0xReceiverAddress", // Dynamically change based on chat partner
       ]);
 
       const encryptedContent = response.encrypted_content;
@@ -52,8 +53,8 @@ const MessageList: React.FC = () => {
       // ✅ Decrypt Messages
       const decryptedMessage = decryptAES(encryptedContent, user.sessionKey);
 
-      setMessages([
-        ...messages,
+      setMessages((prevMessages) => [
+        ...prevMessages,
         {
           sender: "You",
           content: decryptedMessage,
@@ -67,10 +68,46 @@ const MessageList: React.FC = () => {
     }
   };
 
-  // ✅ Auto-Fetch Messages on Load
+  // ✅ WebSocket Real-Time Updates
   useEffect(() => {
-    fetchMessages();
-  }, []);
+    if (!user) return;
+
+    const websocket = new WebSocket(WEBSOCKET_URL);
+
+    websocket.onopen = () => {
+      console.log("🔹 WebSocket Connected");
+      websocket.send(JSON.stringify({ contract_address: STARKNET_MESSAGING_CONTRACT, event: "MessageSent" }));
+    };
+
+    websocket.onmessage = async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("📩 New message received:", data);
+
+        if (data.event === "MessageSent") {
+          const decryptedContent = decryptAES(data.encrypted_content, user.sessionKey);
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              sender: data.sender,
+              content: decryptedContent,
+              timestamp: Date.now(),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("❌ Error processing WebSocket message:", error);
+      }
+    };
+
+    websocket.onclose = () => console.log("🔴 WebSocket Disconnected");
+
+    setWs(websocket);
+
+    return () => {
+      if (websocket) websocket.close();
+    };
+  }, [user]);
 
   return (
     <div className="p-4 border rounded-lg shadow-lg bg-gray-900 text-white">
