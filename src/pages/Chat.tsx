@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Account, Contract } from "starknet";
+import { getFileFromIPFS } from "@/lib/helia";
 
 // ✅ StarkNet Messaging Contract Address
 const STARKNET_MESSAGING_CONTRACT = "0xYourStarkNetMessagingContractAddress";
@@ -52,7 +53,7 @@ const Chat = () => {
     navigate("/settings");
   };
 
-  // ✅ Fetch Messages from StarkNet on Contact Selection
+  // ✅ Fetch Messages from StarkNet & IPFS
   const fetchMessagesFromStarkNet = async () => {
     if (!user || !selectedContactId) return;
 
@@ -67,7 +68,7 @@ const Chat = () => {
               { name: "sender", type: "felt" },
               { name: "receiver", type: "felt" },
             ],
-            outputs: [{ name: "encrypted_content", type: "felt" }],
+            outputs: [{ name: "cid", type: "felt" }],
           },
         ],
         STARKNET_MESSAGING_CONTRACT,
@@ -79,7 +80,12 @@ const Chat = () => {
         selectedContactId,
       ]);
 
-      console.log("🔹 Retrieved Messages:", response);
+      const cid = response.cid;
+      if (cid) {
+        console.log("🔹 Retrieved CID from StarkNet:", cid);
+        const encryptedMessage = await getFileFromIPFS(cid);
+        console.log("🔹 Decrypted Message:", encryptedMessage);
+      }
     } catch (error) {
       console.error("❌ StarkNet Message Fetch Failed:", error);
     }
