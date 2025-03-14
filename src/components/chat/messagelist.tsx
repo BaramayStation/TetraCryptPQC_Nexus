@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, Lock, Database } from "lucide-react";
-import { decryptAES } from "@/lib/crypto";
+import { decryptAES, verifyZKProof } from "@/lib/crypto"; // Ensure zk-STARK proof validation
 import { Provider, Contract, hash } from "starknet";
 import { getUserProfile } from "@/lib/storage";
 
@@ -45,10 +44,17 @@ const MessageList: React.FC = () => {
 
       const response = await messagingContract.call("get_message", [
         user.starknetAddress,
-        "0xReceiverAddress", // Dynamically change based on chat partner
+        "0xReceiverAddress", // Dynamically set based on chat partner
       ]);
 
       const encryptedContent = response.encrypted_content;
+
+      // ✅ Validate zk-STARK Proof Before Decrypting
+      const isValidProof = await verifyZKProof(encryptedContent);
+      if (!isValidProof) {
+        console.warn("❌ Message validation failed: Invalid zk-STARK proof");
+        return;
+      }
 
       // ✅ Decrypt Messages
       const decryptedMessage = decryptAES(encryptedContent, user.sessionKey);
@@ -68,44 +74,65 @@ const MessageList: React.FC = () => {
     }
   };
 
-  // ✅ WebSocket Real-Time Updates
+  // ✅ WebSocket Real-Time Updates with Reconnection
   useEffect(() => {
     if (!user) return;
 
-    const websocket = new WebSocket(WEBSOCKET_URL);
+    const connectWebSocket = () => {
+      const websocket = new WebSocket(WEBSOCKET_URL);
 
-    websocket.onopen = () => {
-      console.log("🔹 WebSocket Connected");
-      websocket.send(JSON.stringify({ contract_address: STARKNET_MESSAGING_CONTRACT, event: "MessageSent" }));
-    };
+      websocket.onopen = () => {
+        console.log("🔹 WebSocket Connected");
+        websocket.send(JSON.stringify({ contract_address: STARKNET_MESSAGING_CONTRACT, event: "MessageSent" }));
+      };
 
-    websocket.onmessage = async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("📩 New message received:", data);
+      websocket.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📩 New message received:", data);
 
-        if (data.event === "MessageSent") {
-          const decryptedContent = decryptAES(data.encrypted_content, user.sessionKey);
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              sender: data.sender,
-              content: decryptedContent,
-              timestamp: Date.now(),
-            },
-          ]);
+          if (data.event === "MessageSent") {
+            // ✅ Ensure Message is Not Duplicated
+            if (messages.some((msg) => msg.content === data.encrypted_content)) {
+              console.warn("⚠️ Duplicate message detected. Skipping.");
+              return;
+            }
+
+            // ✅ Validate zk-STARK Proof Before Decrypting
+            const isValidProof = await verifyZKProof(data.encrypted_content);
+            if (!isValidProof) {
+              console.warn("❌ Invalid zk-STARK proof detected. Ignoring message.");
+              return;
+            }
+
+            // ✅ Decrypt and Append Message
+            const decryptedContent = decryptAES(data.encrypted_content, user.sessionKey);
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                sender: data.sender,
+                content: decryptedContent,
+                timestamp: Date.now(),
+              },
+            ]);
+          }
+        } catch (error) {
+          console.error("❌ Error processing WebSocket message:", error);
         }
-      } catch (error) {
-        console.error("❌ Error processing WebSocket message:", error);
-      }
+      };
+
+      websocket.onclose = () => {
+        console.log("🔴 WebSocket Disconnected. Reconnecting in 3s...");
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      setWs(websocket);
     };
 
-    websocket.onclose = () => console.log("🔴 WebSocket Disconnected");
-
-    setWs(websocket);
+    connectWebSocket();
 
     return () => {
-      if (websocket) websocket.close();
+      if (ws) ws.close();
     };
   }, [user]);
 
