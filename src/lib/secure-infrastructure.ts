@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Secure Infrastructure Module
  * 
@@ -291,3 +290,115 @@ export async function initializeSecureInfrastructure(): Promise<boolean> {
     return false;
   }
 }
+
+export const createSecureInfraNode = async (
+  nodeConfig: SecureNodeConfig,
+  options?: SecurityOptions
+): Promise<SecureNode> => {
+  console.log(`Creating secure infrastructure node: ${nodeConfig.name}`);
+  
+  // Log security event
+  logSecurityEvent({
+    type: "infrastructure",
+    severity: "info",
+    message: `Created secure infrastructure node: ${nodeConfig.name}`,
+    timestamp: new Date().toISOString(),
+    data: { nodeConfig }
+  });
+  
+  // Simulate node creation with a delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  return {
+    id: crypto.randomUUID(),
+    name: nodeConfig.name,
+    type: nodeConfig.type,
+    status: "active",
+    securityLevel: nodeConfig.securityLevel,
+    createdAt: new Date().toISOString(),
+    lastUpdated: new Date().toISOString(),
+    metrics: {
+      uptime: 0,
+      requestsProcessed: 0,
+      securityIncidents: 0
+    }
+  };
+};
+
+export const verifyContainerIntegrity = async (
+  containerId: string,
+  options?: SecurityOptions
+): Promise<boolean> => {
+  console.log(`Verifying container integrity: ${containerId}`);
+  
+  // Log security event
+  logSecurityEvent({
+    type: "infrastructure",
+    severity: "info",
+    message: `Verifying container integrity: ${containerId}`,
+    timestamp: new Date().toISOString(),
+    data: { containerId }
+  });
+  
+  // Simulate verification with a delay
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  // 95% chance of successful verification
+  const isIntegrityValid = Math.random() < 0.95;
+  
+  if (!isIntegrityValid) {
+    logSecurityEvent({
+      type: "infrastructure",
+      severity: "critical",
+      message: `Container integrity verification failed: ${containerId}`,
+      timestamp: new Date().toISOString(),
+      data: { containerId }
+    });
+  }
+  
+  return isIntegrityValid;
+};
+
+export const rotateContainer = async (
+  containerId: string,
+  options?: SecurityOptions
+): Promise<SecureContainer> => {
+  console.log(`Rotating container: ${containerId}`);
+  
+  // Log security event
+  logSecurityEvent({
+    type: "infrastructure",
+    severity: "info",
+    message: `Rotating container: ${containerId}`,
+    timestamp: new Date().toISOString(),
+    data: { containerId }
+  });
+  
+  // Simulate container rotation with a delay
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  
+  return {
+    id: crypto.randomUUID(),
+    name: `container-${Math.floor(Math.random() * 1000)}`,
+    type: "standard",
+    status: "active",
+    securityProfile: "high",
+    confinement: "strict",
+    networkPolicy: "restricted",
+    resources: {
+      cpu: "100m",
+      memory: "256Mi",
+      storage: "1Gi"
+    },
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    signatures: {
+      image: crypto.randomUUID(),
+      config: crypto.randomUUID()
+    },
+    verificationStatus: "verified"
+  };
+};
+
+// Rename this function to match the import in SecureInfrastructurePanel.tsx
+export const createSecureServiceMesh = createSecureMesh;

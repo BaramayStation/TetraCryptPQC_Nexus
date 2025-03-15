@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Confidential Computing Module
  * 
@@ -456,3 +455,13 @@ export async function initializeConfidentialComputing(): Promise<boolean> {
     return false;
   }
 }
+
+// Add "system" to the SecurityEventType union
+export type SecurityEventType = 
+  | "attestation" 
+  | "key_management" 
+  | "confidential_computing" 
+  | "infrastructure"
+  | "system" 
+  | "access_control" 
+  | "audit";

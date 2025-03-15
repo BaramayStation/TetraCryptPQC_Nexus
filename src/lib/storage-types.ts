@@ -320,3 +320,16 @@ export interface SecureServiceMesh {
   created: string;
   lastUpdated: string;
 }
+
+// Define severity types for threat classification
+export type ThreatSeverity = "critical" | "high" | "medium" | "low";
+
+// Define threat interface for security monitoring
+export interface Threat {
+  id: string;
+  severity: ThreatSeverity;
+  description: string;
+  timestamp: string;
+  indicators: string[];
+  mitigationSteps: string[];
+}

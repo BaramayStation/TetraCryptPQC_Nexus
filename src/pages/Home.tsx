@@ -63,7 +63,7 @@ const HomePage = () => {
         </div>
       </section>
       
-      {/* Unimetrix1 Token Section - NEW SECTION */}
+      {/* Unimetrix1 Token Section */}
       <section className="py-16 bg-secondary/5">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
