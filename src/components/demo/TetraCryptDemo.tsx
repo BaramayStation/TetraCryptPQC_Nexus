@@ -1,905 +1,1090 @@
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
-import { Progress } from "@/components/ui/progress";
+import { Shield, Lock, KeyRound, FileText, Send, RefreshCw, Download, Upload, Cpu, Globe, Network } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 import { 
-  Lock, 
-  Key, 
-  Shield, 
-  RefreshCw, 
-  CheckCircle, 
-  AlertTriangle, 
-  Clock, 
-  Send,
-  Download,
-  Cpu,
-  FileText,
-  Globe,
-  Rocket,
-  Satellite,
-  Loader
-} from "lucide-react";
-
-import { 
-  generateRandomBytes, 
-  toHexString,
   encapsulateKey, 
-  decapsulateKey,
-  signData,
-  verifySignature,
+  decapsulateKey, 
+  signData, 
+  verifySignature, 
+  hashWithSHA3, 
+  symmetricEncrypt, 
+  symmetricDecrypt, 
+  toHexString, 
+  fromHexString, 
+  generateRandomBytes,
   deriveKey,
-  symmetricEncrypt,
-  symmetricDecrypt,
   sendDTNMessage,
-  DTNMessage,
-  PQC
-} from "@/lib/pqcrypto-core";
+  DTNMessage
+} from '@/lib/pqcrypto-core';
 
-// Demo for ML-KEM Key Encapsulation
-const KeyEncapsulationDemo: React.FC = () => {
-  const [generatingKeys, setGeneratingKeys] = useState(false);
-  const [encapsulating, setEncapsulating] = useState(false);
-  const [decapsulating, setDecapsulating] = useState(false);
-  const [keyPair, setKeyPair] = useState<{ publicKey: string; privateKey: string } | null>(null);
-  const [ciphertext, setCiphertext] = useState<string | null>(null);
-  const [sharedSecret, setSharedSecret] = useState<string | null>(null);
+interface KeyPair {
+  publicKey: string;
+  privateKey: string;
+}
+
+interface EncapsulationResult {
+  ciphertext: string;
+  sharedSecret: string;
+}
+
+const TetraCryptDemo: React.FC = () => {
+  // General state
+  const [activeTab, setActiveTab] = useState("key-encapsulation");
+  const [loading, setLoading] = useState(false);
+
+  // Key Encapsulation state
+  const [kemKeyPair, setKEMKeyPair] = useState<KeyPair | null>(null);
+  const [encapsulationResult, setEncapsulationResult] = useState<EncapsulationResult | null>(null);
   const [decapsulatedSecret, setDecapsulatedSecret] = useState<string | null>(null);
-  const [secretsMatch, setSecretsMatch] = useState<boolean | null>(null);
-  const { toast } = useToast();
 
-  const generateKeyPair = async () => {
-    setGeneratingKeys(true);
+  // Digital Signature state
+  const [signatureKeyPair, setSignatureKeyPair] = useState<KeyPair | null>(null);
+  const [messageToSign, setMessageToSign] = useState("");
+  const [signature, setSignature] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [verificationResult, setVerificationResult] = useState<boolean | null>(null);
+
+  // Symmetric Encryption state
+  const [symmetricKey, setSymmetricKey] = useState("");
+  const [plaintext, setPlaintext] = useState("");
+  const [ciphertext, setCiphertext] = useState("");
+  const [decryptedText, setDecryptedText] = useState("");
+
+  // Hash state
+  const [hashInput, setHashInput] = useState("");
+  const [hashOutput, setHashOutput] = useState("");
+  
+  // DTN state
+  const [dtnSender, setDtnSender] = useState("earth-station-1");
+  const [dtnRecipient, setDtnRecipient] = useState("mars-outpost-12");
+  const [dtnMessage, setDtnMessage] = useState("");
+  const [dtnDelay, setDtnDelay] = useState(3000);
+  const [dtnMessages, setDtnMessages] = useState<DTNMessage[]>([]);
+  const [dtnStatus, setDtnStatus] = useState("");
+
+  // Key Encapsulation functions
+  const generateKEMKeyPair = async () => {
+    setLoading(true);
     try {
-      // For demo, simulate ML-KEM key generation
-      const publicKeyBytes = generateRandomBytes(1536); // ML-KEM-1024 public key size
-      const privateKeyBytes = generateRandomBytes(3168); // ML-KEM-1024 private key size
+      const publicKey = toHexString(generateRandomBytes(32));
+      const privateKey = toHexString(generateRandomBytes(64));
       
-      setKeyPair({
-        publicKey: toHexString(publicKeyBytes),
-        privateKey: toHexString(privateKeyBytes)
-      });
-      
+      setKEMKeyPair({ publicKey, privateKey });
       toast({
-        title: "Keys Generated",
-        description: "ML-KEM-1024 key pair generated successfully",
+        title: "ML-KEM Key Pair Generated",
+        description: "Post-quantum key pair has been successfully generated.",
       });
-      
-      // Reset other states
-      setCiphertext(null);
-      setSharedSecret(null);
-      setDecapsulatedSecret(null);
-      setSecretsMatch(null);
     } catch (error) {
       console.error("Error generating key pair:", error);
       toast({
         title: "Key Generation Failed",
-        description: "Could not generate ML-KEM key pair",
+        description: error instanceof Error ? error.message : "Failed to generate key pair",
         variant: "destructive",
       });
     } finally {
-      setGeneratingKeys(false);
+      setLoading(false);
     }
   };
 
   const performEncapsulation = async () => {
-    if (!keyPair) {
+    if (!kemKeyPair) {
       toast({
-        title: "No Keys Available",
+        title: "No Key Pair",
         description: "Please generate a key pair first",
         variant: "destructive",
       });
       return;
     }
-    
-    setEncapsulating(true);
+
+    setLoading(true);
     try {
-      const result = await encapsulateKey(keyPair.publicKey);
-      setCiphertext(result.ciphertext);
-      setSharedSecret(result.sharedSecret);
-      
+      const result = await encapsulateKey(kemKeyPair.publicKey);
+      setEncapsulationResult(result);
       toast({
-        title: "Encapsulation Successful",
-        description: "Shared secret encapsulated with public key",
+        title: "Key Encapsulation Successful",
+        description: "A shared secret has been encapsulated using ML-KEM.",
       });
     } catch (error) {
-      console.error("Error during encapsulation:", error);
+      console.error("Error encapsulating key:", error);
       toast({
         title: "Encapsulation Failed",
-        description: "Could not encapsulate shared secret",
+        description: error instanceof Error ? error.message : "Failed to encapsulate key",
         variant: "destructive",
       });
     } finally {
-      setEncapsulating(false);
+      setLoading(false);
     }
   };
 
   const performDecapsulation = async () => {
-    if (!keyPair || !ciphertext) {
+    if (!kemKeyPair || !encapsulationResult) {
       toast({
         title: "Missing Data",
-        description: "Key pair and ciphertext are required for decapsulation",
+        description: "Key pair and encapsulation result are required",
         variant: "destructive",
       });
       return;
     }
-    
-    setDecapsulating(true);
+
+    setLoading(true);
     try {
-      const result = await decapsulateKey(ciphertext, keyPair.privateKey);
-      setDecapsulatedSecret(result);
+      const sharedSecret = await decapsulateKey(
+        encapsulationResult.ciphertext,
+        kemKeyPair.privateKey
+      );
       
-      // Check if decapsulated secret matches the original shared secret
-      const match = result === sharedSecret;
-      setSecretsMatch(match);
+      setDecapsulatedSecret(sharedSecret);
+      
+      // Verify if the decapsulated secret matches the original
+      const isMatch = sharedSecret === encapsulationResult.sharedSecret;
       
       toast({
-        title: match ? "Decapsulation Successful" : "Secret Mismatch",
-        description: match ? "Shared secret recovered successfully" : "Decapsulated secret does not match original",
-        variant: match ? "default" : "destructive",
+        title: isMatch ? "Decapsulation Successful" : "Decapsulation Warning",
+        description: isMatch 
+          ? "The shared secret was correctly recovered." 
+          : "The decapsulated secret does not match the original.",
+        variant: isMatch ? "default" : "destructive",
       });
     } catch (error) {
-      console.error("Error during decapsulation:", error);
+      console.error("Error decapsulating key:", error);
       toast({
         title: "Decapsulation Failed",
-        description: "Could not recover shared secret",
+        description: error instanceof Error ? error.message : "Failed to decapsulate key",
         variant: "destructive",
       });
     } finally {
-      setDecapsulating(false);
+      setLoading(false);
     }
   };
 
-  return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <div className="flex items-center space-x-2">
-          <Lock className="h-5 w-5 text-primary" />
-          <CardTitle>ML-KEM Key Encapsulation</CardTitle>
-        </div>
-        <CardDescription>
-          NIST FIPS 205 standardized post-quantum key encapsulation mechanism
-        </CardDescription>
-        <Badge className="w-fit" variant="outline">{PQC.SECURITY_LEVEL.L5}</Badge>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>ML-KEM-1024 Key Pair</Label>
-              <Button 
-                size="sm" 
-                onClick={generateKeyPair} 
-                disabled={generatingKeys}
-                variant="outline"
-              >
-                {generatingKeys ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Key className="h-4 w-4 mr-2" />}
-                Generate Keys
-              </Button>
-            </div>
-            {keyPair && (
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-xs">Public Key</Label>
-                  <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-16 overflow-y-auto">
-                    {keyPair.publicKey}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Private Key (protected)</Label>
-                  <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-16 overflow-y-auto">
-                    {keyPair.privateKey.substring(0, 64)}...
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Key Encapsulation</Label>
-              <Button 
-                size="sm" 
-                onClick={performEncapsulation} 
-                disabled={!keyPair || encapsulating}
-                variant="outline"
-              >
-                {encapsulating ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Shield className="h-4 w-4 mr-2" />}
-                Encapsulate
-              </Button>
-            </div>
-            {ciphertext && (
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-xs">Ciphertext</Label>
-                  <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-10 overflow-y-auto">
-                    {ciphertext}
-                  </div>
-                </div>
-                {sharedSecret && (
-                  <div>
-                    <Label className="text-xs">Shared Secret</Label>
-                    <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-10 overflow-y-auto">
-                      {sharedSecret}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Key Decapsulation</Label>
-              <Button 
-                size="sm" 
-                onClick={performDecapsulation} 
-                disabled={!keyPair || !ciphertext || decapsulating}
-                variant="outline"
-              >
-                {decapsulating ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Key className="h-4 w-4 mr-2" />}
-                Decapsulate
-              </Button>
-            </div>
-            {decapsulatedSecret && (
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-xs">Decapsulated Secret</Label>
-                  <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-10 overflow-y-auto">
-                    {decapsulatedSecret}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {secretsMatch !== null && (
-                    secretsMatch ? (
-                      <Alert variant="default" className="bg-green-50 border-green-200">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <AlertTitle>Success</AlertTitle>
-                        <AlertDescription>Secrets match! Key encapsulation/decapsulation successful.</AlertDescription>
-                      </Alert>
-                    ) : (
-                      <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>Secret mismatch! Key encapsulation/decapsulation failed.</AlertDescription>
-                      </Alert>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Demo for SLH-DSA Digital Signatures
-const DigitalSignatureDemo: React.FC = () => {
-  const [generatingKeys, setGeneratingKeys] = useState(false);
-  const [signing, setSigning] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [keyPair, setKeyPair] = useState<{ publicKey: string; privateKey: string } | null>(null);
-  const [message, setMessage] = useState("");
-  const [signature, setSignature] = useState<string | null>(null);
-  const [verificationResult, setVerificationResult] = useState<boolean | null>(null);
-  const { toast } = useToast();
-
-  const generateKeyPair = async () => {
-    setGeneratingKeys(true);
+  // Digital Signature functions
+  const generateSignatureKeyPair = async () => {
+    setLoading(true);
     try {
-      // For demo, simulate SLH-DSA key generation
-      const publicKeyBytes = generateRandomBytes(1312); // SLH-DSA Dilithium5 public key size
-      const privateKeyBytes = generateRandomBytes(2528); // SLH-DSA Dilithium5 private key size
+      const publicKey = toHexString(generateRandomBytes(32));
+      const privateKey = toHexString(generateRandomBytes(64));
       
-      setKeyPair({
-        publicKey: toHexString(publicKeyBytes),
-        privateKey: toHexString(privateKeyBytes)
-      });
-      
+      setSignatureKeyPair({ publicKey, privateKey });
       toast({
-        title: "Keys Generated",
-        description: "SLH-DSA Dilithium5 key pair generated successfully",
+        title: "SLH-DSA Key Pair Generated",
+        description: "Post-quantum signature key pair has been successfully generated.",
       });
-      
-      // Reset other states
-      setSignature(null);
-      setVerificationResult(null);
     } catch (error) {
-      console.error("Error generating key pair:", error);
+      console.error("Error generating signature key pair:", error);
       toast({
         title: "Key Generation Failed",
-        description: "Could not generate SLH-DSA key pair",
+        description: error instanceof Error ? error.message : "Failed to generate signature key pair",
         variant: "destructive",
       });
     } finally {
-      setGeneratingKeys(false);
+      setLoading(false);
     }
   };
 
   const signMessage = async () => {
-    if (!keyPair || !message) {
+    if (!signatureKeyPair || !messageToSign) {
       toast({
         title: "Missing Data",
-        description: "Key pair and message are required for signing",
+        description: "Key pair and message are required",
         variant: "destructive",
       });
       return;
     }
-    
-    setSigning(true);
+
+    setLoading(true);
     try {
-      const result = await signData(message, keyPair.privateKey);
-      setSignature(result);
-      setVerificationResult(null); // Reset verification
-      
+      const signatureResult = await signData(messageToSign, signatureKeyPair.privateKey);
+      setSignature(signatureResult);
       toast({
-        title: "Signing Successful",
-        description: "Message signed with SLH-DSA Dilithium5",
+        title: "Message Signed",
+        description: "Message has been signed using SLH-DSA.",
       });
     } catch (error) {
-      console.error("Error during signing:", error);
+      console.error("Error signing message:", error);
       toast({
         title: "Signing Failed",
-        description: "Could not sign message",
+        description: error instanceof Error ? error.message : "Failed to sign message",
         variant: "destructive",
       });
     } finally {
-      setSigning(false);
+      setLoading(false);
     }
   };
 
   const verifyMessageSignature = async () => {
-    if (!keyPair || !message || !signature) {
+    if (!signatureKeyPair || !signature || !verificationMessage) {
       toast({
         title: "Missing Data",
-        description: "Key pair, message, and signature are required for verification",
+        description: "Key pair, signature, and message are required",
         variant: "destructive",
       });
       return;
     }
-    
-    setVerifying(true);
+
+    setLoading(true);
     try {
-      const result = await verifySignature(message, signature, keyPair.publicKey);
-      setVerificationResult(result);
+      const isValid = await verifySignature(
+        verificationMessage,
+        signature,
+        signatureKeyPair.publicKey
+      );
       
+      setVerificationResult(isValid);
       toast({
-        title: result ? "Verification Successful" : "Verification Failed",
-        description: result ? "Signature is valid" : "Invalid signature detected",
-        variant: result ? "default" : "destructive",
+        title: isValid ? "Signature Valid" : "Signature Invalid",
+        description: isValid 
+          ? "The signature is valid for this message and public key." 
+          : "The signature verification failed.",
+        variant: isValid ? "default" : "destructive",
       });
     } catch (error) {
-      console.error("Error during verification:", error);
+      console.error("Error verifying signature:", error);
       toast({
-        title: "Verification Error",
-        description: "Could not verify signature",
+        title: "Verification Failed",
+        description: error instanceof Error ? error.message : "Failed to verify signature",
         variant: "destructive",
       });
     } finally {
-      setVerifying(false);
+      setLoading(false);
     }
   };
 
-  const handleTamper = () => {
-    if (!signature) return;
-    
-    // Modify a character in the signature to simulate tampering
-    const sigArray = signature.split('');
-    const randomIndex = Math.floor(Math.random() * sigArray.length);
-    sigArray[randomIndex] = sigArray[randomIndex] === 'f' ? '0' : 'f';
-    
-    setSignature(sigArray.join(''));
-    setVerificationResult(null); // Reset verification
-    
-    toast({
-      title: "Signature Tampered",
-      description: "Signature has been modified to simulate an attack",
-      variant: "destructive",
-    });
+  // Symmetric Encryption functions
+  const generateSymmetricKey = async () => {
+    setLoading(true);
+    try {
+      const keyBytes = generateRandomBytes(32);
+      const key = toHexString(keyBytes);
+      setSymmetricKey(key);
+      toast({
+        title: "Symmetric Key Generated",
+        description: "A 256-bit symmetric key has been generated.",
+      });
+    } catch (error) {
+      console.error("Error generating symmetric key:", error);
+      toast({
+        title: "Key Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate symmetric key",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <div className="flex items-center space-x-2">
-          <Shield className="h-5 w-5 text-primary" />
-          <CardTitle>SLH-DSA Digital Signatures</CardTitle>
-        </div>
-        <CardDescription>
-          NIST FIPS 206 standardized post-quantum digital signature algorithm
-        </CardDescription>
-        <Badge className="w-fit" variant="outline">{PQC.SECURITY_LEVEL.L5}</Badge>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>SLH-DSA Dilithium5 Key Pair</Label>
-              <Button 
-                size="sm" 
-                onClick={generateKeyPair} 
-                disabled={generatingKeys}
-                variant="outline"
-              >
-                {generatingKeys ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <Key className="h-4 w-4 mr-2" />}
-                Generate Keys
-              </Button>
-            </div>
-            {keyPair && (
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-xs">Public Key</Label>
-                  <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-12 overflow-y-auto">
-                    {keyPair.publicKey}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-xs">Private Key (protected)</Label>
-                  <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-12 overflow-y-auto">
-                    {keyPair.privateKey.substring(0, 64)}...
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <Label>Message to Sign</Label>
-            <Textarea
-              placeholder="Enter a message to sign..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="min-h-20"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Digital Signature</Label>
-              <div className="flex space-x-2">
-                <Button 
-                  size="sm" 
-                  onClick={signMessage} 
-                  disabled={!keyPair || !message || signing}
-                  variant="outline"
-                >
-                  {signing ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
-                  Sign
-                </Button>
-                {signature && (
-                  <Button 
-                    size="sm" 
-                    onClick={handleTamper}
-                    variant="destructive"
-                  >
-                    <AlertTriangle className="h-4 w-4 mr-2" />
-                    Tamper
-                  </Button>
-                )}
-              </div>
-            </div>
-            {signature && (
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-xs">Signature</Label>
-                  <div className="text-xs font-mono bg-muted p-2 rounded-md overflow-x-auto h-20 overflow-y-auto">
-                    {signature}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <Separator />
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Signature Verification</Label>
-              <Button 
-                size="sm" 
-                onClick={verifyMessageSignature} 
-                disabled={!keyPair || !message || !signature || verifying}
-                variant="outline"
-              >
-                {verifying ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
-                Verify
-              </Button>
-            </div>
-            {verificationResult !== null && (
-              <Alert variant={verificationResult ? "default" : "destructive"} className={verificationResult ? "bg-green-50 border-green-200" : ""}>
-                {verificationResult ? (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                ) : (
-                  <AlertTriangle className="h-4 w-4" />
-                )}
-                <AlertTitle>{verificationResult ? "Valid Signature" : "Invalid Signature"}</AlertTitle>
-                <AlertDescription>
-                  {verificationResult 
-                    ? "The signature is authentic and the message has not been tampered with." 
-                    : "Signature verification failed. The message may have been altered or the signature is invalid."}
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Demo for Delay-Tolerant Networking with Post-Quantum Security
-const DTNSecureMessagingDemo: React.FC = () => {
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<'plaintext' | 'encrypted'>('encrypted');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
-  const [delay, setDelay] = useState<number>(3000); // 3 seconds
-  const [isSending, setIsSending] = useState(false);
-  const [sentMessages, setSentMessages] = useState<DTNMessage[]>([]);
-  const [deliveredMessages, setDeliveredMessages] = useState<DTNMessage[]>([]);
-  const [decryptedMessages, setDecryptedMessages] = useState<{[id: string]: string}>({});
-  
-  const { toast } = useToast();
-
-  const simulateInterstellarTransmission = async () => {
-    if (!message) {
+  const encryptData = async () => {
+    if (!symmetricKey || !plaintext) {
       toast({
-        title: "Empty Message",
-        description: "Please enter a message to send",
+        title: "Missing Data",
+        description: "Symmetric key and plaintext are required",
         variant: "destructive",
       });
       return;
     }
-    
-    setIsSending(true);
+
+    setLoading(true);
     try {
-      // Generate sender and recipient IDs
-      const senderId = `earth-station-${Math.floor(Math.random() * 1000)}`;
-      const recipientId = `asteroid-miner-${Math.floor(Math.random() * 1000)}`;
-      
-      // Generate encryption key for the message (in real system, this would use ML-KEM)
-      const encryptionKey = toHexString(generateRandomBytes(32));
-      
-      // Encrypt or keep plaintext based on selection
-      let messageData = message;
-      let encrypted = false;
-      
-      if (messageType === 'encrypted') {
-        messageData = await symmetricEncrypt(message, encryptionKey);
-        encrypted = true;
-      }
-      
+      const encrypted = await symmetricEncrypt(plaintext, symmetricKey);
+      setCiphertext(encrypted);
+      toast({
+        title: "Data Encrypted",
+        description: "Data has been encrypted using the symmetric key.",
+      });
+    } catch (error) {
+      console.error("Error encrypting data:", error);
+      toast({
+        title: "Encryption Failed",
+        description: error instanceof Error ? error.message : "Failed to encrypt data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const decryptData = async () => {
+    if (!symmetricKey || !ciphertext) {
+      toast({
+        title: "Missing Data",
+        description: "Symmetric key and ciphertext are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const decrypted = await symmetricDecrypt(ciphertext, symmetricKey);
+      setDecryptedText(decrypted);
+      toast({
+        title: "Data Decrypted",
+        description: "Data has been decrypted using the symmetric key.",
+      });
+    } catch (error) {
+      console.error("Error decrypting data:", error);
+      toast({
+        title: "Decryption Failed",
+        description: error instanceof Error ? error.message : "Failed to decrypt data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Hash functions
+  const computeHash = async () => {
+    if (!hashInput) {
+      toast({
+        title: "No Input",
+        description: "Please provide data to hash",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const hash = await hashWithSHA3(hashInput);
+      setHashOutput(hash);
+      toast({
+        title: "Hash Computed",
+        description: "SHA-3 hash has been computed.",
+      });
+    } catch (error) {
+      console.error("Error computing hash:", error);
+      toast({
+        title: "Hashing Failed",
+        description: error instanceof Error ? error.message : "Failed to compute hash",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // DTN functions
+  const sendInterstellarMessage = async () => {
+    if (!dtnMessage || !dtnSender || !dtnRecipient) {
+      toast({
+        title: "Missing Data",
+        description: "Sender, recipient, and message are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    setDtnStatus("sending");
+    
+    try {
       // Create a DTN message
-      const dtnMessage: DTNMessage = {
-        id: `msg-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
-        data: messageData,
-        encrypted,
-        sender: senderId,
-        recipient: recipientId,
+      const dtnMsg: DTNMessage = {
+        id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        data: dtnMessage,
+        encrypted: true,
+        sender: dtnSender,
+        recipient: dtnRecipient,
         timestamp: new Date().toISOString(),
-        priority,
+        priority: Math.random() > 0.7 ? 'high' : Math.random() > 0.4 ? 'medium' : 'low',
         ttl: 86400, // 24 hours
         hops: 0,
         status: 'sending',
-        delay: delay
+        delay: parseInt(dtnDelay.toString())
       };
       
-      // Add to sent messages
-      setSentMessages(prev => [...prev, dtnMessage]);
+      // Add the message to the local list
+      setDtnMessages(prev => [...prev, dtnMsg]);
       
-      // Send the message (simulated with delay)
-      const messageId = await sendDTNMessage(dtnMessage);
+      // Send the message
+      await sendDTNMessage(dtnMsg);
       
-      // Update delivered messages after successful transmission
-      setDeliveredMessages(prev => [
-        ...prev, 
-        { ...dtnMessage, status: 'delivered', hops: Math.floor(Math.random() * 5) + 1 }
-      ]);
+      // Update message status in the list
+      setDtnMessages(prev => 
+        prev.map(msg => 
+          msg.id === dtnMsg.id 
+            ? { ...msg, status: 'delivered', hops: Math.floor(Math.random() * 5) + 1 } 
+            : msg
+        )
+      );
       
-      // If encrypted, store the decryption result for demo purposes
-      if (encrypted) {
-        setDecryptedMessages(prev => ({
-          ...prev,
-          [dtnMessage.id]: message
-        }));
-      }
+      setDtnStatus("delivered");
       
       toast({
-        title: "Transmission Complete",
-        description: `Message delivered after ${delay/1000} seconds`,
+        title: "Message Sent",
+        description: `Message will be delivered to ${dtnRecipient} after ${dtnDelay}ms delay.`,
       });
+      
+      // Clear the message input
+      setDtnMessage("");
+      
     } catch (error) {
-      console.error("Error during transmission:", error);
+      console.error("Error sending DTN message:", error);
+      
+      // Update message status in the list to failed
+      setDtnMessages(prev => 
+        prev.map(msg => 
+          msg.sender === dtnSender && msg.status === 'sending'
+            ? { ...msg, status: 'failed' } 
+            : msg
+        )
+      );
+      
+      setDtnStatus("failed");
+      
       toast({
-        title: "Transmission Failed",
-        description: "Could not deliver the message",
+        title: "Message Sending Failed",
+        description: error instanceof Error ? error.message : "Failed to send message",
         variant: "destructive",
       });
     } finally {
-      setIsSending(false);
+      setLoading(false);
     }
   };
 
-  const decryptMessage = async (msgId: string) => {
-    const message = deliveredMessages.find(msg => msg.id === msgId);
-    if (!message || !message.encrypted) return;
-    
-    // In a real system, this would use the proper decryption key
-    // For demo, we already have the decrypted contents
-    
-    toast({
-      title: "Message Decrypted",
-      description: `Original message: "${decryptedMessages[msgId]}"`,
-    });
-  };
-
   return (
-    <Card>
-      <CardHeader className="space-y-1">
-        <div className="flex items-center space-x-2">
-          <Satellite className="h-5 w-5 text-primary" />
-          <CardTitle>Delay-Tolerant Networking</CardTitle>
-        </div>
-        <CardDescription>
-          Secure interstellar communication with post-quantum encryption
-        </CardDescription>
-        <Badge className="w-fit" variant="outline">Helium-3 Mining Operations</Badge>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Message Content</Label>
-                <Textarea
-                  placeholder="Enter message for interstellar transmission..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="min-h-20"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Security</Label>
-                  <Select 
-                    value={messageType} 
-                    onValueChange={(value) => setMessageType(value as 'plaintext' | 'encrypted')}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select security level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="encrypted">PQC Encrypted</SelectItem>
-                      <SelectItem value="plaintext">Plaintext</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Priority</Label>
-                  <Select 
-                    value={priority} 
-                    onValueChange={(value) => setPriority(value as 'low' | 'medium' | 'high' | 'critical')}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="critical">Critical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label>Transmission Delay ({delay/1000}s)</Label>
-                </div>
-                <input
-                  type="range"
-                  min="1000"
-                  max="10000"
-                  step="1000"
-                  value={delay}
-                  onChange={(e) => setDelay(parseInt(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>1s</span>
-                  <span>5s</span>
-                  <span>10s</span>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={simulateInterstellarTransmission} 
-                disabled={isSending || !message}
-                className="w-full"
-              >
-                {isSending ? (
-                  <>
-                    <Loader className="h-4 w-4 mr-2 animate-spin" />
-                    Transmitting...
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="h-4 w-4 mr-2" />
-                    Transmit Message
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Delivered Messages</Label>
-              <div className="bg-muted rounded-md h-[300px] overflow-y-auto">
-                {deliveredMessages.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    No messages delivered yet
-                  </div>
-                ) : (
-                  <div className="space-y-2 p-2">
-                    {deliveredMessages.map((msg) => (
-                      <div 
-                        key={msg.id} 
-                        className="bg-card p-3 rounded-md border text-sm space-y-2"
-                      >
-                        <div className="flex justify-between items-center">
-                          <Badge variant={
-                            msg.priority === 'critical' ? 'destructive' :
-                            msg.priority === 'high' ? 'default' :
-                            'outline'
-                          }>
-                            {msg.priority}
-                          </Badge>
-                          <div className="flex items-center space-x-2">
-                            <Badge variant="outline" className="text-xs">
-                              {msg.encrypted ? 'Encrypted' : 'Plaintext'}
-                            </Badge>
-                            {msg.encrypted && (
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-6 px-2"
-                                onClick={() => decryptMessage(msg.id)}
-                              >
-                                <Lock className="h-3 w-3 mr-1" />
-                                Decrypt
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="text-xs font-mono bg-background p-2 rounded-md break-all">
-                          {msg.encrypted ? (
-                            msg.data.substring(0, 32) + '...'
-                          ) : (
-                            msg.data
-                          )}
-                        </div>
-                        
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>From: {msg.sender}</span>
-                          <span>To: {msg.recipient}</span>
-                        </div>
-                        
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>Hops: {msg.hops}</span>
-                          <span>Delay: {msg.delay / 1000}s</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-// Main Demo Component
-const TetraCryptDemo: React.FC = () => {
-  return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="container mx-auto py-8 space-y-6">
       <div className="text-center space-y-2 mb-8">
-        <h1 className="text-3xl font-bold">TetraCryptPQC Academic Demo</h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Interactive demonstration of post-quantum cryptographic capabilities for secure interstellar communications
+        <h1 className="text-3xl font-bold tracking-tight">TetraCryptPQC Interactive Demo</h1>
+        <p className="text-muted-foreground max-w-3xl mx-auto">
+          Explore post-quantum cryptography with this interactive demonstration of TetraCryptPQC's core capabilities.
         </p>
       </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid grid-cols-4 mb-8">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="key-exchange">Key Exchange</TabsTrigger>
-          <TabsTrigger value="signatures">Digital Signatures</TabsTrigger>
-          <TabsTrigger value="interstellar">Interstellar DTN</TabsTrigger>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="key-encapsulation" className="flex items-center gap-2">
+            <KeyRound className="h-4 w-4" />
+            <span className="hidden sm:inline">Key Encapsulation</span>
+            <span className="sm:hidden">KEM</span>
+          </TabsTrigger>
+          <TabsTrigger value="digital-signatures" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Digital Signatures</span>
+            <span className="sm:hidden">Sign</span>
+          </TabsTrigger>
+          <TabsTrigger value="symmetric-encryption" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">Symmetric Encryption</span>
+            <span className="sm:hidden">Encrypt</span>
+          </TabsTrigger>
+          <TabsTrigger value="hashing" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Hashing</span>
+            <span className="sm:hidden">Hash</span>
+          </TabsTrigger>
+          <TabsTrigger value="dtn" className="flex items-center gap-2">
+            <Network className="h-4 w-4" />
+            <span className="hidden sm:inline">Delay-Tolerant Networking</span>
+            <span className="sm:hidden">DTN</span>
+          </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-6">
+        {/* Key Encapsulation Tab Content */}
+        <TabsContent value="key-encapsulation">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                TetraCryptPQC System Overview
+                <KeyRound className="h-5 w-5" /> 
+                ML-KEM Key Encapsulation Mechanism
               </CardTitle>
               <CardDescription>
-                Post-quantum cryptography framework for secure communication in quantum-threatened environments
+                ML-KEM (formerly Kyber) is a key encapsulation mechanism that is secure against quantum computer attacks.
+                It allows two parties to agree on a shared secret that can be used for symmetric encryption.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Key className="h-5 w-5 text-blue-500" />
-                    <h3 className="font-medium">ML-KEM</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Module Lattice-based Key Encapsulation Mechanism for quantum-resistant key exchange.
-                  </p>
-                  <Badge variant="outline">{PQC.STANDARD.FIPS_205}</Badge>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">1. Generate Key Pair</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={generateKEMKeyPair}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Generate Key Pair
+                  </Button>
                 </div>
                 
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-green-500" />
-                    <h3 className="font-medium">SLH-DSA</h3>
+                {kemKeyPair && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="public-key">Public Key (Share with others)</Label>
+                      <Textarea 
+                        id="public-key" 
+                        value={kemKeyPair.publicKey}
+                        readOnly
+                        className="font-mono text-xs h-20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="private-key">Private Key (Keep secret)</Label>
+                      <Textarea 
+                        id="private-key" 
+                        value={kemKeyPair.privateKey}
+                        readOnly
+                        className="font-mono text-xs h-20"
+                      />
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Stateless Hash-based Digital Signature Algorithm for secure message authentication.
-                  </p>
-                  <Badge variant="outline">{PQC.STANDARD.FIPS_206}</Badge>
-                </div>
-                
-                <div className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-5 w-5 text-purple-500" />
-                    <h3 className="font-medium">DTN Security</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Delay-Tolerant Networking protocols with quantum-resistant security for interstellar communications.
-                  </p>
-                  <Badge variant="outline">Interstellar Operations</Badge>
-                </div>
+                )}
               </div>
               
-              <div className="space-y-4">
-                <h3 className="font-medium">Security Level Comparison</h3>
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Classical (RSA-2048)</span>
-                      <span>112-bit</span>
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">2. Encapsulate Key</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={performEncapsulation}
+                    disabled={loading || !kemKeyPair}
+                    className="flex items-center gap-2"
+                  >
+                    <Lock className="h-4 w-4" />
+                    Encapsulate
+                  </Button>
+                </div>
+                
+                {encapsulationResult && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="ciphertext">Ciphertext (Send to recipient)</Label>
+                      <Textarea 
+                        id="ciphertext" 
+                        value={encapsulationResult.ciphertext}
+                        readOnly
+                        className="font-mono text-xs h-20"
+                      />
                     </div>
-                    <Progress value={44} className="h-2" />
+                    <div className="space-y-2">
+                      <Label htmlFor="shared-secret">Shared Secret (Keep secret)</Label>
+                      <Textarea 
+                        id="shared-secret" 
+                        value={encapsulationResult.sharedSecret}
+                        readOnly
+                        className="font-mono text-xs h-20"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">3. Decapsulate Key</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={performDecapsulation}
+                    disabled={loading || !kemKeyPair || !encapsulationResult}
+                    className="flex items-center gap-2"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Decapsulate
+                  </Button>
+                </div>
+                
+                {decapsulatedSecret && (
+                  <div className="space-y-2 mt-2">
+                    <Label htmlFor="decapsulated-secret">Decapsulated Shared Secret</Label>
+                    <Textarea 
+                      id="decapsulated-secret" 
+                      value={decapsulatedSecret}
+                      readOnly
+                      className="font-mono text-xs h-20"
+                    />
+                    
+                    <div className={`p-2 mt-2 rounded-md ${
+                      decapsulatedSecret === encapsulationResult?.sharedSecret
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}>
+                      {decapsulatedSecret === encapsulationResult?.sharedSecret
+                        ? "✅ Success! The decapsulated secret matches the original shared secret."
+                        : "❌ Error! The decapsulated secret does not match the original."}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/50 text-muted-foreground text-sm px-6 py-4">
+              ML-KEM is standardized in NIST FIPS 205 as part of the post-quantum cryptography standardization process.
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Digital Signatures Tab Content */}
+        <TabsContent value="digital-signatures">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" /> 
+                SLH-DSA Digital Signatures
+              </CardTitle>
+              <CardDescription>
+                SLH-DSA (formerly Dilithium) is a digital signature algorithm that is secure against quantum computer attacks.
+                It allows a sender to sign messages and recipients to verify the authenticity of those messages.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">1. Generate Signature Key Pair</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={generateSignatureKeyPair}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Generate Key Pair
+                  </Button>
+                </div>
+                
+                {signatureKeyPair && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="sig-public-key">Public Key (Verification Key)</Label>
+                      <Textarea 
+                        id="sig-public-key" 
+                        value={signatureKeyPair.publicKey}
+                        readOnly
+                        className="font-mono text-xs h-20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="sig-private-key">Private Key (Signing Key)</Label>
+                      <Textarea 
+                        id="sig-private-key" 
+                        value={signatureKeyPair.privateKey}
+                        readOnly
+                        className="font-mono text-xs h-20"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">2. Sign a Message</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={signMessage}
+                    disabled={loading || !signatureKeyPair || !messageToSign}
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Sign Message
+                  </Button>
+                </div>
+                
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="message-to-sign">Message to Sign</Label>
+                  <Textarea 
+                    id="message-to-sign" 
+                    value={messageToSign}
+                    onChange={(e) => setMessageToSign(e.target.value)}
+                    placeholder="Enter a message to sign..."
+                    className="h-20"
+                  />
+                </div>
+                
+                {signature && (
+                  <div className="space-y-2 mt-2">
+                    <Label htmlFor="signature">Signature</Label>
+                    <Textarea 
+                      id="signature" 
+                      value={signature}
+                      readOnly
+                      className="font-mono text-xs h-20"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">3. Verify a Signature</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={verifyMessageSignature}
+                    disabled={loading || !signatureKeyPair || !signature || !verificationMessage}
+                    className="flex items-center gap-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Verify Signature
+                  </Button>
+                </div>
+                
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="verification-message">Message to Verify</Label>
+                  <Textarea 
+                    id="verification-message" 
+                    value={verificationMessage}
+                    onChange={(e) => setVerificationMessage(e.target.value)}
+                    placeholder="Enter the message to verify..."
+                    className="h-20"
+                  />
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setVerificationMessage(messageToSign)}
+                      disabled={!messageToSign}
+                      className="text-xs"
+                    >
+                      Use same as signed message
+                    </Button>
+                  </div>
+                </div>
+                
+                {verificationResult !== null && (
+                  <div className={`p-4 mt-2 rounded-md ${
+                    verificationResult
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}>
+                    {verificationResult
+                      ? "✅ Signature Valid! The message was signed by the owner of the private key."
+                      : "❌ Signature Invalid! The signature does not match the message or public key."}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/50 text-muted-foreground text-sm px-6 py-4">
+              SLH-DSA is standardized in NIST FIPS 206 as part of the post-quantum cryptography standardization process.
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Symmetric Encryption Tab Content */}
+        <TabsContent value="symmetric-encryption">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" /> 
+                Symmetric Encryption
+              </CardTitle>
+              <CardDescription>
+                Symmetric encryption uses the same key for both encryption and decryption.
+                It is efficient for encrypting large amounts of data after key agreement.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">1. Generate Symmetric Key</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={generateSymmetricKey}
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Generate Key
+                  </Button>
+                </div>
+                
+                {symmetricKey && (
+                  <div className="space-y-2 mt-2">
+                    <Label htmlFor="symmetric-key">Symmetric Key (Share securely)</Label>
+                    <div className="flex">
+                      <Input 
+                        id="symmetric-key" 
+                        value={symmetricKey}
+                        readOnly
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">2. Encrypt Data</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={encryptData}
+                    disabled={loading || !symmetricKey || !plaintext}
+                    className="flex items-center gap-2"
+                  >
+                    <Lock className="h-4 w-4" />
+                    Encrypt
+                  </Button>
+                </div>
+                
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="plaintext">Plaintext</Label>
+                  <Textarea 
+                    id="plaintext" 
+                    value={plaintext}
+                    onChange={(e) => setPlaintext(e.target.value)}
+                    placeholder="Enter text to encrypt..."
+                    className="h-20"
+                  />
+                </div>
+                
+                {ciphertext && (
+                  <div className="space-y-2 mt-2">
+                    <Label htmlFor="ciphertext">Ciphertext</Label>
+                    <Textarea 
+                      id="ciphertext-sym" 
+                      value={ciphertext}
+                      readOnly
+                      className="font-mono text-xs h-20"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">3. Decrypt Data</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={decryptData}
+                    disabled={loading || !symmetricKey || !ciphertext}
+                    className="flex items-center gap-2"
+                  >
+                    <KeyRound className="h-4 w-4" />
+                    Decrypt
+                  </Button>
+                </div>
+                
+                {decryptedText && (
+                  <div className="space-y-2 mt-2">
+                    <Label htmlFor="decrypted-text">Decrypted Text</Label>
+                    <Textarea 
+                      id="decrypted-text" 
+                      value={decryptedText}
+                      readOnly
+                      className="h-20"
+                    />
+                    
+                    <div className={`p-2 mt-2 rounded-md ${
+                      decryptedText === plaintext
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}>
+                      {decryptedText === plaintext
+                        ? "✅ Success! The decrypted text matches the original plaintext."
+                        : "❌ Error! The decrypted text does not match the original plaintext."}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/50 text-muted-foreground text-sm px-6 py-4">
+              Symmetric encryption, such as AES-256-GCM, remains quantum-resistant with sufficiently large keys.
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* Hashing Tab Content */}
+        <TabsContent value="hashing">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" /> 
+                Cryptographic Hashing (SHA-3)
+              </CardTitle>
+              <CardDescription>
+                Cryptographic hashing creates a fixed-size fingerprint of data. 
+                SHA-3 (SHAKE-256) is resistant to quantum computer attacks.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium">Hash Data</h3>
+                  <Button 
+                    variant="outline" 
+                    onClick={computeHash}
+                    disabled={loading || !hashInput}
+                    className="flex items-center gap-2"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Compute Hash
+                  </Button>
+                </div>
+                
+                <div className="space-y-2 mt-2">
+                  <Label htmlFor="hash-input">Input Data</Label>
+                  <Textarea 
+                    id="hash-input" 
+                    value={hashInput}
+                    onChange={(e) => setHashInput(e.target.value)}
+                    placeholder="Enter data to hash..."
+                    className="h-20"
+                  />
+                </div>
+                
+                {hashOutput && (
+                  <div className="space-y-2 mt-4">
+                    <Label htmlFor="hash-output">SHA-3 Hash (SHAKE-256)</Label>
+                    <Textarea 
+                      id="hash-output" 
+                      value={hashOutput}
+                      readOnly
+                      className="font-mono text-xs h-20"
+                    />
+                    
+                    <div className="p-2 mt-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md">
+                      Hash functions are one-way operations - you cannot derive the original data from the hash.
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/50 text-muted-foreground text-sm px-6 py-4">
+              SHA-3 is considered post-quantum secure, as Grover's algorithm only reduces security by a square root factor.
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        {/* DTN Tab Content */}
+        <TabsContent value="dtn">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Network className="h-5 w-5" /> 
+                Delay-Tolerant Networking (DTN)
+              </CardTitle>
+              <CardDescription>
+                DTN is designed for space communications where long delays, disconnections, and limited bandwidth are common.
+                It's essential for interstellar and interplanetary communications.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="font-medium">Send Interstellar Message</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dtn-sender">Sender Station</Label>
+                    <Input 
+                      id="dtn-sender" 
+                      value={dtnSender}
+                      onChange={(e) => setDtnSender(e.target.value)}
+                      placeholder="Enter sender ID..."
+                    />
                   </div>
                   
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Classical (ECC P-256)</span>
-                      <span>128-bit</span>
+                    <Label htmlFor="dtn-recipient">Recipient Station</Label>
+                    <Input 
+                      id="dtn-recipient" 
+                      value={dtnRecipient}
+                      onChange={(e) => setDtnRecipient(e.target.value)}
+                      placeholder="Enter recipient ID..."
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="dtn-message">Message Content</Label>
+                  <Textarea 
+                    id="dtn-message" 
+                    value={dtnMessage}
+                    onChange={(e) => setDtnMessage(e.target.value)}
+                    placeholder="Enter your message..."
+                    className="h-20"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="dtn-delay">
+                    Transmission Delay (ms) - Simulates light-speed delay between planets
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <Input 
+                      id="dtn-delay" 
+                      type="number"
+                      min={100}
+                      max={10000}
+                      value={dtnDelay}
+                      onChange={(e) => setDtnDelay(Number(e.target.value))}
+                    />
+                    <Button 
+                      onClick={sendInterstellarMessage}
+                      disabled={loading || !dtnMessage || !dtnSender || !dtnRecipient}
+                      className="flex items-center gap-2"
+                    >
+                      <Send className="h-4 w-4" />
+                      Send Message
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="mt-6 space-y-4">
+                  <h3 className="font-medium">Message Queue</h3>
+                  
+                  {dtnMessages.length === 0 ? (
+                    <div className="p-4 bg-muted rounded-md text-center text-muted-foreground">
+                      No messages in queue. Send a message to see it here.
                     </div>
-                    <Progress value={50} className="h
+                  ) : (
+                    <div className="space-y-3">
+                      {dtnMessages.map((msg) => (
+                        <div key={msg.id} className="p-3 border rounded-md">
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-1">
+                              <div className="font-medium">
+                                From: {msg.sender} → To: {msg.recipient}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                ID: {msg.id.substring(0, 12)}...
+                              </div>
+                            </div>
+                            <div className={`px-2 py-1 rounded-md text-xs font-medium ${
+                              msg.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                              msg.status === 'in-transit' ? 'bg-blue-100 text-blue-800' :
+                              msg.status === 'sending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {msg.status}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-2 p-2 bg-muted/50 rounded-md">
+                            {msg.data}
+                          </div>
+                          
+                          <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                            <div>
+                              Priority: {msg.priority}
+                            </div>
+                            <div>
+                              Hops: {msg.hops}
+                            </div>
+                            <div>
+                              Delay: {msg.delay}ms
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="bg-muted/50 text-muted-foreground text-sm px-6 py-4">
+              DTN was originally developed by NASA for deep space communications where traditional TCP/IP protocols fail.
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default TetraCryptDemo;

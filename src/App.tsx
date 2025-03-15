@@ -1,3 +1,4 @@
+
 // Import statements
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
@@ -75,7 +76,9 @@ function App() {
                 <Route path="key-management" element={<KeyManagement />} />
                 <Route path="underground-network" element={<UndergroundNetwork />} />
                 <Route path="secure-communication" element={<SecureCommunication />} />
-                <Route path="tetracrypt-demo" element={<React.lazy(() => import('./pages/TetraCryptDemo'))} />
+                <Route path="tetracrypt-demo" element={<React.Suspense fallback={<div>Loading...</div>}>
+                  <React.lazy(() => import('./pages/TetraCryptDemo')) />
+                </React.Suspense>} />
                 
                 {/* Wiki Routes */}
                 <Route path="wiki/*" element={<Wiki />} />
