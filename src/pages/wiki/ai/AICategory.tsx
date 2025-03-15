@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Cpu, ChevronRight, BarChart, Network, Users, FileText } from 'lucide-react';
+import { Cpu, ChevronRight, BarChart, Network, Users, FileText, Shield, Database, Lock } from 'lucide-react';
 
 const AICategory: React.FC = () => {
   const pages = [
@@ -41,6 +41,27 @@ const AICategory: React.FC = () => {
       icon: <FileText className="h-6 w-6 text-primary" />,
       description: 'Ethical considerations for AI in cybersecurity',
       tags: ['Ethics', 'Transparency', 'Accountability']
+    },
+    {
+      title: 'StarkNet AI Smart Contracts',
+      path: '/wiki/ai/starknet-smart-contracts',
+      icon: <Shield className="h-6 w-6 text-primary" />,
+      description: 'Quantum-resistant AI smart contracts on StarkNet Layer-3',
+      tags: ['StarkNet', 'Smart Contracts', 'ZK-Rollups', 'Quantum-Resistant']
+    },
+    {
+      title: 'AI On-Chain Anomaly Detection',
+      path: '/wiki/ai/on-chain-anomaly-detection',
+      icon: <Database className="h-6 w-6 text-primary" />,
+      description: 'AI-powered on-chain anomaly detection and anti-fraud mechanisms',
+      tags: ['Blockchain', 'Anomaly Detection', 'Anti-Fraud']
+    },
+    {
+      title: 'Privacy-Preserving AI',
+      path: '/wiki/ai/privacy-preserving-ai',
+      icon: <Lock className="h-6 w-6 text-primary" />,
+      description: 'ZK-SNARKs & FHE for privacy-preserving on-chain AI transactions',
+      tags: ['ZK-SNARKs', 'FHE', 'Privacy']
     }
   ];
 
@@ -52,7 +73,7 @@ const AICategory: React.FC = () => {
           AI Security
         </h1>
         <p className="mt-2 text-muted-foreground">
-          AI-powered security, federated learning, and governance
+          AI-powered security, quantum-resistant smart contracts, and decentralized governance
         </p>
       </div>
       
