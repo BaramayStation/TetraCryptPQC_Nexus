@@ -13,7 +13,6 @@ import { getUserProfile } from "@/lib/storage";
 import { recordAuditEvent } from "@/lib/enterprise/auditLog";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { PQCKey } from "@/lib/crypto";
 
 const KeyManagement = () => {
   const [profile, setProfile] = useState(() => getUserProfile());
@@ -85,6 +84,7 @@ const KeyManagement = () => {
     }
   }, [profile]);
 
+  
   const downloadComplianceReport = () => {
     // In a real implementation, this would generate and download a proper compliance report
     const reportContent = JSON.stringify({

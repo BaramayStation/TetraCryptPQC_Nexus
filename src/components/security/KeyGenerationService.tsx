@@ -7,7 +7,8 @@ import { Shield, Key } from "lucide-react";
 import { 
   generateKyberKeypair, 
   generateDilithiumKeypair,
-  generateDID
+  generateDID,
+  PQCKey
 } from "@/lib/crypto";
 import { UserProfile, saveUserProfile } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
@@ -64,24 +65,24 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
       // Step 4: Save Profile Securely
       setStatus("Finalizing Secure Key Storage...");
       const userId = crypto.randomUUID();
+      
+      // Add creation timestamp to keys
+      const kyberKeysWithTimestamp: PQCKey = {
+        ...kyberKeys,
+        created: new Date().toISOString()
+      };
+      
+      const signatureKeysWithTimestamp: PQCKey = {
+        ...signatureKeys,
+        created: new Date().toISOString()
+      };
+      
       const userProfile: UserProfile = {
         id: userId,
         name: username,
         keyPairs: {
-          pqkem: {
-            algorithm: "ML-KEM-1024",
-            publicKey: kyberKeys.publicKey,
-            privateKey: kyberKeys.privateKey,
-            strength: "256-bit quantum security",
-            standard: "NIST FIPS 205",
-          },
-          signature: {
-            algorithm: selectedSignatureAlgo === "dilithium" ? "Dilithium5" : "Falcon512",
-            publicKey: signatureKeys.publicKey,
-            privateKey: signatureKeys.privateKey,
-            strength: "256-bit quantum security",
-            standard: "NIST FIPS 205",
-          },
+          pqkem: kyberKeysWithTimestamp,
+          signature: signatureKeysWithTimestamp,
           kyber: kyberKeys,
           falcon: signatureKeys,
         },

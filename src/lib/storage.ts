@@ -17,6 +17,7 @@ export interface UserProfile {
       privateKey: string;
       strength: string;
       standard: string;
+      created: string;
     };
     signature: {
       algorithm: string;
@@ -24,6 +25,7 @@ export interface UserProfile {
       privateKey: string;
       strength: string;
       standard: string;
+      created: string;
     };
     kyber?: {
       publicKey: string;

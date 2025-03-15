@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Shield, Key, RefreshCw, Lock, AlertTriangle, Clock, CheckCircle } from 
 import { useToast } from "@/components/ui/use-toast";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
 import { generateMLKEMKeypair, generateSLHDSAKeypair } from "@/lib/pqcrypto";
+import { PQCKey } from "@/lib/crypto";
 
 const KeyRotationPanel = () => {
   const { toast } = useToast();
@@ -17,7 +17,7 @@ const KeyRotationPanel = () => {
   const [isRotating, setIsRotating] = useState<boolean>(false);
   const [profile, setProfile] = useState(() => getUserProfile());
   
-  // Check if keys exist and add created timestamp if missing
+  // Ensure key pairs have created timestamp
   if (profile?.keyPairs?.pqkem && !profile.keyPairs.pqkem.created) {
     profile.keyPairs.pqkem.created = new Date().toISOString();
   }
@@ -101,6 +101,7 @@ const KeyRotationPanel = () => {
   const kemRotationStatus = getRotationStatus(kemDaysSinceRotation);
   const signatureRotationStatus = getRotationStatus(signatureDaysSinceRotation);
 
+  
   return (
     <GlassContainer className="p-6">
       <div className="space-y-6">
