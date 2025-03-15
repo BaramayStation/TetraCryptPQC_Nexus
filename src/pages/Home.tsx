@@ -1,26 +1,17 @@
 
 import React from "react";
-import { MainLayout } from "@/layout/MainLayout";
-import HeroSection from "@/components/home/HeroSection";
-import WhitepaperSection from "@/components/home/WhitepaperSection";
-import UnimetrixTokenSection from "@/components/home/UnimetrixTokenSection";
-import FeaturesSection from "@/components/home/FeaturesSection";
-import TechnicalSpecsSection from "@/components/home/TechnicalSpecsSection";
-import SustainabilitySection from "@/components/home/SustainabilitySection";
-import CallToActionSection from "@/components/home/CallToActionSection";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { 
+  BarChart3, 
+  FileText, 
+  BookOpen,
+  ArrowRight
+} from "lucide-react";
+import Index from "./Index";
 
-const HomePage = () => {
-  return (
-    <MainLayout fullWidth>
-      <HeroSection />
-      <WhitepaperSection />
-      <UnimetrixTokenSection />
-      <FeaturesSection />
-      <TechnicalSpecsSection />
-      <SustainabilitySection />
-      <CallToActionSection />
-    </MainLayout>
-  );
+const HomePage: React.FC = () => {
+  return <Index />;
 };
 
 export default HomePage;
