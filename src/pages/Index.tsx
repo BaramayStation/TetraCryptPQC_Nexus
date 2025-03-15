@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Shield, Lock, MessageSquare, Key, FileText, Server, Building2, BarChart3, Rocket, Cpu, Globe, Clock } from "lucide-react";
 import WhitepaperPreview from "@/components/whitepaper/WhitepaperPreview";
+import UnimetrixTokenInfo from "@/components/whitepaper/UnimetrixTokenInfo";
 
 const Index = () => {
   return (
@@ -58,6 +59,22 @@ const Index = () => {
           
           <div className="max-w-4xl mx-auto">
             <WhitepaperPreview />
+          </div>
+        </div>
+      </section>
+      
+      {/* Unimetrix1 Token Section - NEW SECTION */}
+      <section className="py-16 bg-secondary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold">Unimetrix1 (UM1) Token</h2>
+            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+              The quantum-sentient AI token designed for million-year economic sustainability
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <UnimetrixTokenInfo />
           </div>
         </div>
       </section>
