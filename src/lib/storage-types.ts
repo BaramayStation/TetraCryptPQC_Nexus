@@ -1,3 +1,4 @@
+
 /**
  * TetraCryptPQC Storage Types
  */
@@ -93,6 +94,76 @@ export enum HSMType {
   SECUREENCLAVE = "SECUREENCLAVE"
 }
 
+// NEW: Certificate Revocation List (CRL) structure
+export interface CertificateRevocationList {
+  id: string;
+  issuer: string;
+  lastUpdated: string;
+  nextUpdate: string;
+  revokedCertificates: Array<{
+    serialNumber: string;
+    revocationDate: string;
+    reasonCode: RevocationReason;
+    fingerprint: string;
+    algorithm: string;
+  }>;
+  signature: string;
+  signatureAlgorithm: string;
+}
+
+// NEW: Revocation reason codes (based on X.509 standard)
+export enum RevocationReason {
+  UNSPECIFIED = 0,
+  KEY_COMPROMISE = 1,
+  CA_COMPROMISE = 2,
+  AFFILIATION_CHANGED = 3,
+  SUPERSEDED = 4,
+  CESSATION_OF_OPERATION = 5,
+  CERTIFICATE_HOLD = 6,
+  REMOVE_FROM_CRL = 8,
+  PRIVILEGE_WITHDRAWN = 9,
+  AA_COMPROMISE = 10,
+  QUANTUM_VULNERABILITY = 11 // Custom reason for quantum vulnerabilities
+}
+
+// NEW: PKI Certificate structure with PQ enhancements
+export interface PKICertificate {
+  id: string;
+  serialNumber: string;
+  subject: string;
+  issuer: string;
+  validFrom: string;
+  validTo: string;
+  publicKeyAlgorithm: string;
+  publicKey: string;
+  signatureAlgorithm: string;
+  signature: string;
+  fingerprint: string;
+  status: 'valid' | 'revoked' | 'expired' | 'suspended';
+  pqcProtected: boolean;
+  quantum: {
+    mlkemPublicKey?: string;
+    falconPublicKey?: string;
+    algorithm: string;
+    strength: string;
+  };
+  extensions: {
+    keyUsage?: string[];
+    extendedKeyUsage?: string[];
+    subjectAltName?: string[];
+    basicConstraints?: {
+      isCA: boolean;
+      pathLenConstraint?: number;
+    };
+    [key: string]: any;
+  };
+  starkNetVerified: boolean;
+  zkProofs: {
+    identityProof?: string;
+    attributeProofs?: Record<string, string>;
+  };
+}
+
 // User Profile structure
 export interface UserProfile {
   id: string;
@@ -113,6 +184,11 @@ export interface UserProfile {
   hsmInfo?: HSMInfo;
   qkdInfo?: QKDInfo;
   signatureKey?: string;
+  // NEW: Additional fields for decentralized PKI
+  certificates?: PKICertificate[];
+  trustedIssuers?: string[];
+  revocationStatus?: 'active' | 'checking' | 'revoked';
+  lastRevocationCheck?: string;
 }
 
 // Contact structure
@@ -130,6 +206,10 @@ export interface Contact {
   lastMessageTime?: string;
   unreadCount?: number;
   signatureKey?: string;
+  // NEW: Certificate verification for contacts
+  certificateVerified?: boolean;
+  certificateStatus?: 'valid' | 'revoked' | 'expired' | 'not_verified';
+  pqCertificate?: PKICertificate;
 }
 
 // Message structure
