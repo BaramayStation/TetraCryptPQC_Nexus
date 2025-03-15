@@ -37,6 +37,7 @@ export interface UserProfile {
     };
   };
   didDocument?: any;
+  starkNetId?: any;  // Add starkNetId property to fix errors
   qkdInfo?: any;
   hsmInfo?: any;
   createdAt: string;

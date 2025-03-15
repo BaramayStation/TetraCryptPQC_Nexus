@@ -163,9 +163,13 @@ export async function createUserDecentralizedIdentity(updateExisting: boolean = 
     );
     
     // Update profile
-    profile.didDocument = didDocument;
-    profile.starkNetId = starkNetId;
-    saveUserProfile(profile);
+    const updatedProfile = {
+      ...profile,
+      didDocument,
+      starkNetId
+    };
+    
+    saveUserProfile(updatedProfile);
     
     return {
       success: true,
