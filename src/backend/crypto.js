@@ -1,4 +1,3 @@
-
 import wasmCrypto from "wasm-feature-detect";
 import { subtle } from "crypto"; // Web Crypto API for AES-GCM
 
@@ -52,7 +51,7 @@ export async function generateKyberKeypair() {
     // Audit log for enterprise compliance
     console.log(`🔹 ML-KEM-1024 key generated successfully. KeyID: ${crypto.randomUUID()}`);
     
-    // Return properly formatted key material
+    // Return properly formatted key material with created timestamp
     return {
       algorithm: "ML-KEM-1024",
       publicKey: Buffer.from(publicKey).toString("hex"),
@@ -309,5 +308,151 @@ export async function hybridEncrypt(message, recipientKyberPublicKey, recipientC
     };
   } catch (error) {
     return logError(error, "hybrid-encrypt");
+  }
+}
+
+// ✅ New: Enterprise-grade compliance reporting function
+export async function generateComplianceReport(userProfile) {
+  try {
+    console.log("🔹 Generating NIST FIPS compliance report...");
+    
+    const reportId = crypto.randomUUID();
+    const now = new Date();
+    
+    // Check key algorithm compliance
+    const kemAlgorithmCompliant = userProfile.keyPairs?.pqkem?.algorithm === "ML-KEM-1024";
+    const signatureAlgorithmCompliant = userProfile.keyPairs?.signature?.algorithm === "SLH-DSA-Dilithium5";
+    
+    // Check key rotation compliance
+    const kemKeyAge = userProfile.keyPairs?.pqkem?.created ? 
+      Math.floor((now - new Date(userProfile.keyPairs.pqkem.created)) / (1000 * 60 * 60 * 24)) : 
+      999;
+    
+    const signatureKeyAge = userProfile.keyPairs?.signature?.created ? 
+      Math.floor((now - new Date(userProfile.keyPairs.signature.created)) / (1000 * 60 * 60 * 24)) : 
+      999;
+    
+    const kemRotationCompliant = kemKeyAge <= 90; // 90 days for KEM
+    const signatureRotationCompliant = signatureKeyAge <= 180; // 180 days for signatures
+    
+    // Calculate overall compliance
+    const findings = [
+      {
+        id: crypto.randomUUID(),
+        standard: "NIST FIPS 205",
+        control: "ML-KEM Algorithm Compliance",
+        status: kemAlgorithmCompliant ? "pass" : "fail",
+        description: kemAlgorithmCompliant ? 
+          "Using compliant ML-KEM-1024 algorithm" : 
+          "Not using the required ML-KEM-1024 algorithm",
+        remediation: kemAlgorithmCompliant ? undefined : "Generate new ML-KEM-1024 keys"
+      },
+      {
+        id: crypto.randomUUID(),
+        standard: "NIST FIPS 206",
+        control: "SLH-DSA Algorithm Compliance",
+        status: signatureAlgorithmCompliant ? "pass" : "fail",
+        description: signatureAlgorithmCompliant ? 
+          "Using compliant SLH-DSA-Dilithium5 algorithm" : 
+          "Not using the required SLH-DSA-Dilithium5 algorithm",
+        remediation: signatureAlgorithmCompliant ? undefined : "Generate new SLH-DSA-Dilithium5 keys"
+      },
+      {
+        id: crypto.randomUUID(),
+        standard: "Enterprise Security Policy",
+        control: "ML-KEM Key Rotation",
+        status: kemRotationCompliant ? "pass" : kemKeyAge > 180 ? "fail" : "warning",
+        description: `ML-KEM key is ${kemKeyAge} days old`,
+        remediation: kemRotationCompliant ? undefined : "Rotate ML-KEM keys"
+      },
+      {
+        id: crypto.randomUUID(),
+        standard: "Enterprise Security Policy",
+        control: "SLH-DSA Key Rotation",
+        status: signatureRotationCompliant ? "pass" : signatureKeyAge > 365 ? "fail" : "warning",
+        description: `SLH-DSA key is ${signatureKeyAge} days old`,
+        remediation: signatureRotationCompliant ? undefined : "Rotate SLH-DSA keys"
+      }
+    ];
+    
+    // Calculate overall score (0-100)
+    const passCount = findings.filter(f => f.status === "pass").length;
+    const warningCount = findings.filter(f => f.status === "warning").length;
+    const overallScore = Math.round((passCount * 100 + warningCount * 50) / findings.length);
+    
+    const overallStatus = overallScore >= 90 ? "compliant" : 
+                         overallScore >= 70 ? "partially-compliant" : 
+                         "non-compliant";
+    
+    // Generate full report
+    const report = {
+      id: reportId,
+      generatedAt: now.toISOString(),
+      standards: ["NIST FIPS 205", "NIST FIPS 206", "Enterprise Security Policy"],
+      status: overallStatus,
+      findings,
+      overallScore,
+      validUntil: new Date(now.setDate(now.getDate() + 30)).toISOString() // Valid for 30 days
+    };
+    
+    console.log(`🔹 NIST FIPS compliance report generated successfully. ReportID: ${reportId}`);
+    return report;
+  } catch (error) {
+    return logError(error, "compliance-report-generation");
+  }
+}
+
+// ✅ New: Enterprise threat intelligence function
+export async function scanForThreats(userProfile) {
+  try {
+    console.log("🔹 Scanning for security threats...");
+    
+    const threatId = crypto.randomUUID();
+    const now = new Date();
+    
+    // In a real implementation, this would connect to threat intelligence services
+    // For now, we'll simulate finding potential issues
+    
+    // Check for key vulnerabilities
+    let threats = [];
+    
+    // Check key age
+    const kemKeyAge = userProfile.keyPairs?.pqkem?.created ? 
+      Math.floor((now - new Date(userProfile.keyPairs.pqkem.created)) / (1000 * 60 * 60 * 24)) : 
+      999;
+    
+    if (kemKeyAge > 180) {
+      threats.push({
+        id: crypto.randomUUID(),
+        source: "TetraCrypt Security Scanner",
+        detectedAt: now.toISOString(),
+        severity: "high",
+        affectedSystems: ["Key Management", "Message Encryption"],
+        description: `ML-KEM key is ${kemKeyAge} days old, exceeding the maximum recommended age of 180 days`,
+        mitigationSteps: ["Rotate ML-KEM keys immediately"],
+        status: "active"
+      });
+    }
+    
+    // Check for missing keys
+    if (!userProfile.keyPairs?.signature) {
+      threats.push({
+        id: crypto.randomUUID(),
+        source: "TetraCrypt Security Scanner",
+        detectedAt: now.toISOString(),
+        severity: "critical",
+        affectedSystems: ["Message Authentication", "Identity Verification"],
+        description: "Missing SLH-DSA signature keys, cannot verify message authenticity",
+        mitigationSteps: ["Generate SLH-DSA signature keys immediately"],
+        status: "active"
+      });
+    }
+    
+    // In a real implementation, additional checks would be performed
+    
+    console.log(`🔹 Security threat scan completed. Found ${threats.length} potential issues.`);
+    return threats;
+  } catch (error) {
+    return logError(error, "threat-intelligence-scan");
   }
 }
