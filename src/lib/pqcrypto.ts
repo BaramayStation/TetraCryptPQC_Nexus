@@ -1,4 +1,3 @@
-
 import { hashWithSHA3 } from './crypto';
 import { PQCKey } from './crypto';
 import { toHexString, generateRandomBytes } from './pqcrypto-core';
@@ -352,6 +351,16 @@ export async function encryptAES(data: string, key: string): Promise<string> {
   console.log("⚠️ Warning: Using legacy encryptAES function. Consider migrating to encryptWithPQC");
   // Return a simulated encrypted result
   return `encrypted_${data}_with_${key.substring(0, 3)}`;
+}
+
+/**
+ * Decrypt a message using AES encryption
+ * This is maintained only for backward compatibility and will be removed.
+ */
+export async function decryptAES(data: string, key: string): Promise<string> {
+  console.log("⚠️ Warning: Using legacy decryptAES function. Consider migrating to TetraCryptPQC.");
+  // Return a simulated decrypted result
+  return data.replace(/^encrypted_(.*)_with_.*$/, '$1');
 }
 
 // Export constants for use throughout the application

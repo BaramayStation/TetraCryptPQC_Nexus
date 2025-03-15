@@ -13,7 +13,9 @@ import {
   Settings,
   Book,
   Building2,
-  ShieldAlert
+  ShieldAlert,
+  Moon,
+  Rocket
 } from "lucide-react";
 
 interface NavItem {
@@ -54,9 +56,9 @@ const navigation: NavItem[] = [
     icon: <ShieldCheck className="h-4 w-4" />,
   },
   {
-    title: "Post-Quantum Security Impl",
-    href: "/PostQuantumSecurityImpl",
-    icon: <ShieldCheck className="h-4 w-4" />,
+    title: "Lunar Helium-3 Economy",
+    href: "/lunar/helium3-economy",
+    icon: <Moon className="h-4 w-4" />,
   },
   {
     title: "Web3 Security",

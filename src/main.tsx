@@ -11,6 +11,10 @@ import PostQuantumSecurityImpl from './pages/PostQuantumSecurityImpl.tsx'
 import DecentralizedID from './pages/DecentralizedID.tsx'
 import AISecurity from './pages/AISecurity.tsx'
 import FailsafeContinuity from "./pages/FailsafeContinuity.tsx"
+import Helium3Economy from './pages/lunar/Helium3Economy.tsx'
+import Helium3Mining from './pages/wiki/lunar/Helium3Mining.tsx'
+import AsteroidMining from './pages/wiki/space/AsteroidMining.tsx'
+import SpaceEconomy from './pages/wiki/space/SpaceEconomy.tsx'
 
 const router = createBrowserRouter([
   {
@@ -44,6 +48,22 @@ const router = createBrowserRouter([
   {
     path: "/failsafe-continuity",
     element: <FailsafeContinuity />,
+  },
+  {
+    path: "/lunar/helium3-economy",
+    element: <Helium3Economy />,
+  },
+  {
+    path: "/wiki/lunar/helium3mining",
+    element: <Helium3Mining />,
+  },
+  {
+    path: "/wiki/space/asteroidmining",
+    element: <AsteroidMining />,
+  },
+  {
+    path: "/wiki/space/spaceeconomy",
+    element: <SpaceEconomy />,
   },
 ]);
 
