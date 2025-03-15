@@ -41,6 +41,7 @@ import Settings from '@/pages/Settings'
 import AccountSettings from '@/pages/AccountSettings'
 import NotFound from '@/pages/NotFound'
 import React from 'react'
+import TetraCryptWallet from '@/pages/TetraCryptWallet'
 
 // Create a client
 const queryClient = new QueryClient()
@@ -76,9 +77,12 @@ function App() {
                 <Route path="key-management" element={<KeyManagement />} />
                 <Route path="underground-network" element={<UndergroundNetwork />} />
                 <Route path="secure-communication" element={<SecureCommunication />} />
-                <Route path="tetracrypt-demo" element={<React.Suspense fallback={<div>Loading...</div>}>
-                  <React.lazy(() => import('./pages/TetraCryptDemo')) />
-                </React.Suspense>} />
+                <Route path="tetracrypt-demo" element={
+                  <React.Suspense fallback={<div>Loading...</div>}>
+                    <React.lazy(() => import('./pages/TetraCryptDemo')) />
+                  </React.Suspense>
+                } />
+                <Route path="tetracrypt-wallet" element={<TetraCryptWallet />} />
                 
                 {/* Wiki Routes */}
                 <Route path="wiki/*" element={<Wiki />} />
