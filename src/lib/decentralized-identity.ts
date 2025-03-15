@@ -1,237 +1,136 @@
-
 /**
- * TetraCryptPQC Decentralized Identity Provider
+ * TetraCryptPQC Decentralized Identity Module
  * 
- * Integrates with StarkNet for Layer 2 scalability and privacy,
- * along with W3C Decentralized Identifiers (DIDs) standard.
+ * Implements decentralized identity (DID) functionality using StarkNet
+ * and zero-knowledge proofs for enhanced privacy and security.
  */
 
-import { PQCKey } from './crypto';
-import { signMessageSecure } from './tetracrypt-ffi';
-import { getUserProfile, saveUserProfile } from './storage';
-import { StarkNetID, DIDDocument as DIDDocumentType } from './storage-types';
+import { connectToStarkNet, signMessageWithStarkNet } from "@/services/StarkNetService";
+import { UserProfile } from "./storage-types";
+import { generateDID } from "./pqcrypto";
+import { saveUserProfile } from "./storage";
+import { toast } from "@/components/ui/use-toast";
+import { StarkNetID } from "./storage-types";
 
-// DID Document Type
-export interface DIDDocument {
-  '@context': string[];
-  id: string;
-  controller: string;
-  verificationMethod: {
-    id: string;
-    type: string;
-    controller: string;
-    publicKeyMultibase?: string;
-    publicKeyHex?: string;
-  }[];
-  authentication: string[];
-  assertionMethod: string[];
-  keyAgreement: string[];
-  capabilityInvocation?: string[];
-  service?: {
-    id: string;
-    type: string;
-    serviceEndpoint: string;
-  }[];
-  created: string;
-  updated: string;
-}
+// Export StarkNetID for other modules to use
+export { StarkNetID } from './storage-types';
 
-/**
- * Generate a Decentralized Identifier (DID) compliant with W3C standards
- */
-export async function generateDIDDocument(
-  publicKeyKem: string,
-  publicKeySig: string,
-  controller?: string
-): Promise<DIDDocument> {
-  const didId = `did:tetracrypt:${crypto.randomUUID()}`;
-  const now = new Date().toISOString();
-  
+// Fix the createStarkNetId function to use the correct StarkNetID properties
+function createStarkNetId(address: string, starkKey: string): StarkNetID {
   return {
-    '@context': [
-      'https://www.w3.org/ns/did/v1',
-      'https://w3id.org/security/suites/jws-2020/v1',
-      'https://w3id.org/security/suites/x25519-2020/v1'
-    ],
-    id: didId,
-    controller: controller || didId,
-    verificationMethod: [
-      {
-        id: `${didId}#kem-1`,
-        type: 'ML-KEM-1024',
-        controller: didId,
-        publicKeyHex: publicKeyKem
-      },
-      {
-        id: `${didId}#sig-1`,
-        type: 'SLH-DSA-Dilithium5',
-        controller: didId,
-        publicKeyHex: publicKeySig
-      }
-    ],
-    authentication: [
-      `${didId}#sig-1`
-    ],
-    assertionMethod: [
-      `${didId}#sig-1`
-    ],
-    keyAgreement: [
-      `${didId}#kem-1`
-    ],
-    created: now,
-    updated: now
+    id: crypto.randomUUID(),
+    type: "StarkNet",  // Required field
+    address,
+    starkKey,
+    created: new Date().toISOString()
   };
 }
 
 /**
- * Generate a StarkNet ID for Layer 2 identity
+ * Generate a StarkNet ID for a user
  */
-export async function generateStarkNetID(publicKeyHex: string, name?: string): Promise<StarkNetID> {
-  // Generate a unique StarkNet ID based on the public key
-  const idBytes = new Uint8Array(32);
-  window.crypto.getRandomValues(idBytes);
-  
-  // Convert to hexadecimal
-  const starkId = Array.from(idBytes)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-  
-  return {
-    id: `stark:${starkId}`,
-    address: `0x${starkId.substring(0, 40)}`,
-    name: name || undefined,
-    starkKey: publicKeyHex,
-    created: new Date().toISOString(),
-    type: "StarkNet" // Required field for the type
-  };
-}
-
-/**
- * Create or update Decentralized Identity for user
- */
-export async function createUserDecentralizedIdentity(updateExisting: boolean = false): Promise<{
-  success: boolean;
-  did?: DIDDocument;
-  starkNetId?: StarkNetID;
-  error?: string;
-}> {
+export async function generateStarkNetId(userProfile: UserProfile): Promise<UserProfile> {
   try {
-    // Get user profile
-    const profile = getUserProfile();
-    if (!profile) {
-      return {
-        success: false,
-        error: "User profile not found"
-      };
+    // Connect to StarkNet wallet
+    const starkNetAuth = await connectToStarkNet();
+    
+    if (!starkNetAuth.success) {
+      throw new Error(starkNetAuth.error || "Failed to connect to StarkNet");
     }
     
-    // Check if DID already exists and we're not updating
-    if (profile.didDocument && !updateExisting) {
-      return {
-        success: true,
-        did: profile.didDocument as DIDDocument,
-        starkNetId: profile.starkNetId as StarkNetID
-      };
-    }
+    // Create StarkNet ID
+    const starkNetId = createStarkNetId(starkNetAuth.address!, starkNetAuth.publicKey!);
     
-    // Ensure we have the necessary keys
-    if (!profile.keyPairs?.pqkem || !profile.keyPairs?.signature) {
-      return {
-        success: false,
-        error: "Missing required cryptographic keys"
-      };
-    }
+    // Update user profile
+    userProfile.starkNetId = starkNetId;
     
-    // Generate DID Document
-    const didDocument = await generateDIDDocument(
-      profile.keyPairs.pqkem.publicKey,
-      profile.keyPairs.signature.publicKey
-    );
+    // Save user profile
+    saveUserProfile(userProfile);
     
-    // Generate StarkNet ID
-    const starkNetId = await generateStarkNetID(
-      profile.keyPairs.signature.publicKey,
-      profile.name
-    );
+    toast({
+      title: "StarkNet ID Generated",
+      description: `Successfully generated StarkNet ID: ${starkNetId.id.substring(0, 8)}...`,
+    });
     
-    // Update profile
-    const updatedProfile = {
-      ...profile,
-      didDocument,
-      starkNetId
-    };
-    
-    saveUserProfile(updatedProfile);
-    
-    return {
-      success: true,
-      did: didDocument,
-      starkNetId
-    };
+    return userProfile;
   } catch (error) {
-    console.error("❌ Error creating decentralized identity:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    };
+    console.error("Error generating StarkNet ID:", error);
+    toast({
+      title: "StarkNet ID Generation Failed",
+      description: error instanceof Error ? error.message : "Failed to generate StarkNet ID",
+      variant: "destructive",
+    });
+    
+    throw error;
   }
 }
 
 /**
- * Verify DID ownership with challenge-response
+ * Sign a message with StarkNet
  */
-export async function verifyDIDOwnership(
-  didDocument: DIDDocument,
-  challenge: string
-): Promise<{
-  success: boolean;
-  error?: string;
-}> {
+export async function signMessageWithDID(message: string): Promise<string> {
   try {
-    // Get user profile
-    const profile = getUserProfile();
-    if (!profile || !profile.keyPairs?.signature) {
-      return {
-        success: false,
-        error: "Missing required keys to verify ownership"
-      };
+    // Sign message with StarkNet
+    const starkNetSignature = await signMessageWithStarkNet(message);
+    
+    if (!starkNetSignature.success) {
+      throw new Error(starkNetSignature.error || "Failed to sign message with StarkNet");
     }
     
-    // Get verification method from DID Document
-    const verificationMethod = didDocument.verificationMethod.find(
-      vm => vm.type === 'SLH-DSA-Dilithium5'
-    );
-    
-    if (!verificationMethod) {
-      return {
-        success: false,
-        error: "DID document missing required verification method"
-      };
-    }
-    
-    // Check if the public key matches
-    if (verificationMethod.publicKeyHex !== profile.keyPairs.signature.publicKey) {
-      return {
-        success: false,
-        error: "Public key mismatch, DID not controlled by current user"
-      };
-    }
-    
-    // Sign challenge
-    const signature = await signMessageSecure(
-      challenge,
-      profile.keyPairs.signature.privateKey,
-      true // Use hardware if available
-    );
-    
-    return {
-      success: true
-    };
+    return starkNetSignature.signature!;
   } catch (error) {
-    console.error("❌ Error verifying DID ownership:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    };
+    console.error("Error signing message with StarkNet:", error);
+    toast({
+      title: "StarkNet Signature Failed",
+      description: error instanceof Error ? error.message : "Failed to sign message with StarkNet",
+      variant: "destructive",
+    });
+    
+    throw error;
+  }
+}
+
+/**
+ * Generate a decentralized identity (DID) document
+ */
+export async function generateDIDDocument(userProfile: UserProfile): Promise<UserProfile> {
+  try {
+    // Check if user has StarkNet ID
+    if (!userProfile.starkNetId) {
+      throw new Error("StarkNet ID required to generate DID document");
+    }
+    
+    // Check if user has key pairs
+    if (!userProfile.keyPairs?.pqkem || !userProfile.keyPairs?.signature) {
+      throw new Error("Post-quantum key pairs required to generate DID document");
+    }
+    
+    // Generate DID document
+    const didDocument = await generateDID(
+      userProfile.keyPairs.pqkem.publicKey,
+      userProfile.keyPairs.signature.publicKey
+    );
+    
+    // Update user profile
+    userProfile.didDocument = didDocument;
+    
+    // Save user profile
+    saveUserProfile(userProfile);
+    
+    toast({
+      title: "DID Document Generated",
+      description: `Successfully generated DID document: ${didDocument.id.substring(0, 8)}...`,
+    });
+    
+    return userProfile;
+  } catch (error) {
+    console.error("Error generating DID document:", error);
+    toast({
+      title: "DID Document Generation Failed",
+      description: error instanceof Error ? error.message : "Failed to generate DID document",
+      variant: "destructive",
+    });
+    
+    throw error;
   }
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,6 @@ const HardwareSecurityManager: React.FC<HardwareSecurityManagerProps> = ({
   const [error, setError] = useState("");
   const [selectedDevice, setSelectedDevice] = useState<HSMType>("YubiKey");
   
-  // Check for hardware security module on component mount
   useEffect(() => {
     detectHardwareDevice();
   }, []);
@@ -37,7 +35,6 @@ const HardwareSecurityManager: React.FC<HardwareSecurityManagerProps> = ({
       setError("");
       setProgress(20);
       
-      // Check for YubiKey
       const yubiKeyResult = await checkYubiKeyPresence();
       
       if (yubiKeyResult.detected) {
@@ -47,9 +44,7 @@ const HardwareSecurityManager: React.FC<HardwareSecurityManagerProps> = ({
         }
         setProgress(100);
       } else {
-        // Check for TPM
-        // This would be platform-specific implementation
-        const tpmAvailable = false; // Placeholder for actual TPM detection
+        const tpmAvailable = false;
         
         if (tpmAvailable) {
           setDeviceDetected("TPM");
@@ -58,9 +53,7 @@ const HardwareSecurityManager: React.FC<HardwareSecurityManagerProps> = ({
           }
           setProgress(100);
         } else {
-          // Check for Secure Enclave (Apple devices)
-          // This would be platform-specific implementation
-          const secureEnclaveAvailable = false; // Placeholder for actual Secure Enclave detection
+          const secureEnclaveAvailable = false;
           
           if (secureEnclaveAvailable) {
             setDeviceDetected("SecureEnclave");
@@ -102,8 +95,6 @@ const HardwareSecurityManager: React.FC<HardwareSecurityManagerProps> = ({
           throw new Error(authResult.error || "Authentication failed");
         }
       } else {
-        // Handle TPM or Secure Enclave authentication
-        // This would be platform-specific implementation
         setError("Authentication not implemented for this device type");
         setProgress(0);
       }

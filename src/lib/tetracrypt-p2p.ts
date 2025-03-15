@@ -1,16 +1,6 @@
-
 /**
- * TetraCryptPQC P2P Messaging Framework
- * 
- * A decentralized, quantum-resistant messaging protocol built on libp2p
- * with zero-knowledge proofs and post-quantum cryptography.
+ * TetraCryptPQC P2P Messaging Module
  */
-
-import { initTetraCryptFFI } from './tetracrypt-ffi';
-import { PQCKey } from './crypto';
-import { getTetraCryptMessaging, P2PMessage, ConnectionState } from './p2p-messaging';
-import { getUserProfile } from './storage';
-import { DIDDocument, StarkNetID } from './decentralized-identity';
 
 // Message structure for TetraCrypt P2P network
 export interface TetraCryptMessage {

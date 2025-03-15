@@ -114,6 +114,7 @@ export type HSMType = "YubiKey" | "TPM" | "SecureEnclave" | "CloudHSM" | "None";
 export type StarkNetID = {
   id: string;
   type: string; // Required by UserProfile
+  name?: string; // Added to fix build error
   address?: string;
   starkKey?: string;
   created?: string;
