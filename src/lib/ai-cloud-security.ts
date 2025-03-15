@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC AI-Powered Cloud Security
  * 
@@ -30,9 +29,11 @@ const aiSecuredInstances: AISecuredCloudInstance[] = [];
 let securityHealthMetrics: SecurityHealthMetrics = {
   overallScore: 85,
   threatDetectionRate: 98.5,
+  threatDetectionLatency: 120, // ms
   falsePositiveRate: 0.02,
   incidentResponseTime: 1.5, // in minutes
   complianceScore: 92,
+  complianceScores: { 'NIST SP 800-207': 94, 'ISO 27001': 89, 'FIPS 140-3': 95 },
   lastUpdated: new Date().toISOString(),
   vulnerabilities: [],
   recommendedActions: []
@@ -61,7 +62,7 @@ export async function initializeAICloudSecurity(): Promise<{
       id: crypto.randomUUID(),
       name: "Default AI Security Policy",
       autoRemediationEnabled: true,
-      threatDetectionLevel: "high",
+      threatDetectionLevel: "maximum", // Changed from "high" to a valid value
       homomorphicEncryptionEnabled: true,
       zeroKnowledgeAuthEnabled: true,
       aiGovernanceLevel: "enterprise",
@@ -120,7 +121,7 @@ export async function initializeAICloudSecurity(): Promise<{
  */
 export async function createAISecuredCloudInstance(name: string, config: {
   region?: string;
-  securityLevel?: 'standard' | 'high' | 'enterprise';
+  securityLevel?: 'standard' | 'enhanced' | 'maximum';
   homomorphicEncryption?: boolean;
   zeroKnowledgeAuth?: boolean;
 }): Promise<{
@@ -143,14 +144,21 @@ export async function createAISecuredCloudInstance(name: string, config: {
       region: config.region || 'us-west',
       securityLevel: config.securityLevel || 'standard',
       keyPairs: {
-        encryption: kemKeys,
-        signature: sigKeys
+        encryption: {
+          publicKey: kemKeys.publicKey,
+          privateKey: kemKeys.privateKey
+        },
+        signature: {
+          publicKey: sigKeys.publicKey,
+          privateKey: sigKeys.privateKey
+        }
       },
       createdAt: new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
       healthStatus: 'healthy',
       threatStatus: 'normal',
       homomorphicEncryptionEnabled: config.homomorphicEncryption !== false,
+      ipfsStorageEnabled: false,
       zeroKnowledgeAuthEnabled: config.zeroKnowledgeAuth !== false,
       metrics: {
         cpuUsage: 0,
@@ -233,9 +241,15 @@ function generateSecurityHealthMetrics(): void {
   securityHealthMetrics = {
     overallScore: 80 + Math.floor(Math.random() * 20),
     threatDetectionRate: 95 + Math.random() * 5,
+    threatDetectionLatency: 100 + Math.random() * 200, // 100-300ms
     falsePositiveRate: Math.random() * 0.05,
     incidentResponseTime: 0.5 + Math.random() * 2, // 0.5 to 2.5 minutes
     complianceScore: 85 + Math.floor(Math.random() * 15),
+    complianceScores: {
+      'NIST SP 800-207': 80 + Math.floor(Math.random() * 20),
+      'ISO 27001': 85 + Math.floor(Math.random() * 15),
+      'FIPS 140-3': 90 + Math.floor(Math.random() * 10)
+    },
     lastUpdated: new Date().toISOString(),
     vulnerabilities: [
       {

@@ -1,588 +1,256 @@
-
 /**
- * TetraCryptPQC TPM and Biometric Authentication
+ * TetraCryptPQC Trusted Platform Module (TPM) and Biometric Authentication
  * 
- * Implements quantum-secure authentication using TPM,
- * biometric verification, and StarkNet zero-knowledge proofs.
+ * Implements hardware-backed key storage and biometric authentication
+ * for enhanced security.
  */
 
-import { generateFalconKeypair, signMessage, verifySignature } from './pqcrypto';
-import { connectToStarkNet, signMessageWithStarkNet } from '../services/StarkNetService';
-import { TPMAuthenticationConfig, BiometricSecurityConfig } from './storage-types';
-import { toast } from "@/components/ui/use-toast";
+import { PQCKey } from './crypto';
+import { UserProfile } from './storage-types';
+import { getUserProfile, updateUserProfile } from './storage';
 
-// TPM configuration
-const TPM_CONFIG = {
-  version: "2.0",
-  pcrMeasurements: [0, 1, 2, 3, 7],
-  algorithm: "SHA256",
-  srkAuth: false,
-  pcrExtendLog: true
-};
-
-// Biometric configuration
-const BIOMETRIC_CONFIG = {
-  methods: ['face', 'fingerprint'],
-  requiredFactors: 1,
-  falseAcceptRate: 0.001,
-  falseRejectRate: 0.01,
-  antiSpoofingEnabled: true
-};
-
-/**
- * Initialize TPM-based authentication
- */
-export async function initializeTPMAuth(): Promise<{
-  success: boolean;
-  tpmConfig?: TPMAuthenticationConfig;
-  error?: string;
-}> {
-  console.log("🔹 Initializing TPM-based authentication");
-  
-  try {
-    // Check if TPM is available
-    const tpmAvailable = await checkTPMAvailability();
-    
-    if (!tpmAvailable.available) {
-      console.log("TPM not available, using software fallback");
-      toast({
-        title: "TPM Not Available",
-        description: "Using software-based authentication fallback",
-        variant: "destructive", // Changed from "warning" to "destructive"
-      });
-    }
-    
-    // Generate Falcon keys for secure authentication
-    const keys = await generateFalconKeypair();
-    
-    // In a real implementation, these would be sealed by the TPM
-    // For simulation, we'll just encrypt them
-    const encryptedPrivateKey = `encrypted:${keys.privateKey}`;
-    
-    // Store keys
-    localStorage.setItem('tpm_auth_public_key', keys.publicKey);
-    localStorage.setItem('tpm_auth_private_key', encryptedPrivateKey);
-    
-    // Create TPM configuration
-    const tpmConfig: TPMAuthenticationConfig = {
-      id: crypto.randomUUID(),
-      enabled: true,
-      tpmVersion: tpmAvailable.available ? '2.0' : '1.2',
-      biometricLinked: false,
-      offlineAuthEnabled: true,
-      backupKeyExists: true,
-      starkNetRegistered: false,
-      pcrConfiguration: TPM_CONFIG.pcrMeasurements,
-      sealedKeyData: tpmAvailable.available,
-      runtimeVerification: true,
-      secureBootRequired: false,
-      lastVerification: new Date().toISOString(),
-      recoveryMechanismEnabled: true
-    };
-    
-    // Store TPM configuration
-    localStorage.setItem('tpm_auth_config', JSON.stringify(tpmConfig));
-    
-    // Register with StarkNet if available
-    const starkNetAvailable = await checkStarkNetAvailability();
-    if (starkNetAvailable.available) {
-      tpmConfig.starkNetRegistered = true;
-      localStorage.setItem('tpm_auth_config', JSON.stringify(tpmConfig));
-    }
-    
-    toast({
-      title: "TPM Authentication Initialized",
-      description: tpmAvailable.available 
-        ? "Hardware-backed TPM authentication enabled" 
-        : "Software-based TPM authentication enabled",
-    });
-    
-    return {
-      success: true,
-      tpmConfig
-    };
-  } catch (error) {
-    console.error("Failed to initialize TPM authentication:", error);
-    
-    toast({
-      title: "TPM Initialization Failed",
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive",
-    });
-    
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    };
-  }
-}
+// Biometric Authentication Methods
+export type BiometricMethod = 'face' | 'fingerprint' | 'voice' | 'iris';
 
 /**
  * Check if TPM is available
  */
-async function checkTPMAvailability(): Promise<{
+export async function checkTPMAvailability(): Promise<{
   available: boolean;
+  manufacturer?: string;
   version?: string;
   features?: string[];
+  error?: string;
 }> {
-  console.log("🔹 Checking TPM availability");
-  
-  // In a real implementation, this would check for a physical TPM
-  // For simulation, we'll return a random result
-  
-  const available = Math.random() > 0.3;
-  
-  if (available) {
+  try {
+    console.log("🔹 Checking TPM availability");
+    
+    // In a real implementation, this would check for actual TPM hardware
+    // For simulation, we'll return fixed values
+    
     return {
       available: true,
+      manufacturer: "Simulated TPM",
       version: "2.0",
-      features: ["PCR Measurement", "Key Sealing", "Remote Attestation"]
-    };
-  } else {
-    return {
-      available: false
-    };
-  }
-}
-
-/**
- * Check if StarkNet wallet is available
- */
-async function checkStarkNetAvailability(): Promise<{
-  available: boolean;
-  wallet?: string;
-}> {
-  console.log("🔹 Checking StarkNet availability for ZK authentication");
-  
-  try {
-    const starkNetStatus = await connectToStarkNet();
-    
-    return {
-      available: starkNetStatus.success,
-      wallet: starkNetStatus.address
+      features: ["Secure Key Storage", "Remote Attestation"]
     };
   } catch (error) {
-    console.error("Error checking StarkNet:", error);
+    console.error("Error checking TPM availability:", error);
     return {
-      available: false
+      available: false,
+      error: error instanceof Error ? error.message : "Unknown error checking TPM"
     };
   }
 }
 
 /**
- * Initialize biometric authentication
+ * Generate a hardware-protected PQC key using TPM
  */
-export async function initializeBiometricAuth(): Promise<{
+export async function generateTPMProtectedKey(
+  userId: string,
+  algorithm: 'ML-KEM-1024' | 'SLH-DSA-Dilithium5'
+): Promise<{
   success: boolean;
-  biometricConfig?: BiometricSecurityConfig;
+  key?: PQCKey;
   error?: string;
 }> {
-  console.log("🔹 Initializing biometric authentication");
-  
   try {
-    // Check if biometrics are available
-    const biometricsAvailable = await checkBiometricAvailability();
+    console.log(`🔹 Generating TPM-protected ${algorithm} key for user: ${userId}`);
     
-    if (!biometricsAvailable.available) {
-      console.log("Biometrics not available");
-      toast({
-        title: "Biometrics Not Available",
-        description: "Biometric authentication is not available on this device",
-        variant: "destructive", // Changed from "warning" to "destructive"
-      });
-      
-      return {
-        success: false,
-        error: "Biometrics not available"
+    // In a real implementation, this would use the TPM to generate and store the key
+    // For simulation, we'll generate a random key and mark it as hardware-protected
+    
+    const publicKey = crypto.randomUUID();
+    const privateKey = crypto.randomUUID();
+    
+    const key: PQCKey = {
+      publicKey,
+      privateKey,
+      created: new Date().toISOString(),
+      algorithm,
+      strength: '256-bit',
+      standard: algorithm === 'ML-KEM-1024' ? 'NIST FIPS 205' : 'NIST FIPS 206',
+      hardwareProtected: true,
+      hardwareType: 'TPM 2.0'
+    };
+    
+    // Update user profile with the new key
+    const profile = getUserProfile();
+    if (profile) {
+      const updatedProfile: UserProfile = {
+        ...profile,
+        keyPairs: {
+          ...profile.keyPairs,
+          pqkem: algorithm === 'ML-KEM-1024' ? key : profile.keyPairs?.pqkem,
+          signature: algorithm === 'SLH-DSA-Dilithium5' ? key : profile.keyPairs?.signature
+        }
       };
+      updateUserProfile(updatedProfile);
     }
-    
-    // Create biometric configuration
-    const biometricConfig: BiometricSecurityConfig = {
-      id: crypto.randomUUID(),
-      enabled: true,
-      methods: biometricsAvailable.methods || ['fingerprint'],
-      requiredFactors: BIOMETRIC_CONFIG.requiredFactors,
-      aiVerification: true,
-      aiModelType: 'local',
-      falseAcceptRate: BIOMETRIC_CONFIG.falseAcceptRate,
-      falseRejectRate: BIOMETRIC_CONFIG.falseRejectRate,
-      antiSpoofingEnabled: BIOMETRIC_CONFIG.antiSpoofingEnabled,
-      localStorageOnly: true,
-      encryptionType: 'ML-KEM-1024',
-      lastUpdated: new Date().toISOString(),
-      tpmProtected: false,
-      offlineModeEnabled: true
-    };
-    
-    // Store biometric configuration
-    localStorage.setItem('biometric_auth_config', JSON.stringify(biometricConfig));
-    
-    // Link with TPM if available
-    const tpmConfigStr = localStorage.getItem('tpm_auth_config');
-    if (tpmConfigStr) {
-      const tpmConfig = JSON.parse(tpmConfigStr) as TPMAuthenticationConfig;
-      tpmConfig.biometricLinked = true;
-      localStorage.setItem('tpm_auth_config', JSON.stringify(tpmConfig));
-      
-      biometricConfig.tpmProtected = true;
-      localStorage.setItem('biometric_auth_config', JSON.stringify(biometricConfig));
-    }
-    
-    toast({
-      title: "Biometric Authentication Initialized",
-      description: `Enabled methods: ${biometricConfig.methods.join(', ')}`,
-    });
     
     return {
       success: true,
-      biometricConfig
+      key
     };
   } catch (error) {
-    console.error("Failed to initialize biometric authentication:", error);
-    
-    toast({
-      title: "Biometric Initialization Failed",
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive",
-    });
-    
+    console.error("Error generating TPM-protected key:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error generating TPM key"
     };
   }
 }
 
 /**
- * Check if biometric authentication is available
+ * Authenticate user with biometric verification
  */
-async function checkBiometricAvailability(): Promise<{
-  available: boolean;
-  methods?: ('face' | 'fingerprint' | 'voice' | 'iris')[];
-}> {
-  console.log("🔹 Checking biometric availability");
-  
-  // In a real implementation, this would check for biometric hardware
-  // For simulation, we'll return a random result
-  
-  const available = Math.random() > 0.3;
-  
-  if (available) {
-    // Randomly select available methods
-    const methods: ('face' | 'fingerprint' | 'voice' | 'iris')[] = [];
-    
-    if (Math.random() > 0.3) methods.push('face');
-    if (Math.random() > 0.3) methods.push('fingerprint');
-    if (Math.random() > 0.7) methods.push('voice');
-    if (Math.random() > 0.9) methods.push('iris');
-    
-    // Ensure at least one method is available
-    if (methods.length === 0) methods.push('fingerprint');
-    
-    return {
-      available: true,
-      methods
-    };
-  } else {
-    return {
-      available: false
-    };
-  }
-}
-
-/**
- * Authenticate using TPM
- */
-export async function authenticateWithTPM(challenge?: string): Promise<{
+export async function authenticateWithBiometrics(
+  userId: string,
+  method: BiometricMethod = 'fingerprint'
+): Promise<{
   success: boolean;
-  sessionId?: string;
+  userId?: string;
+  method?: BiometricMethod;
+  timestamp?: string;
   error?: string;
 }> {
-  console.log("🔹 Authenticating with TPM");
-  
   try {
-    // Check if TPM authentication is initialized
-    const tpmConfigStr = localStorage.getItem('tpm_auth_config');
-    if (!tpmConfigStr) {
-      throw new Error("TPM authentication not initialized");
-    }
+    console.log(`🔹 Authenticating user ${userId} with biometric method: ${method}`);
     
-    const tpmConfig = JSON.parse(tpmConfigStr) as TPMAuthenticationConfig;
+    // In a real implementation, this would use the biometric hardware
+    // For simulation, we'll return a successful result
     
-    if (!tpmConfig.enabled) {
-      throw new Error("TPM authentication is disabled");
-    }
+    // Simulate biometric verification
+    const verificationSuccessful = Math.random() > 0.1; // 90% success rate
     
-    // Get the private key
-    const encryptedPrivateKey = localStorage.getItem('tpm_auth_private_key');
-    if (!encryptedPrivateKey) {
-      throw new Error("Authentication keys not found");
-    }
-    
-    // In a real implementation, this would unseal the key from the TPM
-    // For simulation, we'll just decrypt it
-    const privateKey = encryptedPrivateKey.replace('encrypted:', '');
-    
-    // Generate a challenge if not provided
-    const signChallenge = challenge || `auth-${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    
-    // Sign the challenge
-    const signature = await signMessage(signChallenge, privateKey);
-    
-    // Create a session ID
-    const sessionId = crypto.randomUUID();
-    
-    // Update last verification timestamp
-    tpmConfig.lastVerification = new Date().toISOString();
-    localStorage.setItem('tpm_auth_config', JSON.stringify(tpmConfig));
-    
-    // Register authentication with StarkNet if available
-    if (tpmConfig.starkNetRegistered) {
-      try {
-        await signMessageWithStarkNet(`tpm-auth:${sessionId}`);
-        // In a real implementation, this would store the signature for verification
-      } catch (error) {
-        console.error("StarkNet registration failed:", error);
-        // Continue without StarkNet registration
-      }
-    }
-    
-    toast({
-      title: "TPM Authentication Successful",
-      description: "Successfully authenticated with TPM",
-    });
-    
-    return {
-      success: true,
-      sessionId
-    };
-  } catch (error) {
-    console.error("TPM authentication failed:", error);
-    
-    toast({
-      title: "TPM Authentication Failed",
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive",
-    });
-    
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
-    };
-  }
-}
-
-/**
- * Authenticate using biometrics
- */
-export async function authenticateWithBiometrics(method?: 'face' | 'fingerprint' | 'voice' | 'iris'): Promise<{
-  success: boolean;
-  sessionId?: string;
-  error?: string;
-}> {
-  console.log(`🔹 Authenticating with biometrics: ${method || 'any'}`);
-  
-  try {
-    // Check if biometric authentication is initialized
-    const biometricConfigStr = localStorage.getItem('biometric_auth_config');
-    if (!biometricConfigStr) {
-      throw new Error("Biometric authentication not initialized");
-    }
-    
-    const biometricConfig = JSON.parse(biometricConfigStr) as BiometricSecurityConfig;
-    
-    if (!biometricConfig.enabled) {
-      throw new Error("Biometric authentication is disabled");
-    }
-    
-    // Check if the requested method is available
-    if (method && !biometricConfig.methods.includes(method)) {
-      throw new Error(`Biometric method ${method} is not available`);
-    }
-    
-    // In a real implementation, this would prompt for biometric verification
-    // For simulation, we'll return a random result with high success probability
-    
-    const success = Math.random() > 0.1; // 90% success rate
-    
-    if (!success) {
+    if (verificationSuccessful) {
+      return {
+        success: true,
+        userId,
+        method,
+        timestamp: new Date().toISOString()
+      };
+    } else {
       throw new Error("Biometric verification failed");
     }
-    
-    // Create a session ID
-    const sessionId = crypto.randomUUID();
-    
-    // Update last verification timestamp
-    biometricConfig.lastUpdated = new Date().toISOString();
-    localStorage.setItem('biometric_auth_config', JSON.stringify(biometricConfig));
-    
-    // Also authenticate with TPM if linked
-    if (biometricConfig.tpmProtected) {
-      await authenticateWithTPM();
-    }
-    
-    toast({
-      title: "Biometric Authentication Successful",
-      description: method ? `Successfully authenticated with ${method}` : "Successfully authenticated with biometrics",
-    });
-    
-    return {
-      success: true,
-      sessionId
-    };
   } catch (error) {
-    console.error("Biometric authentication failed:", error);
-    
-    toast({
-      title: "Biometric Authentication Failed",
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive",
-    });
-    
+    console.error("Error authenticating with biometrics:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error during biometric authentication"
     };
   }
 }
 
 /**
- * Perform offline authentication (TPM + Biometrics)
+ * Get available biometric authentication methods
  */
-export async function authenticateOffline(): Promise<{
+export function getBiometricAuthMethods(): { 
+  available: BiometricMethod[];
+  preferred?: BiometricMethod;
+} {
+  try {
+    console.log("🔹 Getting available biometric authentication methods");
+    
+    // In a real implementation, this would check for hardware capabilities
+    // For simulation, we'll return fixed values
+    
+    // Note: 'behavior' is removed as it's not in the BiometricMethod type
+    return {
+      available: ['fingerprint', 'face', 'voice', 'iris'],
+      preferred: 'fingerprint'
+    };
+  } catch (error) {
+    console.error("Error getting biometric methods:", error);
+    return {
+      available: ['fingerprint']
+    };
+  }
+}
+
+/**
+ * Enable biometric authentication for a user
+ */
+export async function enableBiometricAuth(
+  userId: string,
+  method: BiometricMethod
+): Promise<{
   success: boolean;
-  sessionId?: string;
-  methodsUsed?: string[];
+  userId?: string;
+  method?: BiometricMethod;
   error?: string;
 }> {
-  console.log("🔹 Authenticating in offline mode");
-  
   try {
-    const methodsUsed: string[] = [];
+    console.log(`🔹 Enabling biometric authentication (${method}) for user: ${userId}`);
     
-    // Try TPM authentication first
-    const tpmResult = await authenticateWithTPM();
-    if (tpmResult.success) {
-      methodsUsed.push("TPM");
-    }
+    // In a real implementation, this would store the biometric data securely
+    // For simulation, we'll just update the user profile
     
-    // Try biometric authentication
-    const biometricConfigStr = localStorage.getItem('biometric_auth_config');
-    if (biometricConfigStr) {
-      const biometricConfig = JSON.parse(biometricConfigStr) as BiometricSecurityConfig;
-      
-      if (biometricConfig.enabled && biometricConfig.offlineModeEnabled) {
-        // Use the first available method
-        const method = biometricConfig.methods[0];
-        const bioResult = await authenticateWithBiometrics(method);
-        
-        if (bioResult.success) {
-          methodsUsed.push(`Biometric (${method})`);
+    const profile = getUserProfile();
+    if (profile) {
+      const updatedProfile: UserProfile = {
+        ...profile,
+        securitySettings: {
+          ...profile.securitySettings,
+          hardwareAuthentication: true // Assuming biometric auth implies hardware auth
         }
-      }
-    }
-    
-    // If at least one method succeeded, authentication is successful
-    if (methodsUsed.length > 0) {
-      // Create a session ID
-      const sessionId = crypto.randomUUID();
-      
-      toast({
-        title: "Offline Authentication Successful",
-        description: `Methods used: ${methodsUsed.join(', ')}`,
-      });
+      };
+      updateUserProfile(updatedProfile);
       
       return {
         success: true,
-        sessionId,
-        methodsUsed
+        userId,
+        method
       };
     } else {
-      throw new Error("All authentication methods failed");
+      throw new Error("User profile not found");
     }
   } catch (error) {
-    console.error("Offline authentication failed:", error);
-    
-    toast({
-      title: "Offline Authentication Failed",
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive",
-    });
-    
+    console.error("Error enabling biometric authentication:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error enabling biometric auth"
     };
   }
 }
 
 /**
- * Get TPM authentication status
+ * Disable biometric authentication for a user
  */
-export function getTPMAuthStatus(): TPMAuthenticationConfig | null {
-  const tpmConfigStr = localStorage.getItem('tpm_auth_config');
-  return tpmConfigStr ? JSON.parse(tpmConfigStr) as TPMAuthenticationConfig : null;
-}
-
-/**
- * Get biometric authentication status
- */
-export function getBiometricAuthStatus(): BiometricSecurityConfig | null {
-  const biometricConfigStr = localStorage.getItem('biometric_auth_config');
-  return biometricConfigStr ? JSON.parse(biometricConfigStr) as BiometricSecurityConfig : null;
-}
-
-/**
- * Monitor authentication status and switch to offline mode when cloud is unavailable
- */
-export function monitorAuthenticationStatus(): void {
-  console.log("🔹 Monitoring authentication status");
-  
-  // In a real implementation, this would check cloud authentication service availability
-  // For simulation, we'll assume the cloud is sometimes unavailable
-  
-  const isCloudAvailable = Math.random() > 0.3;
-  
-  if (!isCloudAvailable) {
-    console.log("🔹 Cloud authentication unavailable, enabling offline mode");
+export async function disableBiometricAuth(userId: string): Promise<{
+  success: boolean;
+  userId?: string;
+  error?: string;
+}> {
+  try {
+    console.log(`🔹 Disabling biometric authentication for user: ${userId}`);
     
-    // Enable offline mode for TPM
-    const tpmConfigStr = localStorage.getItem('tpm_auth_config');
-    if (tpmConfigStr) {
-      const tpmConfig = JSON.parse(tpmConfigStr) as TPMAuthenticationConfig;
-      if (!tpmConfig.offlineAuthEnabled) {
-        tpmConfig.offlineAuthEnabled = true;
-        localStorage.setItem('tpm_auth_config', JSON.stringify(tpmConfig));
-        
-        toast({
-          title: "Offline TPM Authentication Enabled",
-          description: "Cloud authentication is unavailable",
-          variant: "destructive", // Changed from "warning" to "destructive"
-        });
-      }
-    }
+    // In a real implementation, this would remove the stored biometric data
+    // For simulation, we'll just update the user profile
     
-    // Enable offline mode for biometrics
-    const biometricConfigStr = localStorage.getItem('biometric_auth_config');
-    if (biometricConfigStr) {
-      const biometricConfig = JSON.parse(biometricConfigStr) as BiometricSecurityConfig;
-      if (!biometricConfig.offlineModeEnabled) {
-        biometricConfig.offlineModeEnabled = true;
-        localStorage.setItem('biometric_auth_config', JSON.stringify(biometricConfig));
-        
-        toast({
-          title: "Offline Biometric Authentication Enabled",
-          description: "Cloud authentication is unavailable",
-          variant: "destructive", // Changed from "warning" to "destructive"
-        });
-      }
+    const profile = getUserProfile();
+    if (profile) {
+      const updatedProfile: UserProfile = {
+        ...profile,
+        securitySettings: {
+          ...profile.securitySettings,
+          hardwareAuthentication: false
+        }
+      };
+      updateUserProfile(updatedProfile);
+      
+      return {
+        success: true,
+        userId
+      };
+    } else {
+      throw new Error("User profile not found");
     }
+  } catch (error) {
+    console.error("Error disabling biometric authentication:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error disabling biometric auth"
+    };
   }
-  
-  // In a real implementation, this would set up recurring monitoring
-  setTimeout(() => monitorAuthenticationStatus(), 60000); // Check every minute
 }
-
-// Start monitoring when module is imported
-monitorAuthenticationStatus();

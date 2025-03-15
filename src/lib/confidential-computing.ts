@@ -1,479 +1,498 @@
-
 /**
- * TetraCryptPQC Confidential Computing Module
+ * TetraCryptPQC Confidential Computing
  * 
- * This module provides utilities for secure, hardware-backed confidential computing
- * operations using trusted execution environments like Intel SGX, AMD SEV, ARM TrustZone,
- * and secure enclaves.
+ * Implements Trusted Execution Environments (TEEs) with Intel SGX,
+ * AMD SEV, and ARM TrustZone for secure enclave execution.
  */
 
-import { HSMType } from './secure-infrastructure';
-import { SecureContainerConfig } from './storage-types';
-import { logSecurityEvent } from './ai-security';
-import { encryptAES } from './crypto';
-import { getLocalStorage, setLocalStorage } from './secure-storage';
+import { PQCKey } from './crypto';
+import { getUserProfile } from './storage';
+import { SecurityEventType, ThreatSeverity } from './storage-types';
+import { Logger } from 'tslog';
 
-// Confidential computing environment types
-export enum ConfidentialEnvironmentType {
-  INTEL_SGX = "INTEL_SGX",
-  AMD_SEV = "AMD_SEV",
-  IBM_PEF = "IBM_PEF",
-  ARM_CCA = "ARM_CCA",
-  NVIDIA_CONFIDENTIAL = "NVIDIA_CONFIDENTIAL",
-  SOFTWARE_EMULATED = "SOFTWARE_EMULATED"
+// Define the logger
+const logger = new Logger({ name: "confidential-computing" });
+
+// TEE configuration
+export interface TEEConfig {
+  teeType: 'intel-sgx' | 'amd-sev' | 'arm-trustzone';
+  enabled: boolean;
+  version: string;
+  securityLevel: 'high' | 'medium' | 'low';
+  keyAttestationEnabled: boolean;
+  remoteAttestationEnabled: boolean;
 }
 
-// Container security policy
-export interface ContainerSecurityPolicy {
+// Security event interface for TEE
+export interface TEESecurityEvent {
   id: string;
-  name: string;
-  enforceSelinux: boolean;
-  enforceAppArmor: boolean;
-  enforceSeccomp: boolean;
-  enforceImmutableRootfs: boolean;
-  allowedCapabilities: string[];
-  deniedCapabilities: string[];
-  encryptedMemory: boolean;
-  noNewPrivileges: boolean;
-  readOnlyRootfs: boolean;
+  timestamp: string;
+  eventType: SecurityEventType;
+  userId: string;
+  resourceId?: string;
+  operation: string;
+  status: 'success' | 'failure' | 'blocked';
+  metadata: Record<string, any>;
+  severity: ThreatSeverity;
+  location: 'local' | 'remote';
 }
 
-// Confidential AI container configuration
-export interface ConfidentialAIContainer {
-  id: string;
-  name: string;
-  confidentialEnvironment: ConfidentialEnvironmentType;
-  securityPolicy: string; // ID of container security policy
-  aiModel: string;
-  aiPurpose: 'anomaly-detection' | 'threat-prediction' | 'key-generation' | 'crypto-analysis';
-  memoryEncryptionKey?: string; // Encrypted memory encryption key
-  attestationReport?: string; // Remote attestation report
-  encryptedStorage: boolean;
-  hardwareBindings: string[]; // Hardware binding configurations
-  immutableRootfs?: boolean;
-  selinuxEnabled?: boolean;
-  hsmProtection?: boolean;
-  hsmType?: HSMType;
-  encryptedMemory?: boolean;
-  networkIsolation?: boolean;
-  securityPolicies?: string[];
-  created?: string;
+// Current TEE configuration
+let currentTEEConfig: TEEConfig = {
+  teeType: 'intel-sgx',
+  enabled: true,
+  version: '2.0',
+  securityLevel: 'high',
+  keyAttestationEnabled: true,
+  remoteAttestationEnabled: true
+};
+
+/**
+ * Initialize the TEE environment
+ */
+export async function initializeTEE(): Promise<boolean> {
+  console.log("🔹 Initializing Trusted Execution Environment");
+  
+  try {
+    // In a real implementation, this would perform actual initialization
+    // For simulation, we'll just log the initialization
+    
+    // Log a system audit event
+    logSystemAuditEvent('tee-initialization', 'success', {
+      teeType: currentTEEConfig.teeType,
+      securityLevel: currentTEEConfig.securityLevel
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("❌ TEE initialization failed:", error);
+    
+    // Log a system audit event
+    logSystemAuditEvent('tee-initialization', 'failure', {
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+    
+    return false;
+  }
 }
 
 /**
- * Check if the system supports confidential computing
+ * Check if TEE is available
  */
-export async function checkConfidentialComputingSupport(): Promise<{
-  supported: boolean;
-  environments: {
-    type: ConfidentialEnvironmentType;
-    available: boolean;
-    version?: string;
-    details?: Record<string, any>;
-  }[];
-}> {
+export function checkTEEAvailability(): boolean {
+  // In a real implementation, this would check for actual TEE availability
+  // For simulation purposes, we'll return true
+  return currentTEEConfig.enabled;
+}
+
+/**
+ * Get the current TEE configuration
+ */
+export function getTEEConfig(): TEEConfig {
+  return currentTEEConfig;
+}
+
+/**
+ * Set the TEE configuration
+ */
+export function setTEEConfig(config: Partial<TEEConfig>): void {
+  console.log("🔹 Setting TEE configuration");
+  
+  // Update the configuration
+  currentTEEConfig = {
+    ...currentTEEConfig,
+    ...config
+  };
+  
+  // Log a system audit event
+  logSystemAuditEvent('tee-configuration-update', 'success', {
+    ...config
+  });
+}
+
+/**
+ * Generate a PQC key inside the TEE
+ */
+export async function generateTEEKey(algorithm: 'ML-KEM-1024' | 'SLH-DSA-Dilithium5'): Promise<PQCKey | null> {
+  console.log(`🔹 Generating PQC key inside TEE using ${algorithm}`);
+  
   try {
-    console.log("🔹 Checking confidential computing support");
+    // In a real implementation, this would generate the key inside the TEE
+    // For simulation purposes, we'll generate a random key
     
-    // In a real implementation, this would check the actual hardware capabilities
-    // For simulation purposes, we'll return a static result
+    const publicKey = crypto.randomUUID();
+    const privateKey = crypto.randomUUID();
     
-    // Simulate different levels of support with 30% Intel SGX, 30% AMD SEV, 40% none
-    const random = Math.random();
+    // Log a security event
+    logSecurityEvent({
+      eventType: 'key-usage',
+      userId: 'system',
+      resourceId: 'tee-key',
+      operation: 'key-generation',
+      status: 'success',
+      metadata: {
+        algorithm,
+        teeType: currentTEEConfig.teeType
+      },
+      severity: 'low',
+      location: 'local'
+    });
     
-    if (random < 0.3) {
-      // Intel SGX support
+    return {
+      publicKey,
+      privateKey,
+      created: new Date().toISOString(),
+      algorithm,
+      strength: '256-bit',
+      standard: 'NIST FIPS 205'
+    };
+  } catch (error) {
+    console.error("❌ TEE key generation failed:", error);
+    
+    // Log a security event
+    logSecurityEvent({
+      eventType: 'key-usage',
+      userId: 'system',
+      resourceId: 'tee-key',
+      operation: 'key-generation',
+      status: 'failure',
+      metadata: {
+        algorithm,
+        teeType: currentTEEConfig.teeType,
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      severity: 'high',
+      location: 'local'
+    });
+    
+    return null;
+  }
+}
+
+/**
+ * Attest the TEE environment
+ */
+export async function attestTEE(): Promise<{
+  success: boolean;
+  attestationReport?: string;
+  error?: string;
+}> {
+  console.log("🔹 Attesting TEE environment");
+  
+  try {
+    // In a real implementation, this would perform actual attestation
+    // For simulation purposes, we'll generate a random attestation report
+    
+    const attestationReport = crypto.randomUUID();
+    
+    // Log a system audit event
+    logSystemAuditEvent('tee-attestation', 'success', {
+      teeType: currentTEEConfig.teeType,
+      attestationReport
+    });
+    
+    return {
+      success: true,
+      attestationReport
+    };
+  } catch (error) {
+    console.error("❌ TEE attestation failed:", error);
+    
+    // Log a system audit event
+    logSystemAuditEvent('tee-attestation', 'failure', {
+      teeType: currentTEEConfig.teeType,
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+}
+
+/**
+ * Perform a secure operation inside the TEE
+ */
+export async function performSecureOperation<T>(
+  operation: string,
+  data: any
+): Promise<{
+  success: boolean;
+  result?: T;
+  error?: string;
+}> {
+  console.log(`🔹 Performing secure operation inside TEE: ${operation}`);
+  
+  try {
+    // In a real implementation, this would perform the operation inside the TEE
+    // For simulation purposes, we'll just return the data
+    
+    // Log a security event
+    logSecurityEvent({
+      eventType: 'cryptographic-operation',
+      userId: 'system',
+      resourceId: 'tee-operation',
+      operation,
+      status: 'success',
+      metadata: {
+        teeType: currentTEEConfig.teeType
+      },
+      severity: 'low',
+      location: 'local'
+    });
+    
+    return {
+      success: true,
+      result: data as T
+    };
+  } catch (error) {
+    console.error("❌ Secure operation failed:", error);
+    
+    // Log a security event
+    logSecurityEvent({
+      eventType: 'cryptographic-operation',
+      userId: 'system',
+      resourceId: 'tee-operation',
+      operation,
+      status: 'failure',
+      metadata: {
+        teeType: currentTEEConfig.teeType,
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      severity: 'high',
+      location: 'local'
+    });
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+}
+
+/**
+ * Log a security event for TEE analysis
+ */
+export function logSecurityEvent(
+  event: Partial<TEESecurityEvent>
+): void {
+  const securityEvent: TEESecurityEvent = {
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    eventType: event.eventType || 'system-change', // Valid SecurityEventType
+    userId: event.userId || 'system',
+    resourceId: event.resourceId,
+    operation: event.operation || 'unknown',
+    status: event.status || 'success',
+    metadata: event.metadata || {},
+    severity: event.severity || 'low',
+    location: event.location || 'local'
+  };
+  
+  console.log("🔹 Logging TEE security event:", securityEvent.operation);
+  
+  // In production, this would store the event for later analysis
+  // For development, we'll just log it
+  logger.info(securityEvent);
+  
+  // Also check if it's a suspicious event that requires immediate action
+  if (event.status === 'failure' && 
+     (event.eventType === 'authentication' || event.eventType === 'cryptographic-operation')) {
+    console.warn("⚠️ Suspicious TEE security event detected:", event.operation);
+    // In production, this would trigger a more in-depth analysis
+  }
+}
+
+/**
+ * Initialize the TEE security monitoring system
+ */
+export function initTEESecurityMonitoring(): void {
+  console.log("🔹 Initializing TEE security monitoring");
+  
+  // In production, this would set up event listeners and monitoring tasks
+  // For development, we'll just log the initialization
+}
+
+/**
+ * Simulate remote attestation process
+ */
+export async function simulateRemoteAttestation(): Promise<{
+  success: boolean;
+  report?: string;
+  error?: string;
+}> {
+  console.log("🔹 Simulating remote attestation process");
+  
+  try {
+    // Simulate generating an attestation report
+    const report = `Attestation Report: ${crypto.randomUUID()}`;
+    
+    // Simulate verification of the report
+    const isValid = Math.random() > 0.1; // 90% chance of success
+    
+    if (isValid) {
+      console.log("✅ Remote attestation successful");
+      
+      // Log a system audit event
+      logSystemAuditEvent('remote-attestation', 'success', {
+        teeType: currentTEEConfig.teeType,
+        report
+      });
+      
       return {
-        supported: true,
-        environments: [
-          {
-            type: ConfidentialEnvironmentType.INTEL_SGX,
-            available: true,
-            version: "SGX2",
-            details: {
-              enclaveSize: "512MB",
-              attestationSupport: true,
-              securityLevel: "EAL4+"
-            }
-          },
-          {
-            type: ConfidentialEnvironmentType.AMD_SEV,
-            available: false
-          },
-          {
-            type: ConfidentialEnvironmentType.SOFTWARE_EMULATED,
-            available: true,
-            version: "1.0",
-            details: {
-              securityLevel: "simulation",
-              performance: "degraded"
-            }
-          }
-        ]
-      };
-    } else if (random < 0.6) {
-      // AMD SEV support
-      return {
-        supported: true,
-        environments: [
-          {
-            type: ConfidentialEnvironmentType.AMD_SEV,
-            available: true,
-            version: "SEV-SNP",
-            details: {
-              securityLevel: "High",
-              attestationSupport: true,
-              nestedVirtualization: true
-            }
-          },
-          {
-            type: ConfidentialEnvironmentType.INTEL_SGX,
-            available: false
-          },
-          {
-            type: ConfidentialEnvironmentType.SOFTWARE_EMULATED,
-            available: true,
-            version: "1.0",
-            details: {
-              securityLevel: "simulation",
-              performance: "degraded"
-            }
-          }
-        ]
+        success: true,
+        report
       };
     } else {
-      // No hardware support, only software emulation
-      return {
-        supported: true,
-        environments: [
-          {
-            type: ConfidentialEnvironmentType.SOFTWARE_EMULATED,
-            available: true,
-            version: "1.0",
-            details: {
-              securityLevel: "simulation",
-              performance: "degraded"
-            }
-          },
-          {
-            type: ConfidentialEnvironmentType.INTEL_SGX,
-            available: false
-          },
-          {
-            type: ConfidentialEnvironmentType.AMD_SEV,
-            available: false
-          }
-        ]
-      };
+      throw new Error("Remote attestation failed");
     }
   } catch (error) {
-    console.error("Error checking confidential computing support:", error);
+    console.error("❌ Remote attestation simulation failed:", error);
+    
+    // Log a system audit event
+    logSystemAuditEvent('remote-attestation', 'failure', {
+      teeType: currentTEEConfig.teeType,
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+    
     return {
-      supported: false,
-      environments: []
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+}
+
+// Fix the audit event logs to use allowed SecurityEventType values
+function logSystemAuditEvent(operation: string, status: 'success' | 'failure' | 'blocked', metadata: Record<string, any> = {}): void {
+  logger.log({
+    id: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    eventType: 'system-change', // Changed from 'audit' to a valid type
+    userId: 'system',
+    resourceId: 'tee-environment',
+    operation,
+    status,
+    metadata: {
+      ...metadata,
+      component: 'confidential-computing',
+      teeType: currentTEEConfig.teeType
+    },
+    severity: 'audit',
+    location: 'local'
+  });
+}
+
+/**
+ * Simulate key sealing within the TEE
+ */
+export async function simulateKeySealing(key: string): Promise<{
+  success: boolean;
+  sealedKey?: string;
+  error?: string;
+}> {
+  console.log("🔹 Simulating key sealing within the TEE");
+  
+  try {
+    // Simulate sealing the key
+    const sealedKey = `SealedKey[${key.substring(0, 5)}...${key.substring(key.length - 5)}]`;
+    
+    // Log a security event
+    logSecurityEvent({
+      eventType: 'cryptographic-operation',
+      userId: 'system',
+      resourceId: 'tee-key',
+      operation: 'key-sealing',
+      status: 'success',
+      metadata: {
+        teeType: currentTEEConfig.teeType
+      },
+      severity: 'low',
+      location: 'local'
+    });
+    
+    return {
+      success: true,
+      sealedKey
+    };
+  } catch (error) {
+    console.error("❌ Key sealing simulation failed:", error);
+    
+    // Log a security event
+    logSecurityEvent({
+      eventType: 'cryptographic-operation',
+      userId: 'system',
+      resourceId: 'tee-key',
+      operation: 'key-sealing',
+      status: 'failure',
+      metadata: {
+        teeType: currentTEEConfig.teeType,
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      severity: 'high',
+      location: 'local'
+    });
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
     };
   }
 }
 
 /**
- * Create a container security policy
+ * Simulate data sealing within the TEE
  */
-export async function createContainerSecurityPolicy(
-  name: string,
-  config: Partial<ContainerSecurityPolicy> = {}
-): Promise<ContainerSecurityPolicy> {
+export async function simulateDataSealing(data: string): Promise<{
+  success: boolean;
+  sealedData?: string;
+  error?: string;
+}> {
+  console.log("🔹 Simulating data sealing within the TEE");
+  
   try {
-    // Generate a new policy ID
-    const id = crypto.randomUUID();
+    // Simulate sealing the data
+    const sealedData = `SealedData[${data.substring(0, 10)}...${data.substring(data.length - 10)}]`;
     
-    // Create security policy with defaults
-    const securityPolicy: ContainerSecurityPolicy = {
-      id,
-      name,
-      enforceSelinux: config.enforceSelinux ?? true,
-      enforceAppArmor: config.enforceAppArmor ?? true,
-      enforceSeccomp: config.enforceSeccomp ?? true,
-      enforceImmutableRootfs: config.enforceImmutableRootfs ?? true,
-      allowedCapabilities: config.allowedCapabilities ?? ['CHOWN', 'DAC_OVERRIDE', 'FOWNER', 'MKNOD', 'NET_RAW', 'SETGID', 'SETUID'],
-      deniedCapabilities: config.deniedCapabilities ?? ['SYS_ADMIN', 'SYS_PTRACE', 'NET_ADMIN', 'SYS_MODULE'],
-      encryptedMemory: config.encryptedMemory ?? true,
-      noNewPrivileges: config.noNewPrivileges ?? true,
-      readOnlyRootfs: config.readOnlyRootfs ?? true
+    // Log a security event
+    logSecurityEvent({
+      eventType: 'data-access',
+      userId: 'system',
+      resourceId: 'tee-data',
+      operation: 'data-sealing',
+      status: 'success',
+      metadata: {
+        teeType: currentTEEConfig.teeType
+      },
+      severity: 'low',
+      location: 'local'
+    });
+    
+    return {
+      success: true,
+      sealedData
     };
-    
-    // Store the security policy
-    const policies = getLocalStorage<ContainerSecurityPolicy[]>("container_security_policies") || [];
-    policies.push(securityPolicy);
-    setLocalStorage("container_security_policies", policies);
-    
-    // Log security event - using the correct type
-    logSecurityEvent({
-      eventType: "audit",  // Changed from "system" to "audit"
-      userId: "system",
-      operation: "create_container_security_policy",
-      status: "success",
-      metadata: { policyId: id, name }
-    });
-    
-    return securityPolicy;
   } catch (error) {
-    console.error("Error creating container security policy:", error);
+    console.error("❌ Data sealing simulation failed:", error);
     
-    // Log security event - using the correct type
+    // Log a security event
     logSecurityEvent({
-      eventType: "audit",  // Changed from "system" to "audit"
-      userId: "system",
-      operation: "create_container_security_policy",
-      status: "failure",
-      metadata: { name, error: error instanceof Error ? error.message : "Unknown error" }
+      eventType: 'data-access',
+      userId: 'system',
+      resourceId: 'tee-data',
+      operation: 'data-sealing',
+      status: 'failure',
+      metadata: {
+        teeType: currentTEEConfig.teeType,
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      severity: 'high',
+      location: 'local'
     });
     
-    throw error;
-  }
-}
-
-/**
- * Create a confidential AI container
- */
-export async function createConfidentialAIContainer(
-  name: string,
-  aiModel: string,
-  aiPurpose: 'anomaly-detection' | 'threat-prediction' | 'key-generation' | 'crypto-analysis',
-  config: Partial<ConfidentialAIContainer> = {}
-): Promise<ConfidentialAIContainer> {
-  try {
-    console.log(`🔹 Creating confidential AI container: ${name}`);
-    
-    // Check confidential computing support
-    const ccSupport = await checkConfidentialComputingSupport();
-    
-    // Determine the best available confidential environment
-    let environment = ConfidentialEnvironmentType.SOFTWARE_EMULATED;
-    for (const env of ccSupport.environments) {
-      if (env.available && env.type !== ConfidentialEnvironmentType.SOFTWARE_EMULATED) {
-        environment = env.type;
-        break;
-      }
-    }
-    
-    // Generate a new container ID
-    const id = crypto.randomUUID();
-    
-    // Create or use an existing security policy
-    let securityPolicyId = config.securityPolicy;
-    if (!securityPolicyId) {
-      const policy = await createContainerSecurityPolicy(`${name}-security-policy`);
-      securityPolicyId = policy.id;
-    }
-    
-    // Generate memory encryption key (in a real implementation, this would be stored in a HSM)
-    const randomBytes = crypto.getRandomValues(new Uint8Array(32));
-    const memoryEncryptionKey = Array.from(randomBytes, b => b.toString(16).padStart(2, '0')).join('');
-    
-    // Encrypt the memory encryption key (in a real implementation, this would use asymmetric encryption)
-    const encryptedMemoryKey = await encryptAES(memoryEncryptionKey, 'secure_key');
-    
-    // Create container config
-    const containerConfig: ConfidentialAIContainer = {
-      id,
-      name,
-      immutableRootfs: config.immutableRootfs ?? true,
-      selinuxEnabled: config.selinuxEnabled ?? true,
-      hsmProtection: config.hsmProtection ?? true,
-      hsmType: config.hsmType ?? HSMType.TPM,
-      encryptedMemory: config.encryptedMemory ?? true,
-      networkIsolation: config.networkIsolation ?? true,
-      securityPolicies: config.securityPolicies ?? [securityPolicyId],
-      created: new Date().toISOString(),
-      confidentialEnvironment: config.confidentialEnvironment ?? environment,
-      securityPolicy: securityPolicyId,
-      aiModel,
-      aiPurpose,
-      memoryEncryptionKey: encryptedMemoryKey,
-      encryptedStorage: config.encryptedStorage ?? true,
-      hardwareBindings: config.hardwareBindings ?? ['tpm', 'cpu-id', 'machine-id']
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
     };
-    
-    // Store the container config
-    const containers = getLocalStorage<ConfidentialAIContainer[]>("confidential_ai_containers") || [];
-    containers.push(containerConfig);
-    setLocalStorage("confidential_ai_containers", containers);
-    
-    // Log security event
-    logSecurityEvent({
-      eventType: "audit",  // Changed from "system" to "audit"
-      userId: "system",
-      operation: "create_confidential_ai_container",
-      status: "success",
-      metadata: { containerId: id, name, environment, aiPurpose }
-    });
-    
-    console.log(`🔹 Confidential AI container created: ${name} (${environment})`);
-    return containerConfig;
-  } catch (error) {
-    console.error("Error creating confidential AI container:", error);
-    
-    // Log security event
-    logSecurityEvent({
-      eventType: "audit",  // Changed from "system" to "audit"
-      userId: "system",
-      operation: "create_confidential_ai_container",
-      status: "failure",
-      metadata: { name, error: error instanceof Error ? error.message : "Unknown error" }
-    });
-    
-    throw error;
   }
 }
-
-/**
- * Get all confidential AI containers
- */
-export function getConfidentialAIContainers(): ConfidentialAIContainer[] {
-  return getLocalStorage<ConfidentialAIContainer[]>("confidential_ai_containers") || [];
-}
-
-/**
- * Get a container security policy by ID
- */
-export function getContainerSecurityPolicy(id: string): ContainerSecurityPolicy | null {
-  const policies = getLocalStorage<ContainerSecurityPolicy[]>("container_security_policies") || [];
-  return policies.find(policy => policy.id === id) || null;
-}
-
-/**
- * Get all container security policies
- */
-export function getAllContainerSecurityPolicies(): ContainerSecurityPolicy[] {
-  return getLocalStorage<ContainerSecurityPolicy[]>("container_security_policies") || [];
-}
-
-/**
- * Start a confidential AI container
- */
-export async function startConfidentialAIContainer(containerId: string): Promise<boolean> {
-  try {
-    console.log(`🔹 Starting confidential AI container: ${containerId}`);
-    
-    // Get the container
-    const containers = getLocalStorage<ConfidentialAIContainer[]>("confidential_ai_containers") || [];
-    const containerIndex = containers.findIndex(c => c.id === containerId);
-    
-    if (containerIndex === -1) {
-      throw new Error(`Container not found: ${containerId}`);
-    }
-    
-    // In a real implementation, this would actually start the container
-    // For simulation purposes, we'll just log it
-    
-    // Log security event
-    logSecurityEvent({
-      eventType: "audit",  // Changed from "system" to "audit"
-      userId: "system",
-      operation: "start_confidential_ai_container",
-      status: "success",
-      metadata: { 
-        containerId, 
-        name: containers[containerIndex].name,
-        environment: containers[containerIndex].confidentialEnvironment,
-        aiPurpose: containers[containerIndex].aiPurpose
-      }
-    });
-    
-    console.log(`🔹 Confidential AI container started: ${containers[containerIndex].name}`);
-    return true;
-  } catch (error) {
-    console.error("Error starting confidential AI container:", error);
-    
-    // Log security event
-    logSecurityEvent({
-      eventType: "audit",  // Changed from "system" to "audit"
-      userId: "system",
-      operation: "start_confidential_ai_container",
-      status: "failure",
-      metadata: { containerId, error: error instanceof Error ? error.message : "Unknown error" }
-    });
-    
-    return false;
-  }
-}
-
-/**
- * Initialize confidential computing environment
- */
-export async function initializeConfidentialComputing(): Promise<boolean> {
-  try {
-    console.log("🔹 Initializing confidential computing environment");
-    
-    // Check if already initialized
-    if (getLocalStorage<boolean>("confidential_computing_initialized")) {
-      console.log("🔹 Confidential computing already initialized");
-      return true;
-    }
-    
-    // Check confidential computing support
-    const ccSupport = await checkConfidentialComputingSupport();
-    
-    if (!ccSupport.supported) {
-      console.warn("⚠️ No confidential computing support detected. Using software emulation.");
-    }
-    
-    // Create default security policies
-    await createContainerSecurityPolicy("high-security-policy", {
-      enforceSelinux: true,
-      enforceAppArmor: true,
-      enforceSeccomp: true,
-      enforceImmutableRootfs: true,
-      encryptedMemory: true,
-      noNewPrivileges: true,
-      readOnlyRootfs: true
-    });
-    
-    await createContainerSecurityPolicy("medium-security-policy", {
-      enforceSelinux: true,
-      enforceAppArmor: true,
-      enforceSeccomp: true,
-      enforceImmutableRootfs: true,
-      encryptedMemory: true,
-      noNewPrivileges: true,
-      readOnlyRootfs: false
-    });
-    
-    // Create default confidential AI containers
-    await createConfidentialAIContainer(
-      "pqc-anomaly-detection",
-      "anomaly-detection-mlp",
-      "anomaly-detection"
-    );
-    
-    await createConfidentialAIContainer(
-      "pqc-threat-prediction",
-      "threat-prediction-lstm",
-      "threat-prediction"
-    );
-    
-    await createConfidentialAIContainer(
-      "pqc-crypto-analysis",
-      "crypto-analysis-cnn",
-      "crypto-analysis"
-    );
-    
-    // Mark as initialized
-    setLocalStorage("confidential_computing_initialized", true);
-    
-    console.log("🔹 Confidential computing initialized successfully");
-    return true;
-  } catch (error) {
-    console.error("Error initializing confidential computing:", error);
-    return false;
-  }
-}
-
-// Update the SecurityEventType to include the "audit" type used above
-export type SecurityEventType = 
-  | "attestation" 
-  | "key_management" 
-  | "confidential_computing" 
-  | "infrastructure"
-  | "audit" 
-  | "access_control";
