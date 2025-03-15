@@ -3,856 +3,675 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { toast } from "@/components/ui/use-toast";
-import { Shield, Server, Database, Cloud, Lock, Key, FileDigit, RefreshCw, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle, Shield, Server, Cloud, Database, AlertTriangle, Activity, Lock, RefreshCw } from "lucide-react";
 import { 
-  createAISecuredCloudInstance, 
+  initializeAICloudSecurity, 
+  createAISecuredCloudInstance,
   getAISecuredCloudInstances,
+  getSecurityHealthMetrics,
   setupHomomorphicEncryption,
   setupIPFSSecureStorage,
-  enableZeroKnowledgeAuth,
-  getSecurityHealthMetrics,
-  AISecuredCloudInstance,
-  SecurityHealthMetrics
+  enableZeroKnowledgeAuth
 } from "@/lib/ai-cloud-security";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { AISecuredCloudInstance, SecurityHealthMetrics } from "@/lib/storage-types";
+import { toast } from "@/components/ui/use-toast";
 
 const AISecureCloudInfrastructure: React.FC = () => {
-  const [instances, setInstances] = useState<AISecuredCloudInstance[]>([]);
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [cloudInstances, setCloudInstances] = useState<AISecuredCloudInstance[]>([]);
   const [healthMetrics, setHealthMetrics] = useState<SecurityHealthMetrics | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [activeTab, setActiveTab] = useState("instances");
-  
-  // Form states
-  const [instanceName, setInstanceName] = useState("secure-cloud");
-  const [instanceType, setInstanceType] = useState<'podman' | 'kubernetes' | 'openshift'>('podman');
-  const [securityLevel, setSecurityLevel] = useState<'standard' | 'enhanced' | 'maximum'>('enhanced');
-  
-  // Load instances and metrics on component mount
+  const [newInstanceName, setNewInstanceName] = useState("");
+
   useEffect(() => {
-    const loadData = async () => {
+    // Initialize on component mount
+    const initialize = async () => {
       try {
-        // Load instances
-        const cloudInstances = await getAISecuredCloudInstances();
-        setInstances(cloudInstances);
+        setInitializing(true);
+        const result = await initializeAICloudSecurity();
+        if (result.success && result.metrics) {
+          setHealthMetrics(result.metrics);
+        }
         
-        // Load health metrics
-        const metrics = await getSecurityHealthMetrics();
-        setHealthMetrics(metrics);
+        // Load existing instances
+        const instances = getAISecuredCloudInstances();
+        setCloudInstances(instances);
       } catch (error) {
-        console.error("Error loading AI Cloud data:", error);
+        console.error("Failed to initialize AI cloud infrastructure:", error);
         toast({
-          title: "Error Loading Data",
-          description: error instanceof Error ? error.message : "Failed to load AI Cloud data",
+          title: "Initialization Failed",
+          description: "Failed to initialize AI cloud infrastructure",
           variant: "destructive",
         });
+      } finally {
+        setInitializing(false);
       }
     };
     
-    loadData();
-  }, []);
-  
-  // Create a new cloud instance
-  const handleCreateInstance = async () => {
-    setIsCreating(true);
+    initialize();
     
-    try {
-      const newInstance = await createAISecuredCloudInstance(
-        instanceName,
-        instanceType,
-        securityLevel
-      );
-      
-      setInstances([...instances, newInstance]);
-      
+    // Set up periodic refresh
+    const refreshInterval = setInterval(() => {
+      setCloudInstances(getAISecuredCloudInstances());
+      setHealthMetrics(getSecurityHealthMetrics());
+    }, 10000);
+    
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  const handleCreateInstance = async () => {
+    if (!newInstanceName.trim()) {
       toast({
-        title: "Cloud Instance Created",
-        description: `Secure cloud instance "${instanceName}" created successfully`,
-      });
-      
-      // Reset form
-      setInstanceName("secure-cloud-" + Math.floor(Math.random() * 1000));
-    } catch (error) {
-      console.error("Error creating cloud instance:", error);
-      toast({
-        title: "Error Creating Instance",
-        description: error instanceof Error ? error.message : "Failed to create cloud instance",
+        title: "Validation Error",
+        description: "Instance name is required",
         variant: "destructive",
       });
-    } finally {
-      setIsCreating(false);
+      return;
     }
-  };
-  
-  // Enable zero-knowledge authentication for an instance
-  const handleEnableZkAuth = async (instanceId: string) => {
+    
     try {
-      const result = await enableZeroKnowledgeAuth(instanceId);
+      setCreating(true);
+      const result = await createAISecuredCloudInstance(newInstanceName, {
+        securityLevel: 'enterprise',
+        homomorphicEncryption: true,
+        zeroKnowledgeAuth: true
+      });
       
-      if (result.success) {
-        // Update instance in the state
-        setInstances(instances.map(instance => 
-          instance.id === instanceId 
-            ? { ...instance, zkAuthentication: true } 
-            : instance
-        ));
+      if (result.success && result.instance) {
+        setCloudInstances([...cloudInstances, result.instance]);
+        setNewInstanceName("");
         
         toast({
-          title: "ZK Authentication Enabled",
-          description: result.message,
-        });
-      } else {
-        toast({
-          title: "Error Enabling ZK Authentication",
-          description: result.message,
-          variant: "destructive",
+          title: "Creating Cloud Instance",
+          description: `AI-secured instance '${newInstanceName}' is being provisioned`,
         });
       }
     } catch (error) {
-      console.error("Error enabling ZK authentication:", error);
       toast({
-        title: "Operation Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
+        title: "Instance Creation Failed",
+        description: "Failed to create AI-secured cloud instance",
         variant: "destructive",
       });
+    } finally {
+      setCreating(false);
     }
   };
-  
-  // Setup homomorphic encryption for an instance
-  const handleSetupHomomorphicEncryption = async (instanceId: string) => {
+
+  const handleEnableFeature = async (instanceId: string, feature: 'homomorphic' | 'ipfs' | 'zk') => {
+    setLoading(true);
     try {
-      await setupHomomorphicEncryption('CKKS', 128, true);
+      let result;
       
-      // Update instance in the state
-      setInstances(instances.map(instance => 
-        instance.id === instanceId 
-          ? { ...instance, aiCapabilities: { ...instance.aiCapabilities, homomorphicEncryption: true } } 
-          : instance
-      ));
+      switch (feature) {
+        case 'homomorphic':
+          result = await setupHomomorphicEncryption(instanceId);
+          break;
+        case 'ipfs':
+          result = await setupIPFSSecureStorage(instanceId);
+          break;
+        case 'zk':
+          result = await enableZeroKnowledgeAuth(instanceId);
+          break;
+      }
       
-      toast({
-        title: "Homomorphic Encryption Enabled",
-        description: "AI-driven homomorphic encryption has been set up successfully",
-      });
+      if (result && result.success) {
+        // Refresh instances
+        setCloudInstances(getAISecuredCloudInstances());
+      }
     } catch (error) {
-      console.error("Error setting up homomorphic encryption:", error);
       toast({
-        title: "Operation Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
+        title: "Feature Activation Failed",
+        description: `Failed to enable ${feature} feature`,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
-  
-  // Setup IPFS storage for an instance
-  const handleSetupIPFSStorage = async (instanceId: string) => {
-    try {
-      await setupIPFSSecureStorage('ML-KEM-1024', true, 500);
-      
-      // Update instance in the state
-      setInstances(instances.map(instance => 
-        instance.id === instanceId 
-          ? { ...instance, ipfsStorage: { ...instance.ipfsStorage, enabled: true } } 
-          : instance
-      ));
-      
-      toast({
-        title: "IPFS Storage Enabled",
-        description: "Quantum-resistant IPFS storage has been set up successfully",
-      });
-    } catch (error) {
-      console.error("Error setting up IPFS storage:", error);
-      toast({
-        title: "Operation Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    }
+
+  const formatMetric = (value: number) => {
+    return value % 1 === 0 ? value.toString() : value.toFixed(1);
   };
-  
-  // Refresh health metrics
-  const handleRefreshMetrics = async () => {
-    try {
-      const metrics = await getSecurityHealthMetrics();
-      setHealthMetrics(metrics);
-      
-      toast({
-        title: "Metrics Updated",
-        description: "Security health metrics have been refreshed",
-      });
-    } catch (error) {
-      console.error("Error refreshing metrics:", error);
-      toast({
-        title: "Update Failed",
-        description: error instanceof Error ? error.message : "Failed to update metrics",
-        variant: "destructive",
-      });
-    }
-  };
-  
-  // Get badge color for security level
-  const getSecurityLevelColor = (level: string) => {
-    switch (level) {
-      case 'maximum': return "bg-purple-500/15 text-purple-600 hover:bg-purple-500/25";
-      case 'enhanced': return "bg-blue-500/15 text-blue-600 hover:bg-blue-500/25";
-      case 'standard': return "bg-green-500/15 text-green-600 hover:bg-green-500/25";
-      default: return "bg-gray-500/15 text-gray-600 hover:bg-gray-500/25";
-    }
-  };
-  
-  // Get color for threat score
-  const getThreatScoreColor = (score: number) => {
-    if (score < 5) return "text-green-600";
-    if (score < 15) return "text-yellow-600";
-    if (score < 30) return "text-orange-600";
-    return "text-red-600";
-  };
-  
+
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Cloud className="h-6 w-6 text-accent" />
-          AI-Secured Cloud Infrastructure
-        </CardTitle>
-        <CardDescription>
-          Autonomous, quantum-resistant cloud infrastructure with AI-driven security automation
-        </CardDescription>
-      </CardHeader>
-
-      <Tabs defaultValue="instances" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mx-6">
-          <TabsTrigger value="instances">
-            <Server className="h-4 w-4 mr-2" />
-            Cloud Instances
-          </TabsTrigger>
-          <TabsTrigger value="security">
-            <Shield className="h-4 w-4 mr-2" />
-            Enterprise Security
-          </TabsTrigger>
-          <TabsTrigger value="metrics">
-            <FileDigit className="h-4 w-4 mr-2" />
-            Health Metrics
-          </TabsTrigger>
+    <div className="container mx-auto p-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">AI-Secured Cloud Infrastructure</h1>
+          <p className="text-muted-foreground">
+            Quantum-resistant, AI-powered secure cloud platform
+          </p>
+        </div>
+        <Badge className="bg-accent/20 text-accent" variant="outline">
+          <Shield className="w-3 h-3 mr-1" />
+          Post-Quantum Secured
+        </Badge>
+      </div>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid grid-cols-3 md:w-[400px]">
+          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="instances">Cloud Instances</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
-
-        <CardContent className="pt-6">
-          {/* Cloud Instances tab */}
-          <TabsContent value="instances" className="space-y-6">
-            {/* Create Instance Form */}
+        
+        <TabsContent value="dashboard" className="space-y-4">
+          {/* Security Health Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Deploy Secure Cloud Instance</CardTitle>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Overall Security</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Instance Name</Label>
-                    <input
-                      id="name"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="secure-cloud-name"
-                      value={instanceName}
-                      onChange={(e) => setInstanceName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="type">Instance Type</Label>
-                      <Select
-                        value={instanceType}
-                        onValueChange={(value) => setInstanceType(value as any)}
-                      >
-                        <SelectTrigger id="type">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="podman">Podman (Rootless)</SelectItem>
-                          <SelectItem value="kubernetes">Kubernetes</SelectItem>
-                          <SelectItem value="openshift">OpenShift</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="security">Security Level</Label>
-                      <Select
-                        value={securityLevel}
-                        onValueChange={(value) => setSecurityLevel(value as any)}
-                      >
-                        <SelectTrigger id="security">
-                          <SelectValue placeholder="Select security level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="standard">Standard</SelectItem>
-                          <SelectItem value="enhanced">Enhanced</SelectItem>
-                          <SelectItem value="maximum">Maximum</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                <div className="text-2xl font-bold">
+                  {healthMetrics ? formatMetric(healthMetrics.overallScore) : '0'}/100
                 </div>
+                <Progress 
+                  value={healthMetrics ? healthMetrics.overallScore : 0} 
+                  className="h-2 mt-2" 
+                />
               </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full" 
-                  onClick={handleCreateInstance}
-                  disabled={isCreating || !instanceName}
-                >
-                  {isCreating ? "Deploying..." : "Deploy Secure Instance"}
-                </Button>
-              </CardFooter>
             </Card>
             
-            {/* Instance List */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Deployed Instances</h3>
-              
-              {instances.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No instances deployed yet. Create your first secure cloud instance.
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">Threat Detection</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {healthMetrics ? formatMetric(healthMetrics.threatDetectionRate) : '0'}%
+                </div>
+                <Progress 
+                  value={healthMetrics ? healthMetrics.threatDetectionRate : 0} 
+                  className="h-2 mt-2" 
+                />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Response Time
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {healthMetrics ? formatMetric(healthMetrics.incidentResponseTime) : '0'} min
+                </div>
+                <Progress 
+                  value={healthMetrics ? 100 - (healthMetrics.incidentResponseTime * 20) : 0}
+                  className="h-2 mt-2" 
+                />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Compliance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {healthMetrics ? formatMetric(healthMetrics.complianceScore) : '0'}/100
+                </div>
+                <Progress 
+                  value={healthMetrics ? healthMetrics.complianceScore : 0}
+                  className="h-2 mt-2" 
+                />
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Instance Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Cloud Instances</CardTitle>
+              <CardDescription>
+                Post-quantum encrypted and AI-managed infrastructure
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {cloudInstances.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <Cloud className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">No Cloud Instances</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Create your first AI-secured cloud instance to get started
+                  </p>
+                  <Button 
+                    onClick={() => setActiveTab("instances")} 
+                    className="mt-4"
+                  >
+                    Create Instance
+                  </Button>
                 </div>
               ) : (
-                <div className="grid gap-4">
-                  {instances.map((instance) => (
-                    <Card key={instance.id} className="overflow-hidden">
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center">
-                          <CardTitle className="text-lg flex items-center">
-                            <Server className="h-4 w-4 mr-2" />
-                            {instance.name}
-                          </CardTitle>
-                          <Badge className={getSecurityLevelColor(instance.securityLevel)}>
-                            {instance.securityLevel.charAt(0).toUpperCase() + instance.securityLevel.slice(1)}
+                <div className="space-y-4">
+                  {cloudInstances.map((instance) => (
+                    <div 
+                      key={instance.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <Server className="h-6 w-6 text-primary" />
+                        <div>
+                          <h3 className="font-medium">{instance.name}</h3>
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <span>{instance.region}</span>
+                            <span className="mx-2">•</span>
+                            <span className="capitalize">{instance.securityLevel}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {instance.status === 'running' ? (
+                          <Badge className="bg-green-500/20 text-green-600" variant="outline">
+                            Running
                           </Badge>
-                        </div>
-                        <CardDescription>
-                          {instance.type.charAt(0).toUpperCase() + instance.type.slice(1)} | 
-                          Deployed {new Date(instance.deployedAt).toLocaleDateString()}
-                        </CardDescription>
-                      </CardHeader>
-                      
-                      <CardContent className="pb-2">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-medium text-sm mb-2">Instance Status</h4>
-                            <div className="grid grid-cols-2 gap-y-2 text-sm">
-                              <span className="text-muted-foreground">Status:</span>
-                              <Badge variant="outline" className="justify-center">
-                                {instance.status.charAt(0).toUpperCase() + instance.status.slice(1)}
-                              </Badge>
-                              
-                              <span className="text-muted-foreground">Quantum-Resistant:</span>
-                              <span className="font-medium">{instance.quantumResistant ? "Yes" : "No"}</span>
-                              
-                              <span className="text-muted-foreground">Threat Score:</span>
-                              <span className={`font-medium ${getThreatScoreColor(instance.threatScore)}`}>
-                                {instance.threatScore}/100
-                              </span>
-                              
-                              <span className="text-muted-foreground">Instances:</span>
-                              <span className="font-medium">{instance.autoScaling.currentInstances}</span>
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h4 className="font-medium text-sm mb-2">AI Capabilities</h4>
-                            <div className="space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">Intrusion Detection</span>
-                                <Switch checked={instance.aiCapabilities.intrusionDetection} disabled />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">Self-Healing</span>
-                                <Switch checked={instance.aiCapabilities.selfHealing} disabled />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">Homomorphic Encryption</span>
-                                <Switch checked={instance.aiCapabilities.homomorphicEncryption} disabled />
-                              </div>
-                              
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm">ZK Authentication</span>
-                                <Switch checked={instance.zkAuthentication} disabled />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                      
-                      <CardFooter className="pt-2 flex flex-wrap gap-2">
-                        {!instance.aiCapabilities.homomorphicEncryption && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSetupHomomorphicEncryption(instance.id)}
-                          >
-                            <Key className="h-3.5 w-3.5 mr-1" />
-                            Enable Homomorphic Encryption
-                          </Button>
+                        ) : instance.status === 'provisioning' ? (
+                          <Badge className="bg-amber-500/20 text-amber-600" variant="outline">
+                            Provisioning
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-red-500/20 text-red-600" variant="outline">
+                            Stopped
+                          </Badge>
                         )}
                         
-                        {!instance.zkAuthentication && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEnableZkAuth(instance.id)}
-                          >
-                            <Lock className="h-3.5 w-3.5 mr-1" />
-                            Enable ZK Authentication
-                          </Button>
+                        {instance.threatStatus === 'elevated' && (
+                          <Badge className="bg-red-500/20 text-red-600" variant="outline">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Threat Detected
+                          </Badge>
                         )}
-                        
-                        {!instance.ipfsStorage.enabled && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSetupIPFSStorage(instance.id)}
-                          >
-                            <Database className="h-3.5 w-3.5 mr-1" />
-                            Setup IPFS Storage
-                          </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
+                      </div>
+                    </div>
                   ))}
+                  
+                  <Button 
+                    onClick={() => setActiveTab("instances")} 
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    View All Instances
+                  </Button>
                 </div>
               )}
-            </div>
-          </TabsContent>
+            </CardContent>
+          </Card>
           
-          {/* Enterprise Security tab */}
-          <TabsContent value="security" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Quantum-Resistant Security Features */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Quantum-Resistant Security</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-green-500" />
-                        <span className="text-sm">ML-KEM-1024 Key Exchange</span>
-                      </div>
-                      <Badge variant="outline" className="bg-green-500/10">Active</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-green-500" />
-                        <span className="text-sm">SLH-DSA-Dilithium5 Signatures</span>
-                      </div>
-                      <Badge variant="outline" className="bg-green-500/10">Active</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-green-500" />
-                        <span className="text-sm">NIST FIPS 205/206 Compliance</span>
-                      </div>
-                      <Badge variant="outline" className="bg-green-500/10">Verified</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-yellow-500" />
-                        <span className="text-sm">Falcon-1024 Signatures</span>
-                      </div>
-                      <Badge variant="outline" className="bg-yellow-500/10">Optional</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* AI-Driven Security Features */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">AI-Driven Security</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-blue-500" />
-                        <span className="text-sm">Anomaly Detection</span>
-                      </div>
-                      <Badge variant="outline" className="bg-blue-500/10">Active</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-blue-500" />
-                        <span className="text-sm">Self-Healing Infrastructure</span>
-                      </div>
-                      <Badge variant="outline" className="bg-blue-500/10">Active</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-blue-500" />
-                        <span className="text-sm">Homomorphic Threat Analysis</span>
-                      </div>
-                      <Badge variant="outline" className="bg-blue-500/10">Active</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Shield className="h-4 w-4 mr-2 text-blue-500" />
-                        <span className="text-sm">AI-Managed Key Rotation</span>
-                      </div>
-                      <Badge variant="outline" className="bg-blue-500/10">Active</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Secure Infrastructure Features */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Secure Infrastructure</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Server className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">Podman Rootless Containers</span>
-                      </div>
-                      <Badge variant="outline" className="bg-indigo-500/10">Deployed</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Server className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">Immutable Infrastructure</span>
-                      </div>
-                      <Badge variant="outline" className="bg-indigo-500/10">Enforced</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Server className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">SELinux Mandatory Access Control</span>
-                      </div>
-                      <Badge variant="outline" className="bg-indigo-500/10">Enforced</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Server className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">TPM-Verified Boot</span>
-                      </div>
-                      <Badge variant="outline" className="bg-indigo-500/10">Enabled</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              {/* Decentralized Storage Features */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Decentralized Storage</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Database className="h-4 w-4 mr-2 text-amber-500" />
-                        <span className="text-sm">IPFS Content-Addressed Storage</span>
-                      </div>
-                      <Badge variant="outline" className="bg-amber-500/10">Active</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Database className="h-4 w-4 mr-2 text-amber-500" />
-                        <span className="text-sm">Quantum-Encrypted Storage</span>
-                      </div>
-                      <Badge variant="outline" className="bg-amber-500/10">Active</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Database className="h-4 w-4 mr-2 text-amber-500" />
-                        <span className="text-sm">Decentralized Replication</span>
-                      </div>
-                      <Badge variant="outline" className="bg-amber-500/10">3x</Badge>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <Database className="h-4 w-4 mr-2 text-amber-500" />
-                        <span className="text-sm">AI-Managed Key Rotation</span>
-                      </div>
-                      <Badge variant="outline" className="bg-amber-500/10">90 days</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Compliance Status */}
+          {/* Security Recommendations */}
+          {healthMetrics && healthMetrics.recommendedActions.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">AI-Governed Compliance Status</CardTitle>
+                <CardTitle>AI-Generated Security Recommendations</CardTitle>
+                <CardDescription>
+                  Improve your security posture with these AI-driven suggestions
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">NIST 800-53</span>
-                      <span className="text-sm font-medium">92%</span>
-                    </div>
-                    <Progress value={92} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">FIPS 140-3</span>
-                      <span className="text-sm font-medium">89%</span>
-                    </div>
-                    <Progress value={89} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">ISO 27001</span>
-                      <span className="text-sm font-medium">94%</span>
-                    </div>
-                    <Progress value={94} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">GDPR</span>
-                      <span className="text-sm font-medium">96%</span>
-                    </div>
-                    <Progress value={96} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">HIPAA</span>
-                      <span className="text-sm font-medium">91%</span>
-                    </div>
-                    <Progress value={91} className="h-2" />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm">FedRAMP</span>
-                      <span className="text-sm font-medium">87%</span>
-                    </div>
-                    <Progress value={87} className="h-2" />
-                  </div>
-                </div>
+                <ul className="space-y-2">
+                  {healthMetrics.recommendedActions.map((action, index) => (
+                    <li key={index} className="flex items-start space-x-2">
+                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+                      <span>{action}</span>
+                    </li>
+                  ))}
+                </ul>
               </CardContent>
-              <CardFooter>
-                <div className="w-full flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Last verified: {new Date().toLocaleDateString()}
-                  </span>
-                  <Button variant="outline" size="sm">
-                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                    Run Compliance Scan
-                  </Button>
-                </div>
-              </CardFooter>
             </Card>
-          </TabsContent>
-          
-          {/* Health Metrics tab */}
-          <TabsContent value="metrics" className="space-y-6">
-            {healthMetrics ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Security Health Overview</h3>
-                  <Button variant="outline" size="sm" onClick={handleRefreshMetrics}>
-                    <RefreshCw className="h-3.5 w-3.5 mr-1" />
-                    Refresh Metrics
-                  </Button>
-                </div>
-                
-                {/* Overall Security Score */}
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold mb-2">
-                        Overall Security Score: {healthMetrics.overallScore}/100
-                      </div>
-                      <Progress value={healthMetrics.overallScore} className="h-3" />
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Last updated: {new Date(healthMetrics.lastUpdated).toLocaleString()}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Threat Detection Latency */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Threat Detection Latency</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{healthMetrics.threatDetectionLatency} ms</div>
-                      <p className="text-xs text-muted-foreground">AI-driven response time</p>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Mean Time to Remediate */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Mean Time to Remediate</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{healthMetrics.meanTimeToRemediate} min</div>
-                      <p className="text-xs text-muted-foreground">Self-healing response time</p>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* False Positive Rate */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">False Positive Rate</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{healthMetrics.falsePositiveRate}%</div>
-                      <p className="text-xs text-muted-foreground">AI alert accuracy metric</p>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* AI Alert Accuracy */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">AI Alert Accuracy</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{healthMetrics.aiAlertAccuracy}%</div>
-                      <p className="text-xs text-muted-foreground">Machine learning precision</p>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Patch Compliance */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Patch Compliance</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{healthMetrics.patchComplianceRate}%</div>
-                      <p className="text-xs text-muted-foreground">Systems up-to-date</p>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Encryption Coverage */}
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Encryption Coverage</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{healthMetrics.encryptionCoverage}%</div>
-                      <p className="text-xs text-muted-foreground">Data protected by quantum crypto</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                {/* Vulnerabilities by Risk */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Vulnerabilities by Risk Level</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 mr-2 text-red-500" />
-                          <span>Critical</span>
-                        </div>
-                        <Badge variant="outline" className="bg-red-500/10 text-red-600">
-                          {healthMetrics.vulnerabilitiesByRisk.critical}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
-                          <span>High</span>
-                        </div>
-                        <Badge variant="outline" className="bg-amber-500/10 text-amber-600">
-                          {healthMetrics.vulnerabilitiesByRisk.high}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 mr-2 text-yellow-500" />
-                          <span>Medium</span>
-                        </div>
-                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600">
-                          {healthMetrics.vulnerabilitiesByRisk.medium}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <AlertTriangle className="h-4 w-4 mr-2 text-blue-500" />
-                          <span>Low</span>
-                        </div>
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600">
-                          {healthMetrics.vulnerabilitiesByRisk.low}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                {/* Incidents by Category */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Security Incidents by Category</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {Object.entries(healthMetrics.incidentsByCategory).map(([category, count]) => (
-                        <div key={category} className="flex items-center justify-between">
-                          <span className="capitalize">{category}</span>
-                          <Badge variant="outline">{count}</Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-center">
-                  <RefreshCw className="h-10 w-10 mx-auto mb-4 text-muted-foreground animate-spin" />
-                  <p className="text-muted-foreground">Loading security metrics...</p>
-                </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="instances" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Create AI-Secured Cloud Instance</CardTitle>
+              <CardDescription>
+                Deploy a new post-quantum encrypted and AI-managed cloud instance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <input
+                  type="text"
+                  value={newInstanceName}
+                  onChange={(e) => setNewInstanceName(e.target.value)}
+                  placeholder="Enter instance name"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <Button 
+                  onClick={handleCreateInstance} 
+                  disabled={creating || !newInstanceName.trim()}
+                >
+                  {creating ? "Creating..." : "Create Instance"}
+                </Button>
               </div>
-            )}
-          </TabsContent>
-        </CardContent>
+            </CardContent>
+          </Card>
+          
+          {cloudInstances.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                <Server className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">No Cloud Instances</h3>
+                <p className="text-muted-foreground mt-2">
+                  Create your first AI-secured cloud instance using the form above
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            cloudInstances.map((instance) => (
+              <Card key={instance.id} className="overflow-hidden">
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>{instance.name}</CardTitle>
+                      <CardDescription>
+                        {instance.region} • {instance.securityLevel} security
+                      </CardDescription>
+                    </div>
+                    <Badge 
+                      className={instance.status === 'running' 
+                        ? "bg-green-500/20 text-green-600" 
+                        : instance.status === 'provisioning'
+                          ? "bg-amber-500/20 text-amber-600"
+                          : "bg-red-500/20 text-red-600"
+                      } 
+                      variant="outline"
+                    >
+                      {instance.status === 'running' 
+                        ? "Running" 
+                        : instance.status === 'provisioning'
+                          ? "Provisioning"
+                          : "Stopped"
+                      }
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Resource Usage */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">CPU</div>
+                      <Progress value={instance.metrics.cpuUsage} className="h-2" />
+                      <div className="text-xs mt-1">{formatMetric(instance.metrics.cpuUsage)}%</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Memory</div>
+                      <Progress value={instance.metrics.memoryUsage} className="h-2" />
+                      <div className="text-xs mt-1">{formatMetric(instance.metrics.memoryUsage)}%</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Storage</div>
+                      <Progress value={instance.metrics.storageUsage} className="h-2" />
+                      <div className="text-xs mt-1">{formatMetric(instance.metrics.storageUsage)}%</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Network</div>
+                      <Progress value={instance.metrics.networkUsage / 10} className="h-2" />
+                      <div className="text-xs mt-1">{formatMetric(instance.metrics.networkUsage)} KB/s</div>
+                    </div>
+                  </div>
+                  
+                  {/* Security Features */}
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Security Features</h4>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className="bg-accent/20 text-accent" variant="outline">
+                        <Shield className="w-3 h-3 mr-1" />
+                        Post-Quantum Encryption
+                      </Badge>
+                      <Badge className="bg-accent/20 text-accent" variant="outline">
+                        <Activity className="w-3 h-3 mr-1" />
+                        AI Threat Detection
+                      </Badge>
+                      {instance.homomorphicEncryptionEnabled && (
+                        <Badge className="bg-accent/20 text-accent" variant="outline">
+                          <Lock className="w-3 h-3 mr-1" />
+                          Homomorphic Encryption
+                        </Badge>
+                      )}
+                      {instance.ipfsStorageEnabled && (
+                        <Badge className="bg-accent/20 text-accent" variant="outline">
+                          <Database className="w-3 h-3 mr-1" />
+                          IPFS Storage
+                        </Badge>
+                      )}
+                      {instance.zeroKnowledgeAuthEnabled && (
+                        <Badge className="bg-accent/20 text-accent" variant="outline">
+                          <Lock className="w-3 h-3 mr-1" />
+                          ZK Authentication
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Status Information */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-muted-foreground">Health Status</div>
+                      <div className="flex items-center mt-1">
+                        <div 
+                          className={`w-2 h-2 rounded-full mr-2 ${
+                            instance.healthStatus === 'healthy' 
+                              ? 'bg-green-500' 
+                              : instance.healthStatus === 'warning'
+                                ? 'bg-amber-500'
+                                : 'bg-red-500'
+                          }`}
+                        />
+                        <span className="capitalize text-sm">{instance.healthStatus}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground">Threat Status</div>
+                      <div className="flex items-center mt-1">
+                        <div 
+                          className={`w-2 h-2 rounded-full mr-2 ${
+                            instance.threatStatus === 'normal' 
+                              ? 'bg-green-500' 
+                              : instance.threatStatus === 'elevated'
+                                ? 'bg-red-500'
+                                : 'bg-amber-500'
+                          }`}
+                        />
+                        <span className="capitalize text-sm">{instance.threatStatus}</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex flex-wrap gap-2 border-t p-4">
+                  {!instance.homomorphicEncryptionEnabled && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loading || instance.status !== 'running'}
+                      onClick={() => handleEnableFeature(instance.id, 'homomorphic')}
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      Enable Homomorphic Encryption
+                    </Button>
+                  )}
+                  
+                  {!instance.ipfsStorageEnabled && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loading || instance.status !== 'running'}
+                      onClick={() => handleEnableFeature(instance.id, 'ipfs')}
+                    >
+                      <Database className="w-4 h-4 mr-2" />
+                      Enable IPFS Storage
+                    </Button>
+                  )}
+                  
+                  {!instance.zeroKnowledgeAuthEnabled && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loading || instance.status !== 'running'}
+                      onClick={() => handleEnableFeature(instance.id, 'zk')}
+                    >
+                      <Shield className="w-4 h-4 mr-2" />
+                      Enable ZK Authentication
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+        
+        <TabsContent value="security" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Security Health Metrics</CardTitle>
+              <CardDescription>
+                AI-monitored security status and compliance metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {healthMetrics ? (
+                <>
+                  {/* Security Scores */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium">Security Performance</h3>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Overall Security Score</span>
+                          <span className="font-medium">{formatMetric(healthMetrics.overallScore)}/100</span>
+                        </div>
+                        <Progress value={healthMetrics.overallScore} className="h-2" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Threat Detection Rate</span>
+                          <span className="font-medium">{formatMetric(healthMetrics.threatDetectionRate)}%</span>
+                        </div>
+                        <Progress value={healthMetrics.threatDetectionRate} className="h-2" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>False Positive Rate</span>
+                          <span className="font-medium">{(healthMetrics.falsePositiveRate * 100).toFixed(2)}%</span>
+                        </div>
+                        <Progress value={100 - (healthMetrics.falsePositiveRate * 100)} className="h-2" />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium">Operational Metrics</h3>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Incident Response Time</span>
+                          <span className="font-medium">{formatMetric(healthMetrics.incidentResponseTime)} min</span>
+                        </div>
+                        <Progress value={100 - (healthMetrics.incidentResponseTime * 20)} className="h-2" />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Compliance Score</span>
+                          <span className="font-medium">{formatMetric(healthMetrics.complianceScore)}/100</span>
+                        </div>
+                        <Progress value={healthMetrics.complianceScore} className="h-2" />
+                      </div>
+                      
+                      <div className="pt-2">
+                        <div className="text-sm font-medium mb-2">Compliance Frameworks</div>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline">NIST SP 800-207</Badge>
+                          <Badge variant="outline">ISO 27001</Badge>
+                          <Badge variant="outline">FIPS 140-3</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Vulnerabilities */}
+                  {healthMetrics.vulnerabilities.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">Active Vulnerabilities</h3>
+                      <div className="space-y-2">
+                        {healthMetrics.vulnerabilities.map((vuln) => (
+                          <div 
+                            key={vuln.id} 
+                            className="border rounded-lg p-3 space-y-2"
+                          >
+                            <div className="flex justify-between">
+                              <div className="flex items-center">
+                                <Badge 
+                                  className={
+                                    vuln.severity === 'high' 
+                                      ? "bg-red-500/20 text-red-600" 
+                                      : vuln.severity === 'medium'
+                                        ? "bg-amber-500/20 text-amber-600"
+                                        : "bg-blue-500/20 text-blue-600"
+                                  } 
+                                  variant="outline"
+                                >
+                                  {vuln.severity.toUpperCase()}
+                                </Badge>
+                                <span className="text-sm font-medium ml-2">{vuln.description}</span>
+                              </div>
+                              <Badge 
+                                variant="outline" 
+                                className={vuln.status === 'open' ? "bg-red-500/10 text-red-600" : "bg-green-500/10 text-green-600"}
+                              >
+                                {vuln.status === 'open' ? "Open" : "Mitigated"}
+                              </Badge>
+                            </div>
+                            
+                            <div className="text-xs text-muted-foreground">
+                              Affected: {vuln.affectedComponents.join(", ")}
+                            </div>
+                            
+                            {vuln.remediationSteps.length > 0 && (
+                              <div className="space-y-1">
+                                <div className="text-xs font-medium">Remediation Steps:</div>
+                                <ul className="text-xs pl-5 list-disc space-y-1">
+                                  {vuln.remediationSteps.map((step, idx) => (
+                                    <li key={idx}>{step}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Last Updated */}
+                  <div className="text-xs text-muted-foreground">
+                    Last updated: {new Date(healthMetrics.lastUpdated).toLocaleString()}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <RefreshCw className="h-10 w-10 text-muted-foreground mb-4 animate-spin" />
+                  <h3 className="text-lg font-medium">Loading Security Metrics</h3>
+                  <p className="text-muted-foreground mt-2">
+                    The AI is analyzing security data...
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-
-      <CardFooter className="flex justify-between">
-        <p className="text-xs text-muted-foreground">
-          Powered by TetraCryptPQC with NIST FIPS 205/206 compliance
-        </p>
-        <Badge variant="outline">Quantum-Resistant Enterprise Security</Badge>
-      </CardFooter>
-    </Card>
+    </div>
   );
 };
 

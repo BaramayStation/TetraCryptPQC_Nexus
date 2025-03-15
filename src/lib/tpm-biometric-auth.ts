@@ -48,7 +48,7 @@ export async function initializeTPMAuth(): Promise<{
       toast({
         title: "TPM Not Available",
         description: "Using software-based authentication fallback",
-        variant: "warning",
+        variant: "destructive", // Changed from "warning" to "destructive"
       });
     }
     
@@ -188,7 +188,7 @@ export async function initializeBiometricAuth(): Promise<{
       toast({
         title: "Biometrics Not Available",
         description: "Biometric authentication is not available on this device",
-        variant: "warning",
+        variant: "destructive", // Changed from "warning" to "destructive"
       });
       
       return {
@@ -259,7 +259,7 @@ export async function initializeBiometricAuth(): Promise<{
  */
 async function checkBiometricAvailability(): Promise<{
   available: boolean;
-  methods?: ('face' | 'fingerprint' | 'voice' | 'iris' | 'behavior')[];
+  methods?: ('face' | 'fingerprint' | 'voice' | 'iris')[];
 }> {
   console.log("🔹 Checking biometric availability");
   
@@ -270,7 +270,7 @@ async function checkBiometricAvailability(): Promise<{
   
   if (available) {
     // Randomly select available methods
-    const methods: ('face' | 'fingerprint' | 'voice' | 'iris' | 'behavior')[] = [];
+    const methods: ('face' | 'fingerprint' | 'voice' | 'iris')[] = [];
     
     if (Math.random() > 0.3) methods.push('face');
     if (Math.random() > 0.3) methods.push('fingerprint');
@@ -558,7 +558,7 @@ export function monitorAuthenticationStatus(): void {
         toast({
           title: "Offline TPM Authentication Enabled",
           description: "Cloud authentication is unavailable",
-          variant: "warning",
+          variant: "destructive", // Changed from "warning" to "destructive"
         });
       }
     }
@@ -574,7 +574,7 @@ export function monitorAuthenticationStatus(): void {
         toast({
           title: "Offline Biometric Authentication Enabled",
           description: "Cloud authentication is unavailable",
-          variant: "warning",
+          variant: "destructive", // Changed from "warning" to "destructive"
         });
       }
     }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,7 +47,6 @@ import {
   Radar as RadarComponent
 } from 'recharts';
 
-// Random data generator for demo
 const generateSecurityData = (days: number) => {
   return Array.from({ length: days }, (_, i) => {
     const date = new Date();
@@ -81,6 +79,33 @@ const threatIntelData = [
   { name: 'Replay Attack', value: 5, status: 'mitigated', description: 'Message reuse in network traffic' },
 ];
 
+const threats: Threat[] = [
+  {
+    id: crypto.randomUUID(),
+    severity: 'high' as const,
+    description: "Unusual authentication pattern detected",
+    timestamp: new Date().toISOString(),
+    indicators: ["Multiple failed login attempts", "Unusual IP addresses"],
+    mitigationSteps: ["Lock the affected account", "Notify security team"]
+  },
+  {
+    id: crypto.randomUUID(),
+    severity: 'medium' as const,
+    description: "Potential data exfiltration attempt",
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    indicators: ["Large data transfers", "Access outside normal hours"],
+    mitigationSteps: ["Block outbound connections", "Verify authorization"]
+  },
+  {
+    id: crypto.randomUUID(),
+    severity: 'critical' as const,
+    description: "Quantum cryptography breach attempt",
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    indicators: ["SLH-DSA signature tampering", "Modified key exchange protocol"],
+    mitigationSteps: ["Rotate all cryptographic keys", "Engage cyber response team"]
+  }
+];
+
 const MilitarySecurityDashboard: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -93,10 +118,8 @@ const MilitarySecurityDashboard: React.FC = () => {
   const [sgxStatus, setSgxStatus] = useState<'active' | 'inactive' | 'checking'>('checking');
   const [systemStatus, setSystemStatus] = useState<'normal' | 'degraded' | 'compromised'>('normal');
   
-  // Current time for the military clock
   const [currentTime, setCurrentTime] = useState(new Date());
   
-  // Initialize hardware security check
   useEffect(() => {
     const checkHardwareSecurity = async () => {
       try {
@@ -112,14 +135,11 @@ const MilitarySecurityDashboard: React.FC = () => {
     
     checkHardwareSecurity();
     
-    // Update clock every second
     const clockInterval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
     
-    // Simulate changing security level occasionally
     const securityInterval = setInterval(() => {
-      // 85% chance to stay green, 10% amber, 5% red
       const random = Math.random();
       if (random > 0.95) {
         setSecurityLevel('red');
@@ -138,7 +158,7 @@ const MilitarySecurityDashboard: React.FC = () => {
       } else {
         setSecurityLevel('green');
       }
-    }, 30000); // Every 30 seconds
+    }, 30000);
     
     return () => {
       clearInterval(clockInterval);
@@ -146,12 +166,10 @@ const MilitarySecurityDashboard: React.FC = () => {
     };
   }, []);
   
-  // Simulate a security scan
   const performSecurityScan = async () => {
     setIsScanning(true);
     setScanProgress(0);
     
-    // Simulate scan progress
     const interval = setInterval(() => {
       setScanProgress((prev) => {
         if (prev >= 100) {
@@ -163,20 +181,10 @@ const MilitarySecurityDashboard: React.FC = () => {
     }, 150);
     
     try {
-      // Simulate security scan
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Generate mock threats
-      const mockThreats = Math.random() > 0.7 ? [{
-        id: crypto.randomUUID(),
-        severity: Math.random() > 0.5 ? 'medium' : 'low',
-        description: 'Anomalous cryptographic operation detected',
-        timestamp: new Date().toISOString(),
-        indicators: ['Unusual API access pattern', 'Elevated memory usage'],
-        mitigationSteps: ['Verify user identity', 'Review recent cryptographic operations']
-      }] : [];
+      const mockThreats = Math.random() > 0.7 ? threats : [];
       
-      // Generate mock threat detection result
       const result: ThreatDetectionResult = {
         detected: mockThreats.length > 0,
         score: mockThreats.length > 0 ? 40 + Math.random() * 20 : 5 + Math.random() * 10,
@@ -186,7 +194,6 @@ const MilitarySecurityDashboard: React.FC = () => {
           : 'No action required. System secure.'
       };
       
-      // Update state with detection results
       setTimeout(() => {
         setThreatDetection(result);
         setIsScanning(false);
@@ -217,7 +224,6 @@ const MilitarySecurityDashboard: React.FC = () => {
 
   return (
     <div className="container py-6 space-y-6">
-      {/* Military-style header with security status */}
       <div className="border-b pb-4 mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
@@ -283,9 +289,7 @@ const MilitarySecurityDashboard: React.FC = () => {
         </div>
       )}
       
-      {/* Main dashboard grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Left column - System Status */}
         <div className="space-y-4">
           <Card className="border-2">
             <CardHeader className="pb-2">
@@ -422,7 +426,6 @@ const MilitarySecurityDashboard: React.FC = () => {
           </Card>
         </div>
         
-        {/* Middle column - Main visualization */}
         <div className="space-y-4 md:col-span-2">
           <Card className="border-2">
             <CardHeader className="pb-2">
@@ -530,7 +533,6 @@ const MilitarySecurityDashboard: React.FC = () => {
         </div>
       </div>
       
-      {/* Additional security information */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-2">
           <CardHeader className="pb-2">

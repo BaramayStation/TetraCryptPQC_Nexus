@@ -244,7 +244,7 @@ export interface Conversation {
 }
 
 // Define severity types for threat classification
-export type ThreatSeverity = "critical" | "high" | "medium" | "low";
+export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical';
 
 // Define threat interface for security monitoring
 export interface Threat {
@@ -526,13 +526,7 @@ export type SecurityEventType =
   | 'system-change'
   | 'network-access'
   | 'cryptographic-operation'
-  | 'audit'
-  | 'compliance'
-  | 'threat-detection'
-  | 'system'
-  | 'intrusion-attempt'
-  | 'data-leakage'
-  | 'access-control';
+  | 'audit';
 
 // Support for Podman-based isolation services
 export interface PodmanSecurityConfig {
