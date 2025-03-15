@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Storage Types
  */
@@ -94,7 +93,7 @@ export enum HSMType {
   SECUREENCLAVE = "SECUREENCLAVE"
 }
 
-// NEW: Certificate Revocation List (CRL) structure
+// Certificate Revocation List (CRL) structure
 export interface CertificateRevocationList {
   id: string;
   issuer: string;
@@ -111,7 +110,7 @@ export interface CertificateRevocationList {
   signatureAlgorithm: string;
 }
 
-// NEW: Revocation reason codes (based on X.509 standard)
+// Revocation reason codes (based on X.509 standard)
 export enum RevocationReason {
   UNSPECIFIED = 0,
   KEY_COMPROMISE = 1,
@@ -126,7 +125,7 @@ export enum RevocationReason {
   QUANTUM_VULNERABILITY = 11 // Custom reason for quantum vulnerabilities
 }
 
-// NEW: PKI Certificate structure with PQ enhancements
+// PKI Certificate structure with PQ enhancements
 export interface PKICertificate {
   id: string;
   serialNumber: string;
@@ -184,7 +183,6 @@ export interface UserProfile {
   hsmInfo?: HSMInfo;
   qkdInfo?: QKDInfo;
   signatureKey?: string;
-  // NEW: Additional fields for decentralized PKI
   certificates?: PKICertificate[];
   trustedIssuers?: string[];
   revocationStatus?: 'active' | 'checking' | 'revoked';
@@ -206,7 +204,6 @@ export interface Contact {
   lastMessageTime?: string;
   unreadCount?: number;
   signatureKey?: string;
-  // NEW: Certificate verification for contacts
   certificateVerified?: boolean;
   certificateStatus?: 'valid' | 'revoked' | 'expired' | 'not_verified';
   pqCertificate?: PKICertificate;
@@ -226,7 +223,6 @@ export interface Message {
   verified?: boolean;
   encrypted?: boolean;
   encryptionType?: string;
-  // New quantum-secure properties
   zkProofVerified?: boolean;
   didVerified?: boolean;
   pqSignatureType?: "Falcon-1024" | "SLH-DSA-Dilithium5";
@@ -338,7 +334,7 @@ export interface SecurityOptions {
   certificateRotation?: boolean;
 }
 
-// NEW: Secure Service Mesh interface
+// Secure Service Mesh interface
 export interface SecureServiceMesh {
   id: string;
   name: string;
@@ -355,7 +351,7 @@ export interface SecureServiceMesh {
   lastUpdated: string;
 }
 
-// NEW: SecureInfraNode with hardware capabilities
+// SecureInfraNode with hardware capabilities
 export interface SecureInfraNode {
   id: string;
   name: string;
@@ -387,7 +383,7 @@ export interface SecureInfraNode {
   threatLevel: 'minimal' | 'low' | 'medium' | 'high' | 'critical';
 }
 
-// NEW: AI-Secured Cloud Instance
+// AI-Secured Cloud Instance
 export interface AISecuredCloudInstance {
   id: string;
   name: string;
@@ -429,7 +425,7 @@ export interface AISecuredCloudInstance {
   };
 }
 
-// NEW: AI-Security Automation Policy
+// AI-Security Automation Policy
 export interface AISecurityPolicy {
   id: string;
   name: string;
@@ -460,7 +456,7 @@ export interface AISecurityPolicy {
   };
 }
 
-// NEW: Homomorphic Encryption Context
+// Homomorphic Encryption Context
 export interface HomomorphicEncryptionContext {
   id: string;
   scheme: 'CKKS' | 'BFV' | 'BGV' | 'TFHE';
@@ -475,7 +471,7 @@ export interface HomomorphicEncryptionContext {
   aiOptimized: boolean;
 }
 
-// NEW: IPFS Secure Storage Configuration
+// IPFS Secure Storage Configuration
 export interface IPFSSecureStorage {
   id: string;
   gatewayUrl: string;
@@ -502,7 +498,7 @@ export interface IPFSSecureStorage {
   };
 }
 
-// NEW: Security Health Metrics
+// Security Health Metrics
 export interface SecurityHealthMetrics {
   overallScore: number; // 0-100
   threatDetectionLatency: number; // in milliseconds
@@ -538,7 +534,7 @@ export type SecurityEventType =
   | 'data-leakage'
   | 'access-control';
 
-// NEW: Support for Podman-based isolation services
+// Support for Podman-based isolation services
 export interface PodmanSecurityConfig {
   id: string;
   name: string;
@@ -562,7 +558,7 @@ export interface PodmanSecurityConfig {
   lastUpdated: string;
 }
 
-// NEW: AI-Driven biometric security
+// AI-Driven biometric security
 export interface BiometricSecurityConfig {
   id: string;
   enabled: boolean;
@@ -580,7 +576,7 @@ export interface BiometricSecurityConfig {
   offlineModeEnabled: boolean;
 }
 
-// NEW: Zero Trust AI Access Control
+// Zero Trust AI Access Control
 export interface ZeroTrustAIConfig {
   id: string;
   enabled: boolean;
@@ -603,7 +599,7 @@ export interface ZeroTrustAIConfig {
   anomalyThreshold: number; // 0-100
 }
 
-// NEW: AI-Driven P2P Sync Configuration
+// AI-Driven P2P Sync Configuration
 export interface P2PSecureSyncConfig {
   id: string;
   enabled: boolean;
@@ -621,7 +617,7 @@ export interface P2PSecureSyncConfig {
   offlineModeEnabled: boolean;
 }
 
-// NEW: AI-Secured USB Backup Configuration
+// AI-Secured USB Backup Configuration
 export interface SecureUSBBackupConfig {
   id: string;
   enabled: boolean;
@@ -638,7 +634,7 @@ export interface SecureUSBBackupConfig {
   emergencyAccessEnabled: boolean;
 }
 
-// NEW: TPM-Based Authentication Configuration
+// TPM-Based Authentication Configuration
 export interface TPMAuthenticationConfig {
   id: string;
   enabled: boolean;
@@ -655,7 +651,7 @@ export interface TPMAuthenticationConfig {
   recoveryMechanismEnabled: boolean;
 }
 
-// NEW: IPFS Failover Configuration
+// IPFS Failover Configuration
 export interface IPFSFailoverConfig {
   id: string;
   enabled: boolean;
@@ -672,7 +668,7 @@ export interface IPFSFailoverConfig {
   aiDataPrioritization: boolean;
 }
 
-// NEW: P2P Governance Configuration
+// P2P Governance Configuration
 export interface P2PGovernanceConfig {
   id: string;
   enabled: boolean;
@@ -689,3 +685,141 @@ export interface P2PGovernanceConfig {
   permissionLevel: 'open' | 'permissioned' | 'hybrid';
 }
 
+// NEW: Local AI-Encrypted Backup Configuration
+export interface LocalAIBackupConfig {
+  id: string;
+  enabled: boolean;
+  backupSchedule: 'hourly' | 'daily' | 'weekly' | 'intelligent';
+  encryptionType: 'ML-KEM-1024' | 'Falcon-1024' | 'hybrid';
+  podmanEnabled: boolean;
+  rootlessMode: boolean;
+  tpmProtection: boolean;
+  starkNetVerification: boolean;
+  ipfsBackup: boolean;
+  selfHealingEnabled: boolean;
+  lastBackup: string;
+  lastRestore: string;
+  storageLocation: string;
+  maxBackupSizeGB: number;
+  retentionPeriodDays: number;
+  autoRestartEnabled: boolean;
+  biometricAuthRequired: boolean;
+  offlineModeEnabled: boolean;
+  zkProofVerification: boolean;
+  syncStatus: 'synced' | 'syncing' | 'failed' | 'offline';
+  backups: Array<{
+    id: string;
+    timestamp: string;
+    size: number;
+    files: number;
+    intact: boolean;
+    encrypted: boolean;
+    verified: boolean;
+  }>;
+}
+
+// NEW: AI Sync Status
+export interface AISyncStatus {
+  id: string;
+  lastCloudSync: string;
+  lastLocalSync: string;
+  pendingUploads: number;
+  pendingDownloads: number;
+  syncErrors: Array<{
+    timestamp: string;
+    error: string;
+    resolved: boolean;
+  }>;
+  cloudAvailable: boolean;
+  localAvailable: boolean;
+  p2pAvailable: boolean;
+  offlineMode: boolean;
+  selfHealingAttempts: number;
+  lastSelfHealingAction: string;
+  dataIntegrity: 'verified' | 'unverified' | 'compromised';
+  zkProofsGenerated: number;
+  zkProofsVerified: number;
+}
+
+// NEW: AI Cloud Connection Status
+export interface AICloudConnectionStatus {
+  id: string;
+  connected: boolean;
+  lastConnectionAttempt: string;
+  connectionUptime: number; // in seconds
+  failoverActivated: boolean;
+  activeFailoverType: 'local' | 'p2p' | 'ipfs' | 'none';
+  reconnectionAttempts: number;
+  lastSuccessfulConnection: string;
+  networkLatency: number; // in milliseconds
+  dataTransferRate: number; // in KB/s
+  currentBackupMode: 'cloud' | 'local' | 'ipfs' | 'hybrid';
+  securityVerified: boolean;
+  verificationMethod: 'zk-proof' | 'starknet' | 'tpm' | 'standard';
+}
+
+// NEW: Podman Container Security Status
+export interface PodmanContainerStatus {
+  id: string;
+  containerName: string;
+  running: boolean;
+  securityLevel: 'standard' | 'enhanced' | 'maximum';
+  rootless: boolean;
+  selinuxEnabled: boolean;
+  tpmIntegrated: boolean;
+  autoRestartEnabled: boolean;
+  memoryUsageMB: number;
+  cpuUsagePercent: number;
+  uptime: number; // in seconds
+  restartCount: number;
+  lastRestart: string;
+  vulnerabilities: Array<{
+    severity: ThreatSeverity;
+    description: string;
+    mitigated: boolean;
+  }>;
+  healthStatus: 'healthy' | 'degraded' | 'unhealthy';
+  encryptionEnabled: boolean;
+  encryptionType: 'ML-KEM-1024' | 'AES-256-GCM' | 'hybrid';
+  networkIsolation: boolean;
+}
+
+// NEW: WebRTC P2P Messaging Status
+export interface WebRTCPeerStatus {
+  id: string;
+  peerId: string;
+  connectionStatus: 'connected' | 'connecting' | 'disconnected' | 'failed';
+  encryptionEnabled: boolean;
+  encryptionType: 'ML-KEM-1024' | 'hybrid';
+  signatureType: 'Falcon-1024' | 'SLH-DSA-Dilithium5';
+  lastMessageTimestamp: string;
+  dataTransferred: number; // in bytes
+  latency: number; // in milliseconds
+  starkNetVerified: boolean;
+  localEndpoint: string;
+  remoteEndpoint: string;
+  zkProofVerified: boolean;
+  reliabilityScore: number; // 0-100
+}
+
+// NEW: Quantum-Resistant Security Metrics
+export interface QuantumSecurityMetrics {
+  id: string;
+  timestamp: string;
+  kyberKeyExchangeCount: number;
+  falconSignatureCount: number;
+  zkProofGenerationCount: number;
+  zkProofVerificationCount: number;
+  quantumResistanceScore: number; // 0-100
+  estimatedPostQuantumStrength: 'level1' | 'level3' | 'level5';
+  keyRotationFrequency: number; // days
+  lastKeyRotation: string;
+  vulnerabilityScanTimestamp: string;
+  quantumAttackSimulationResults: {
+    shorAttackResistant: boolean;
+    groveroAttackResistant: boolean;
+    latticeCryptanalysisResistant: boolean;
+    estimatedAttackCost: string;
+  };
+  nistComplianceLevel: 'FIPS140-2' | 'FIPS140-3' | 'FIPS205' | 'FIPS204' | 'none';
+}
