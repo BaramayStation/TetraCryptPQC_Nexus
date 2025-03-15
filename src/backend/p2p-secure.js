@@ -1,5 +1,6 @@
+
 import WebSocket, { WebSocketServer } from 'ws';
-import { decryptAES, encryptAES } from '../src/lib/crypto.js';
+import { decryptAES, encryptAES } from '../lib/crypto.js';
 
 // 🔹 Start WebSocket Server
 const wss = new WebSocketServer({ port: 8080 });
