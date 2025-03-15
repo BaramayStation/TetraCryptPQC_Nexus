@@ -3,6 +3,8 @@
  * Implements NIST FIPS 205/206 compliant algorithms
  */
 
+import { detectSimdSupport } from "./wasm-detection";
+
 // Utility function to generate hex strings
 const generateRandomHex = (length: number): string => {
   return Array.from({ length }, () => 
@@ -13,6 +15,8 @@ const generateRandomHex = (length: number): string => {
 // Simulate WASM imports since we don't have actual WASM modules loaded
 const simulateWasmImport = async () => {
   console.log("🔹 Initializing PQC WebAssembly modules (simulated)");
+  const simdSupported = await detectSimdSupport();
+  console.log(`🔹 WebAssembly SIMD support: ${simdSupported ? "Available" : "Not available"}`);
   return true;
 };
 

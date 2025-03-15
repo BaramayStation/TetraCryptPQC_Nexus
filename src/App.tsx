@@ -17,7 +17,13 @@ function App() {
   useEffect(() => {
     // Check WebAssembly support on app initialization
     logWasmSupport().then(support => {
-      if (!support.isOptimal) {
+      if (!support.isSupported) {
+        toast({
+          title: "WebAssembly not supported",
+          description: "Your browser doesn't support WebAssembly which is required for cryptographic operations.",
+          duration: 10000
+        });
+      } else if (!support.isOptimal) {
         toast({
           title: "WebAssembly SIMD not detected",
           description: "Some cryptographic operations may run slower in this browser.",
