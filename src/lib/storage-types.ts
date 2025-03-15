@@ -7,13 +7,37 @@ export interface UserProfile {
   starknetAddress?: string;
   sessionKey?: string;
   keyPairs?: {
-    encryption: {
+    pqkem?: {
+      algorithm: string;
       publicKey: string;
       privateKey: string;
+      strength: string;
+      standard: string;
+      created: string;
     };
-    signature: {
+    signature?: {
+      algorithm: string;
       publicKey: string;
       privateKey: string;
+      strength: string;
+      standard: string;
+      created: string;
+    };
+    bike?: {
+      algorithm: string;
+      publicKey: string;
+      privateKey: string;
+      strength: string;
+      standard: string;
+      created: string;
+    };
+    falcon?: {
+      algorithm: string;
+      publicKey: string;
+      privateKey: string;
+      strength: string;
+      standard: string;
+      created: string;
     };
   };
   didDocument?: any;
@@ -21,6 +45,7 @@ export interface UserProfile {
   hsmInfo?: any;
   starkKey?: string;
   provider?: any;
+  createdAt?: string;
 }
 
 export interface Contact {

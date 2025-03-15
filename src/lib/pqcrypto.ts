@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Post-Quantum Cryptography Implementation
  * Implements NIST FIPS 205/206 compliant algorithms
@@ -37,6 +36,7 @@ export async function generateMLKEMKeypair() {
     privateKey,
     strength: "256-bit quantum security",
     standard: "NIST FIPS 205",
+    created: new Date().toISOString(),
   };
 }
 
@@ -60,6 +60,7 @@ export async function generateBIKEKeypair() {
     privateKey,
     strength: "192-bit quantum security",
     standard: "NIST Round 4 Alternate",
+    created: new Date().toISOString(),
   };
 }
 
@@ -82,6 +83,7 @@ export async function generateSLHDSAKeypair() {
     privateKey,
     strength: "256-bit quantum security",
     standard: "NIST FIPS 206",
+    created: new Date().toISOString(),
   };
 }
 
@@ -104,6 +106,7 @@ export async function generateFalconKeypair() {
     privateKey,
     strength: "128-bit quantum security",
     standard: "NIST Round 4 Alternate",
+    created: new Date().toISOString(),
   };
 }
 

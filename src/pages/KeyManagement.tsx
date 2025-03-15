@@ -1,22 +1,89 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import KeyGenerationPanel from "@/components/keymanagement/KeyGenerationPanel";
 import KeyInventoryPanel from "@/components/keymanagement/KeyInventoryPanel";
 import KeyRotationPanel from "@/components/keymanagement/KeyRotationPanel";
-import { Shield, FileText, Download, Upload, AlertTriangle } from "lucide-react";
+import { Shield, FileText, Download, Upload, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { getUserProfile } from "@/lib/storage";
+import { recordAuditEvent } from "@/lib/enterprise/auditLog";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 const KeyManagement = () => {
+  const [profile, setProfile] = useState(() => getUserProfile());
   const [complianceInfo, setComplianceInfo] = useState({
     lastAudit: "2024-03-15",
     complianceStatus: "Compliant",
     nextAuditDue: "2024-09-15",
     standards: ["NIST FIPS 205", "NIST FIPS 206", "ISO 27001", "SOC 2 Type II"]
   });
+  const [keyHealth, setKeyHealth] = useState({
+    kemStatus: "unknown",
+    signatureStatus: "unknown",
+    kemLastRotated: null as Date | null,
+    signatureLastRotated: null as Date | null,
+    daysToKemExpiry: 0,
+    daysToSignatureExpiry: 0
+  });
+
+  useEffect(() => {
+    // Calculate key health
+    if (profile) {
+      const kemCreated = profile?.keyPairs?.pqkem?.created
+        ? new Date(profile.keyPairs.pqkem.created)
+        : null;
+        
+      const signatureCreated = profile?.keyPairs?.signature?.created
+        ? new Date(profile.keyPairs.signature.created)
+        : null;
+      
+      const kemExpiry = kemCreated
+        ? new Date(kemCreated.getTime() + (90 * 24 * 60 * 60 * 1000)) // 90 days
+        : null;
+        
+      const signatureExpiry = signatureCreated
+        ? new Date(signatureCreated.getTime() + (180 * 24 * 60 * 60 * 1000)) // 180 days
+        : null;
+      
+      const today = new Date();
+      
+      setKeyHealth({
+        kemStatus: !kemCreated ? "missing" :
+                   kemExpiry && kemExpiry < today ? "expired" :
+                   kemExpiry && (kemExpiry.getTime() - today.getTime()) < (14 * 24 * 60 * 60 * 1000) ? "warning" :
+                   "healthy",
+        signatureStatus: !signatureCreated ? "missing" :
+                         signatureExpiry && signatureExpiry < today ? "expired" :
+                         signatureExpiry && (signatureExpiry.getTime() - today.getTime()) < (30 * 24 * 60 * 60 * 1000) ? "warning" :
+                         "healthy",
+        kemLastRotated: kemCreated,
+        signatureLastRotated: signatureCreated,
+        daysToKemExpiry: kemExpiry 
+          ? Math.max(0, Math.ceil((kemExpiry.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)))
+          : 0,
+        daysToSignatureExpiry: signatureExpiry
+          ? Math.max(0, Math.ceil((signatureExpiry.getTime() - today.getTime()) / (24 * 60 * 60 * 1000)))
+          : 0
+      });
+    }
+    
+    // Record audit event for accessing the key management page
+    if (profile) {
+      recordAuditEvent(
+        "access_key_management",
+        "success",
+        profile.id || "unknown-user",
+        { pageAccess: "KeyManagement" },
+        "info"
+      );
+    }
+  }, [profile]);
 
   const downloadComplianceReport = () => {
     // In a real implementation, this would generate and download a proper compliance report
@@ -27,9 +94,9 @@ const KeyManagement = () => {
       complianceStatus: complianceInfo.complianceStatus,
       standards: complianceInfo.standards,
       keyAlgorithms: {
-        kemAlgorithm: "ML-KEM-1024",
-        signatureAlgorithm: "SLH-DSA-Dilithium5",
-        securityStrength: "256-bit quantum security"
+        kemAlgorithm: profile?.keyPairs?.pqkem?.algorithm || "Not implemented",
+        signatureAlgorithm: profile?.keyPairs?.signature?.algorithm || "Not implemented",
+        securityStrength: profile?.keyPairs?.pqkem?.strength || "Unknown"
       },
       certificationStatement: "This system implements NIST FIPS 205 and 206 compliant post-quantum cryptographic algorithms."
     }, null, 2);
@@ -43,6 +110,17 @@ const KeyManagement = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    // Record audit event for downloading compliance report
+    if (profile) {
+      recordAuditEvent(
+        "download_compliance_report",
+        "success",
+        profile.id || "unknown-user",
+        { reportType: "PQC Compliance" },
+        "info"
+      );
+    }
   };
 
   return (
@@ -83,6 +161,113 @@ const KeyManagement = () => {
             providing protection against both classical and quantum computing threats.
           </AlertDescription>
         </Alert>
+        
+        {/* Key Health Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <Shield className="h-5 w-5 text-accent" />
+                ML-KEM Key Health
+              </CardTitle>
+              <CardDescription>NIST FIPS 205 Key Encapsulation Mechanism</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Status</span>
+                <Badge className={
+                  keyHealth.kemStatus === "healthy" ? "bg-green-500" :
+                  keyHealth.kemStatus === "warning" ? "bg-yellow-500" :
+                  keyHealth.kemStatus === "expired" ? "bg-red-500" :
+                  "bg-muted"
+                }>
+                  {keyHealth.kemStatus === "healthy" ? "Healthy" :
+                   keyHealth.kemStatus === "warning" ? "Rotation Recommended" :
+                   keyHealth.kemStatus === "expired" ? "Expired" :
+                   keyHealth.kemStatus === "missing" ? "Not Implemented" : "Unknown"}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Last Rotated</span>
+                <span className="text-sm">
+                  {keyHealth.kemLastRotated ? keyHealth.kemLastRotated.toLocaleDateString() : "Never"}
+                </span>
+              </div>
+              
+              {keyHealth.kemStatus !== "missing" && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Days Until Expiry</span>
+                    <span className={`text-sm ${
+                      keyHealth.daysToKemExpiry <= 0 ? "text-red-500" :
+                      keyHealth.daysToKemExpiry < 14 ? "text-yellow-500" :
+                      "text-green-500"
+                    }`}>
+                      {keyHealth.daysToKemExpiry <= 0 ? "Expired" : `${keyHealth.daysToKemExpiry} days`}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-2">
+                    <Progress value={Math.min(100, (keyHealth.daysToKemExpiry / 90) * 100)} className="h-2" />
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <Shield className="h-5 w-5 text-accent" />
+                SLH-DSA Key Health
+              </CardTitle>
+              <CardDescription>NIST FIPS 206 Digital Signature Algorithm</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Status</span>
+                <Badge className={
+                  keyHealth.signatureStatus === "healthy" ? "bg-green-500" :
+                  keyHealth.signatureStatus === "warning" ? "bg-yellow-500" :
+                  keyHealth.signatureStatus === "expired" ? "bg-red-500" :
+                  "bg-muted"
+                }>
+                  {keyHealth.signatureStatus === "healthy" ? "Healthy" :
+                   keyHealth.signatureStatus === "warning" ? "Rotation Recommended" :
+                   keyHealth.signatureStatus === "expired" ? "Expired" :
+                   keyHealth.signatureStatus === "missing" ? "Not Implemented" : "Unknown"}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Last Rotated</span>
+                <span className="text-sm">
+                  {keyHealth.signatureLastRotated ? keyHealth.signatureLastRotated.toLocaleDateString() : "Never"}
+                </span>
+              </div>
+              
+              {keyHealth.signatureStatus !== "missing" && (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Days Until Expiry</span>
+                    <span className={`text-sm ${
+                      keyHealth.daysToSignatureExpiry <= 0 ? "text-red-500" :
+                      keyHealth.daysToSignatureExpiry < 30 ? "text-yellow-500" :
+                      "text-green-500"
+                    }`}>
+                      {keyHealth.daysToSignatureExpiry <= 0 ? "Expired" : `${keyHealth.daysToSignatureExpiry} days`}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-2">
+                    <Progress value={Math.min(100, (keyHealth.daysToSignatureExpiry / 180) * 100)} className="h-2" />
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
         
         <Card>
           <CardHeader>
