@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Key, Lock, AlertTriangle, CheckCircle, Fingerprint, RefreshCw, KeyRound } from "lucide-react";
-import { HSMType } from "@/lib/storage-types";
+import { HSMType } from "@/lib/hsm-types";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -133,6 +133,7 @@ const HardwareSecurityManager: React.FC = () => {
       userProfile.hsmInfo = {
         id: crypto.randomUUID(),
         type: "YubiKey",
+        status: "active",
         provider: "Yubico",
         securityLevel: "High",
         lastVerified: new Date().toISOString(),
@@ -143,6 +144,7 @@ const HardwareSecurityManager: React.FC = () => {
       userProfile.hsmInfo = {
         id: crypto.randomUUID(),
         type: "TPM",
+        status: "active",
         provider: "Platform",
         securityLevel: "Medium",
         lastVerified: new Date().toISOString(),
@@ -153,6 +155,7 @@ const HardwareSecurityManager: React.FC = () => {
       userProfile.hsmInfo = {
         id: crypto.randomUUID(),
         type: "Secure Enclave",
+        status: "active",
         provider: "Apple",
         securityLevel: "High",
         lastVerified: new Date().toISOString(),

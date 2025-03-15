@@ -6,7 +6,16 @@
  * with quantum-resistant security measures for enterprise environments.
  */
 
-import { SecureNodeConfig, SecurityOptions, SecureNode, SecureContainer, SecureContainerConfig, SecureInfraNode, SecureServiceMesh } from './storage-types';
+import { 
+  SecureNodeConfig, 
+  SecurityOptions, 
+  SecureNode, 
+  SecureContainer, 
+  SecureContainerConfig, 
+  SecureInfraNode, 
+  SecureServiceMesh 
+} from './storage-types';
+import { HSMType, NodeType, ThreatSeverity } from './hsm-types';
 
 // For security event logging - create our own implementation
 interface SecurityEvent {
@@ -78,15 +87,6 @@ export const createSecureMesh = async (
     name,
     services,
     encryptionType: 'ml-kem',
-    mutualAuthentication: true,
-    certificateRotation: true,
-    trafficAnalysis: true,
-    anomalyDetection: true,
-    mtls: true,
-    zkProofVerification: true,
-    serviceDiscovery: true,
-    created: new Date().toISOString(),
-    lastUpdated: new Date().toISOString()
   };
   
   return mesh;
@@ -113,24 +113,31 @@ export const createSecureContainer = async (
   // Generate new container ID
   const id = crypto.randomUUID();
   
+  // Prepare network policy
+  const networkPolicy = {
+    ingress: true,
+    egress: false,
+    allowedPorts: [80, 443]
+  };
+  
   // Create container with defaults merged with provided config
   const container: SecureContainerConfig = {
     id,
     name,
-    type: config?.type || 'podman',
     securityProfile,
+    networkPolicy,
     immutableRootfs: config?.immutableRootfs !== undefined ? config.immutableRootfs : true,
     confinement: config?.confinement || 'seccomp',
-    networkPolicy: config?.networkPolicy || 'service-mesh',
     rotationPolicy: {
       enabled: config?.rotationPolicy?.enabled !== undefined ? config.rotationPolicy.enabled : true,
-      interval: config?.rotationPolicy?.interval || 60,
-      triggerOnAnomaly: config?.rotationPolicy?.triggerOnAnomaly !== undefined ? config.rotationPolicy.triggerOnAnomaly : true
+      intervalDays: config?.rotationPolicy?.intervalDays || 60,
+      triggerOnAnomaly: config?.rotationPolicy?.triggerOnAnomaly,
+      lastRotation: new Date().toISOString()
     },
     resources: {
-      cpuLimit: config?.resources?.cpuLimit || '100m',
-      memoryLimit: config?.resources?.memoryLimit || '256Mi',
-      storageLimit: config?.resources?.storageLimit || '1Gi'
+      cpu: config?.resources?.cpu || '100m',
+      memory: config?.resources?.memory || '256Mi',
+      storage: config?.resources?.storage || '1Gi'
     },
     verifiedBoot: config?.verifiedBoot !== undefined ? config.verifiedBoot : true,
     integrityMonitoring: config?.integrityMonitoring !== undefined ? config.integrityMonitoring : true,
@@ -151,74 +158,16 @@ export const createSecureContainer = async (
 };
 
 /**
- * Deploys a secure container with quantum-resistant security measures.
- *
- * @param {string} imageName - The name of the container image to deploy.
- * @param {string} securityProfile - The security profile to apply to the container.
- * @param {SecurityOptions} [options] - Optional security configurations.
- * @returns {Promise<string>} - A promise that resolves with the ID of the deployed container.
- */
-export const deploySecureContainer = async (
-  imageName: string,
-  securityProfile: string,
-  options?: SecurityOptions
-): Promise<string> => {
-  console.log(`Deploying secure container: ${imageName} with profile: ${securityProfile}`);
-
-  // Simulate secure container deployment with a delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-
-  // Log security event
-  logSecurityEvent({
-    severity: "info",
-    message: `Deployed secure container: ${imageName}`,
-    timestamp: new Date().toISOString(),
-    data: { imageName, securityProfile }
-  });
-
-  const containerId = crypto.randomUUID();
-  return containerId;
-};
-
-/**
- * Monitors the security posture of a secure container.
- *
- * @param {string} containerId - The ID of the container to monitor.
- * @param {SecurityOptions} [options] - Optional security configurations.
- * @returns {Promise<string>} - A promise that resolves with the security status of the container.
- */
-export const monitorSecureContainer = async (
-  containerId: string,
-  options?: SecurityOptions
-): Promise<string> => {
-  console.log(`Monitoring secure container: ${containerId}`);
-
-  // Simulate security monitoring with a delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  // Log security event
-  logSecurityEvent({
-    severity: "info",
-    message: `Monitoring secure container: ${containerId}`,
-    timestamp: new Date().toISOString(),
-    data: { containerId }
-  });
-
-  const status = Math.random() > 0.1 ? "secure" : "compromised";
-  return status;
-};
-
-/**
  * Creates a secure infrastructure node
  * 
  * @param {string} name - Name of the node
- * @param {string} type - Type of the node
+ * @param {NodeType} type - Type of the node
  * @param {Partial<SecureInfraNode>} [config] - Additional node configuration
  * @returns {Promise<SecureInfraNode>} - The created node
  */
 export const createSecureInfraNode = async (
   name: string,
-  type: 'physical' | 'virtual' | 'container' | 'serverless',
+  type: NodeType,
   config?: Partial<SecureInfraNode>
 ): Promise<SecureInfraNode> => {
   console.log(`Creating secure infrastructure node: ${name}`);
@@ -239,31 +188,22 @@ export const createSecureInfraNode = async (
     id: crypto.randomUUID(),
     name,
     type,
-    hardwareCapabilities: config?.hardwareCapabilities || {
-      tpm: Math.random() > 0.3,
-      sgx: Math.random() > 0.6,
-      sev: Math.random() > 0.7,
-      nvdimm: Math.random() > 0.8,
-      secureBoot: Math.random() > 0.4
-    },
-    networkSecurity: config?.networkSecurity || {
-      encryptionInTransit: true,
+    hardwareCapabilities: ["tpm", "sgx", "sev"],
+    networkSecurity: {
       firewallEnabled: true,
-      intrusionDetection: true,
-      ddosProtection: type === 'physical' || type === 'virtual'
+      encryptionEnabled: true
     },
-    complianceStatus: config?.complianceStatus || {
-      fisma: type === 'physical',
-      fedramp: true,
-      hipaa: Math.random() > 0.5,
-      pci: Math.random() > 0.5,
-      gdpr: true
+    complianceStatus: {
+      compliant: true,
+      frameworks: ["NIST", "FedRAMP", "HIPAA"]
     },
-    confidentialComputing: config?.confidentialComputing !== undefined ? config.confidentialComputing : type === 'physical' || type === 'virtual',
-    attestationSupport: config?.attestationSupport !== undefined ? config.attestationSupport : type === 'physical',
-    patchStatus: config?.patchStatus || 'up-to-date',
-    lastScan: new Date().toISOString(),
-    threatLevel: config?.threatLevel || 'minimal'
+    status: 'active',
+    location: 'East Region',
+    securityLevel: 'enhanced',
+    confidentialComputing: true,
+    attestationSupport: true,
+    patchStatus: 'up-to-date',
+    threatLevel: 'low'
   };
   
   return node;
@@ -348,8 +288,8 @@ export const rotateContainer = async (
   return {
     id: crypto.randomUUID(),
     name: name,
+    status: "running",
     type: "standard",
-    status: "active",
     securityProfile: "high",
     confinement: "strict",
     networkPolicy: "restricted",
@@ -368,48 +308,5 @@ export const rotateContainer = async (
   };
 };
 
-/**
- * Initializes the secure infrastructure
- * 
- * @returns {Promise<boolean>} - Whether initialization was successful
- */
-export const initializeSecureInfrastructure = async (): Promise<boolean> => {
-  console.log("Initializing secure infrastructure...");
-  
-  try {
-    // Check hardware capabilities
-    const hwCapabilities = await checkHardwareSecurityCapabilities();
-    
-    // Create basic infrastructure components
-    const node1 = await createSecureInfraNode("primary-node", "physical");
-    const node2 = await createSecureInfraNode("secondary-node", "virtual");
-    
-    // Create containers
-    const container1 = await createSecureContainer("tetracrypt-core", "hardened");
-    const container2 = await createSecureContainer("tetracrypt-messaging", "tpm-protected");
-    
-    // Create service mesh
-    await createSecureMesh("tetracrypt-mesh", [container1.id, container2.id]);
-    
-    console.log("Secure infrastructure initialized successfully");
-    return true;
-  } catch (error) {
-    console.error("Failed to initialize secure infrastructure:", error);
-    return false;
-  }
-};
-
 // Export aliases for backward compatibility
 export const createSecureServiceMesh = createSecureMesh;
-
-// Define HSM Type for confidential-computing.ts to use
-export enum HSMType {
-  TPM = "TPM",
-  SGX = "SGX",
-  SEV = "SEV",
-  YUBIKEY = "YUBIKEY",
-  HSM = "HSM",
-  TRUSTZONE = "TRUSTZONE",
-  NONE = "NONE",
-  SECUREENCLAVE = "SECUREENCLAVE"
-}

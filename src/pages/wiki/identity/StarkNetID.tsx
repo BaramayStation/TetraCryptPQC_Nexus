@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import WikiLayout from '@/components/layout/WikiLayout';
-import { CircuitBoard } from 'lucide-react';
+import { CircuitBoard, Shield, Key, Link } from 'lucide-react';
 
 const StarkNetID: React.FC = () => {
   return (
@@ -23,10 +23,74 @@ const StarkNetID: React.FC = () => {
         <Card>
           <CardContent className="pt-6">
             <h2 className="text-xl font-semibold mb-4">StarkNet ID Overview</h2>
-            <p>
+            <p className="mb-4">
               TetraCryptPQC integrates with StarkNet to provide quantum-resistant
               decentralized identities secured by zero-knowledge proofs and Layer 2 scaling.
+              This integration enables secure, private, and verifiable identity management
+              that's resistant to both classical and quantum computing threats.
             </p>
+            
+            <div className="grid md:grid-cols-2 gap-6 mt-6">
+              <Card className="bg-muted/40">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center">
+                    <Shield className="h-4 w-4 mr-2 text-primary" />
+                    Quantum-Resistant Identity
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm">
+                  <p>
+                    StarkNet IDs are secured using post-quantum cryptographic algorithms,
+                    making them resistant to attacks from both current and future quantum computers.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-muted/40">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center">
+                    <Key className="h-4 w-4 mr-2 text-primary" />
+                    Zero-Knowledge Authentication
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm">
+                  <p>
+                    Authenticate without revealing sensitive information using
+                    zero-knowledge proofs, allowing selective disclosure of identity attributes.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-muted/40">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center">
+                    <Link className="h-4 w-4 mr-2 text-primary" />
+                    Cross-Platform Verification
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm">
+                  <p>
+                    StarkNet IDs can be verified across multiple platforms and applications
+                    while maintaining cryptographic security and user privacy.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-muted/40">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center">
+                    <CircuitBoard className="h-4 w-4 mr-2 text-primary" />
+                    Layer 2 Scalability
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm">
+                  <p>
+                    Leverage StarkNet's Layer 2 scaling to provide high-throughput,
+                    low-cost identity verification with Ethereum-level security.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </CardContent>
         </Card>
       </div>

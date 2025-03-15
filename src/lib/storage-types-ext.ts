@@ -5,6 +5,16 @@
  * This module defines extended types for secure infrastructure.
  */
 
+import { 
+  SecurityLevel, 
+  ContainerStatus, 
+  NodeType, 
+  ThreatSeverity, 
+  EncryptionType,
+  SignatureType,
+  SelfHealingStatus
+} from './hsm-types';
+
 // Hardware Security Module Types
 export interface HSMType {
   id?: string;
@@ -15,31 +25,19 @@ export interface HSMType {
   certificationLevel: 'FIPS-140-2' | 'FIPS-140-3' | 'Common Criteria';
 }
 
-// StarkNet Identity
-export interface StarkNetID {
-  id: string;
-  address: string;
-  publicKey: string;
-  controller: string;
-  created: string;
-  updated: string;
-  verified: boolean;
-  type?: string;
-}
-
 // Secure Infrastructure Types
 export interface SecureNodeConfig {
   nodeId: string;
   name: string;
   type: 'physical' | 'virtual' | 'container' | 'serverless';
-  encryptionLevel: 'standard' | 'enhanced' | 'maximum';
+  encryptionLevel: SecurityLevel;
   location: string;
   created: string;
   lastUpdated: string;
 }
 
 export interface SecurityOptions {
-  level: 'standard' | 'enhanced' | 'maximum';
+  level: SecurityLevel;
   aiEnhanced: boolean;
   postQuantumReady: boolean;
   hardwareSecurityEnabled: boolean;
@@ -52,7 +50,7 @@ export interface SecureNode {
   name: string;
   status: 'online' | 'offline' | 'maintenance' | 'compromised';
   type: 'physical' | 'virtual' | 'container';
-  securityLevel: 'standard' | 'enhanced' | 'maximum';
+  securityLevel: SecurityLevel;
   lastHealthCheck: string;
   metrics: {
     cpuUsage: number;
@@ -65,87 +63,127 @@ export interface SecureNode {
 export interface SecureContainerConfig {
   id: string;
   name: string;
-  image: string;
-  version: string;
-  securityOptions: SecurityOptions;
-  resourceLimits: {
-    cpu: number;
-    memory: number;
-    storage: number;
-  };
-  networkPolicy: {
-    ingress: boolean;
-    egress: boolean;
-    allowedPorts: number[];
-  };
+  type?: string;
+  image?: string;
+  version?: string;
+  securityProfile?: string;
+  securityOptions?: SecurityOptions;
   immutableRootfs?: boolean;
   confinement?: string;
   verifiedBoot?: boolean;
   integrityMonitoring?: boolean;
+  networkPolicy?: {
+    ingress: boolean;
+    egress: boolean;
+    allowedPorts: number[];
+  };
   rotationPolicy?: {
     enabled: boolean;
     intervalDays: number;
+    interval?: number;
     lastRotation?: string;
+    triggerOnAnomaly?: boolean;
   };
   resources?: {
     cpu: string;
     memory: string;
     storage: string;
+    cpuLimit?: string;
+    memoryLimit?: string;
+    storageLimit?: string;
   };
+  status?: string;
+  created?: string;
+  lastUpdated?: string;
 }
 
 export interface SecureContainer {
   id: string;
   name: string;
-  status: 'running' | 'stopped' | 'paused' | 'error';
-  image: string;
-  created: string;
-  lastUpdated: string;
-  healthStatus: 'healthy' | 'warning' | 'critical';
-  securityLevel: 'standard' | 'enhanced' | 'maximum';
+  status: ContainerStatus;
+  type?: string;
+  securityProfile?: string;
+  confinement?: string;
+  networkPolicy?: string;
+  resources?: {
+    cpu: string;
+    memory: string;
+    storage: string;
+  };
+  createdAt?: string;
+  expiresAt?: string;
+  signatures?: {
+    image: string;
+    config: string;
+  };
+  verificationStatus?: string;
 }
 
 export interface SecureInfraNode {
   id: string;
   name: string;
-  type: 'kubernetes' | 'docker' | 'podman' | 'bare-metal';
+  type: NodeType;
   status: 'active' | 'inactive' | 'maintenance';
   location: string;
-  ipAddress: string;
-  securityLevel: 'standard' | 'enhanced' | 'maximum';
-  lastSeen: string;
-  hardwareCapabilities?: string[];
+  ipAddress?: string;
+  securityLevel: SecurityLevel;
+  lastSeen?: string;
+  hardwareCapabilities?: string[] | {
+    tpm?: boolean;
+    sgx?: boolean;
+    sev?: boolean;
+    nvdimm?: boolean;
+    secureBoot?: boolean;
+  };
   networkSecurity?: {
     firewallEnabled: boolean;
     encryptionEnabled: boolean;
+    encryptionInTransit?: boolean;
+    intrusionDetection?: boolean;
+    ddosProtection?: boolean;
   };
   complianceStatus?: {
     compliant: boolean;
     frameworks: string[];
+    fisma?: boolean;
+    fedramp?: boolean;
+    hipaa?: boolean;
+    pci?: boolean;
+    gdpr?: boolean;
   };
   confidentialComputing?: boolean;
   attestationSupport?: boolean;
   patchStatus?: string;
-  threatLevel?: 'low' | 'medium' | 'high' | 'critical';
+  threatLevel?: ThreatSeverity;
+  lastScan?: string;
 }
 
 export interface SecureServiceMesh {
   id: string;
   name: string;
   services: string[];
-  securityLevel: 'standard' | 'enhanced' | 'maximum';
-  encryptionEnabled: boolean;
-  mtlsEnabled: boolean;
-  zeroTrustEnabled: boolean;
-  aiMonitoringEnabled: boolean;
+  securityLevel?: SecurityLevel;
+  encryptionEnabled?: boolean;
+  mtlsEnabled?: boolean;
+  zeroTrustEnabled?: boolean;
+  aiMonitoringEnabled?: boolean;
   encryptionType?: string;
+  mutualAuthentication?: boolean;
+  certificateRotation?: boolean;
+  trafficAnalysis?: boolean;
+  anomalyDetection?: boolean;
+  mtls?: boolean;
+  zkProofVerification?: boolean;
+  serviceDiscovery?: boolean;
+  created?: string;
+  lastUpdated?: string;
 }
 
 // AI and Local Backup Types
 export interface LocalAIBackupConfig {
   id: string;
   name: string;
-  encryptionType: 'ML-KEM-768' | 'ML-KEM-1024' | 'Hybrid';
+  encryptionType: EncryptionType;
   storageLocation: string;
   compressionEnabled: boolean;
   backupSchedule: string;
@@ -159,6 +197,7 @@ export interface LocalAIBackupConfig {
     timestamp: string;
     size: number;
     status: string;
+    files?: string[];
   }>;
   lastRestore?: string;
   syncStatus?: AISyncStatus;
@@ -179,12 +218,13 @@ export interface AISyncStatus {
   p2pAvailable?: boolean;
   offlineMode?: boolean;
   lastCloudSync?: string;
+  lastLocalSync?: string;
 }
 
 export interface PodmanContainerStatus {
   id: string;
   name: string;
-  status: 'running' | 'stopped' | 'paused' | 'error';
+  status: ContainerStatus;
   image: string;
   created: string;
   ports: string[];
@@ -197,6 +237,7 @@ export interface PodmanContainerStatus {
   restartCount?: number;
   lastRestart?: string;
   containerName?: string;
+  securityLevel?: string;
 }
 
 export interface AICloudConnectionStatus {
@@ -206,16 +247,17 @@ export interface AICloudConnectionStatus {
   lastSuccessfulConnection: string;
   connectionType: 'direct' | 'proxy' | 'p2p' | 'relay';
   latency: number;
-  encryptionStrength: 'standard' | 'enhanced' | 'maximum';
+  encryptionStrength: SecurityLevel;
   securityVerified: boolean;
+  connectionUptime?: number;
 }
 
 export interface WebRTCPeerStatus {
   id: string;
   address: string;
   connected: boolean;
-  encryptionType: 'ML-KEM-768' | 'ML-KEM-1024' | 'Hybrid';
-  signatureType: 'Dilithium2' | 'Dilithium3' | 'Dilithium5';
+  encryptionType: EncryptionType;
+  signatureType: SignatureType;
   connectionQuality: 'excellent' | 'good' | 'fair' | 'poor';
   lastActivity: string;
   dataChannelsOpen: number;

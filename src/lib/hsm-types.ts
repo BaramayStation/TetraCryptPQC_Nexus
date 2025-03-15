@@ -1,72 +1,54 @@
 
 /**
- * Hardware Security Module (HSM) Types
+ * TetraCryptPQC HSM Types
  * 
- * This module defines available HSM types and related utilities
+ * This module defines hardware security module types and enums
  */
 
-import { HSMType } from './storage-types';
-
-// Available HSM types
-export const HSM_TYPES: HSMType[] = [
-  {
-    id: 'hsm-1',
-    type: 'TPM',
-    vendor: 'Infineon',
-    model: 'SLB 9670',
-    firmwareVersion: '7.85',
-    certificationLevel: 'FIPS-140-2'
-  },
-  {
-    id: 'hsm-2',
-    type: 'YubiKey',
-    vendor: 'Yubico',
-    model: 'YubiKey 5 FIPS',
-    firmwareVersion: '5.2.4',
-    certificationLevel: 'FIPS-140-2'
-  },
-  {
-    id: 'hsm-3',
-    type: 'Secure Enclave',
-    vendor: 'Apple',
-    model: 'T2',
-    firmwareVersion: '2023.1',
-    certificationLevel: 'FIPS-140-3'
-  },
-  {
-    id: 'hsm-4',
-    type: 'Cloud HSM',
-    vendor: 'AWS',
-    model: 'CloudHSM',
-    firmwareVersion: '5.8.0',
-    certificationLevel: 'FIPS-140-3'
-  },
-  {
-    id: 'hsm-5',
-    type: 'Hardware Token',
-    vendor: 'Thales',
-    model: 'Luna Network HSM 7',
-    firmwareVersion: '7.4.0',
-    certificationLevel: 'FIPS-140-3'
-  }
-];
-
-// Get HSM type details by ID
-export function getHSMTypeById(id: string): HSMType | undefined {
-  return HSM_TYPES.find(hsm => hsm.id === id);
+// Define HSMType as an enum so it can be used as both a type and value
+export enum HSMType {
+  TPM = "TPM",
+  SGX = "SGX",
+  SEV = "SEV",
+  YUBIKEY = "YUBIKEY",
+  HSM = "HSM",
+  TRUSTZONE = "TRUSTZONE",
+  NONE = "NONE",
+  SECUREENCLAVE = "SECUREENCLAVE"
 }
 
-// Get HSM type details by type
-export function getHSMTypeByType(type: string): HSMType | undefined {
-  return HSM_TYPES.find(hsm => hsm.type.toLowerCase() === type.toLowerCase());
+// HSM Information interface
+export interface HSMInfo {
+  id?: string;
+  type: string;
+  status: string;
+  lastVerified?: string;
+  provider?: string;
+  securityLevel?: string;
+  capabilities?: string[];
 }
 
-// Check if HSM is FIPS compliant
-export function isFIPSCompliant(hsm: HSMType): boolean {
-  return hsm.certificationLevel.startsWith('FIPS');
+// Hardware capabilities interface
+export interface HardwareCapabilities {
+  tpm?: boolean;
+  sgx?: boolean;
+  sev?: boolean;
+  nvdimm?: boolean;
+  secureBoot?: boolean;
 }
 
-// Get available HSM types filtered by certification level
-export function getHSMTypesByCertification(level: 'FIPS-140-2' | 'FIPS-140-3' | 'Common Criteria'): HSMType[] {
-  return HSM_TYPES.filter(hsm => hsm.certificationLevel === level);
-}
+// Security level type
+export type SecurityLevel = 'standard' | 'enhanced' | 'maximum';
+
+// Add types for user setup
+export type UserSetupSecurityLevel = 'standard' | 'advanced' | 'quantum';
+
+// Self-healing status type
+export type SelfHealingStatus = 'active' | 'healing' | 'compromised';
+
+// Container types
+export type ContainerStatus = 'running' | 'stopped' | 'paused' | 'error';
+export type NodeType = 'kubernetes' | 'docker' | 'podman' | 'bare-metal' | 'physical' | 'virtual';
+export type ThreatSeverity = 'critical' | 'high' | 'medium' | 'low' | 'minimal';
+export type EncryptionType = 'ML-KEM-768' | 'ML-KEM-1024' | 'Hybrid';
+export type SignatureType = 'Dilithium2' | 'Dilithium3' | 'Dilithium5' | 'Falcon-1024';

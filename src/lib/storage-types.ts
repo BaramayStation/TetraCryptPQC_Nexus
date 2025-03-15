@@ -5,6 +5,8 @@
  * This module defines core types for the storage system.
  */
 
+import { HSMType, SecurityLevel } from './hsm-types';
+
 // User Profile
 export interface UserProfile {
   userId: string;
@@ -38,7 +40,7 @@ export interface UserProfile {
       standard?: string;
     };
   };
-  securityLevel: 'standard' | 'enhanced' | 'maximum';
+  securityLevel: SecurityLevel;
   securitySettings?: {
     mfa: boolean;
     hardwareAuthentication: boolean;
@@ -58,6 +60,9 @@ export interface UserProfile {
     status: string;
     lastVerified?: string;
     id?: string;
+    provider?: string;
+    securityLevel?: string;
+    capabilities?: string[];
   };
   qkdInfo?: {
     enabled: boolean;
@@ -67,6 +72,7 @@ export interface UserProfile {
     id: string;
     address: string;
     verified: boolean;
+    starkKey?: string;
   };
 }
 
@@ -144,10 +150,65 @@ export type SecurityEventType =
   | 'audit';
 
 // Threat Severity Levels
-export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical' | 'audit';
+export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical' | 'audit' | 'minimal';
 
 // AI Security Model Types
 export type SecurityModelType = 'anomaly-detection' | 'intrusion-prevention' | 'threat-intelligence';
+
+// Threat model type
+export interface Threat {
+  id: string;
+  description: string;
+  severity: ThreatSeverity;
+  timestamp?: string;
+  source?: string;
+  mitigation?: string;
+  status?: 'active' | 'mitigated' | 'investigating';
+}
+
+// AI-related security types
+export interface AISecuredCloudInstance {
+  id: string;
+  name: string;
+  status: string;
+  type?: string;
+  region?: string;
+  encryptionLevel?: SecurityLevel;
+  lastHealthCheck?: string;
+}
+
+export interface SecurityHealthMetrics {
+  uptime: number;
+  incidents: number;
+  threatScore?: number;
+  availability?: number;
+  integrity?: number;
+  confidentiality?: number;
+  lastUpdated?: string;
+}
+
+export interface AISecurityPolicy {
+  id: string;
+  rules: string[];
+  name?: string;
+  description?: string;
+  enforced?: boolean;
+  created?: string;
+  updated?: string;
+}
+
+// StarkNet Identity
+export interface StarkNetID {
+  id: string;
+  address: string;
+  publicKey: string;
+  controller: string;
+  created: string;
+  updated: string;
+  verified: boolean;
+  type?: string;
+  starkKey?: string;
+}
 
 // Export types from extended module
 export * from './storage-types-ext';

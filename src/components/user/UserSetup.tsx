@@ -12,6 +12,7 @@ import { generateMLKEMKeypair, generateSLHDSAKeypair } from "@/lib/pqcrypto";
 import { UserProfile } from "@/lib/storage-types";
 import { saveUserProfile } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
+import { UserSetupSecurityLevel } from "@/lib/hsm-types";
 
 // Advanced user setup component properties
 interface AdvancedSetupProps {
@@ -46,10 +47,24 @@ const AdvancedSetup: React.FC<AdvancedSetupProps> = ({ onComplete, authType }) =
   };
   
   // Handle security level change
-  const handleSecurityLevelChange = (value: "standard" | "advanced" | "quantum") => {
+  const handleSecurityLevelChange = (value: UserSetupSecurityLevel) => {
+    // Map user-friendly security levels to system security levels
+    let systemLevel: 'standard' | 'enhanced' | 'maximum';
+    
+    switch(value) {
+      case 'advanced':
+        systemLevel = 'enhanced';
+        break;
+      case 'quantum':
+        systemLevel = 'maximum';
+        break;
+      default:
+        systemLevel = 'standard';
+    }
+    
     setProfile({
       ...profile,
-      securityLevel: value,
+      securityLevel: systemLevel,
     });
   };
   
@@ -110,6 +125,7 @@ const AdvancedSetup: React.FC<AdvancedSetupProps> = ({ onComplete, authType }) =
       signatureKey: profile.signatureKey,
       created: timestamp,
       updated: timestamp,
+      lastActive: timestamp,
       securityLevel: profile.securityLevel || "standard",
     };
     

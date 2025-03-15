@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,27 +33,22 @@ const SecureInfrastructurePanel: React.FC = () => {
   const [immutableRootfs, setImmutableRootfs] = useState(true);
   const [enableRotation, setEnableRotation] = useState(true);
   
-  // Load hardware capabilities and demo containers on component mount
   useEffect(() => {
     const loadData = async () => {
-      // Check hardware security capabilities
       const capabilities = await checkHardwareSecurityCapabilities();
       setHwCapabilities(capabilities);
       
-      // Create demo containers
       try {
         const container1 = await createSecureContainer("app-frontend", "hardened");
         const container2 = await createSecureContainer("app-backend", "tpm-protected");
         
         setContainers([container1, container2]);
         
-        // Create demo nodes
-        const node1 = await createSecureInfraNode("primary-node", "physical");
-        const node2 = await createSecureInfraNode("replica-node", "virtual");
+        const node1 = await createSecureInfraNode("primary-node", "kubernetes");
+        const node2 = await createSecureInfraNode("replica-node", "docker");
         
         setNodes([node1, node2]);
         
-        // Create demo service mesh
         const mesh = await createSecureServiceMesh("tetracrypt-mesh", [container1.id, container2.id]);
         
         setServiceMesh(mesh);
@@ -71,7 +65,6 @@ const SecureInfrastructurePanel: React.FC = () => {
     loadData();
   }, []);
   
-  // Create a new secure container
   const handleCreateContainer = async () => {
     setIsCreating(true);
     
@@ -80,7 +73,7 @@ const SecureInfrastructurePanel: React.FC = () => {
         immutableRootfs,
         rotationPolicy: {
           enabled: enableRotation,
-          interval: 60,
+          intervalDays: 60,
           triggerOnAnomaly: true
         }
       });
@@ -92,7 +85,6 @@ const SecureInfrastructurePanel: React.FC = () => {
         description: `Secure container ${containerName} created with ${securityProfile} profile`,
       });
       
-      // Reset form
       setContainerName("secure-app-" + Math.floor(Math.random() * 1000));
     } catch (error) {
       console.error("Error creating container:", error);
@@ -106,7 +98,6 @@ const SecureInfrastructurePanel: React.FC = () => {
     }
   };
   
-  // Verify container integrity
   const handleVerifyIntegrity = async (containerId: string) => {
     setIsVerifying(true);
     
@@ -137,21 +128,17 @@ const SecureInfrastructurePanel: React.FC = () => {
     }
   };
   
-  // Rotate a container
   const handleRotateContainer = async (containerId: string) => {
     try {
       const rotatedContainer = await rotateContainer(containerId);
       
-      // Update containers list with type-safe approach
       const updatedContainers = containers.filter(c => c.id !== containerId);
       toast({
         title: "Container Rotated",
         description: `Container successfully rotated`,
       });
       
-      // We need to update the state in a type-safe way
       setContainers(updatedContainers);
-      
     } catch (error) {
       console.error("Error rotating container:", error);
       toast({
@@ -162,7 +149,6 @@ const SecureInfrastructurePanel: React.FC = () => {
     }
   };
   
-  // Get security profile badge color
   const getProfileColor = (profile: string) => {
     switch (profile) {
       case 'standard': return "bg-blue-500/10 text-blue-600";
@@ -202,7 +188,6 @@ const SecureInfrastructurePanel: React.FC = () => {
         </TabsList>
 
         <CardContent className="pt-6">
-          {/* Container content */}
           <TabsContent value="containers" className="space-y-6">
             <div className="text-center">
               <p>Containers tab content - fully implemented with proper types</p>
@@ -212,14 +197,12 @@ const SecureInfrastructurePanel: React.FC = () => {
             </div>
           </TabsContent>
 
-          {/* Service Mesh content */}
           <TabsContent value="mesh" className="space-y-6">
             <div className="text-center">
               <p>Service Mesh tab content - fully implemented with proper types</p>
             </div>
           </TabsContent>
 
-          {/* Nodes content */}
           <TabsContent value="nodes" className="space-y-6">
             <div className="text-center">
               <p>Infrastructure Nodes tab content - fully implemented with proper types</p>
