@@ -1,3 +1,4 @@
+
 /**
  * TetraCryptPQC Storage Types
  */
@@ -335,4 +336,188 @@ export interface SecurityOptions {
   encryptionType?: string;
   mutualAuthentication?: boolean;
   certificateRotation?: boolean;
+}
+
+// NEW: Secure Service Mesh interface
+export interface SecureServiceMesh {
+  id: string;
+  name: string;
+  services: string[];
+  encryptionType: string;
+  mutualAuthentication: boolean;
+  certificateRotation: boolean;
+  trafficAnalysis: boolean;
+  anomalyDetection: boolean;
+  mtls: boolean;
+  zkProofVerification: boolean;
+  serviceDiscovery: boolean;
+  created: string;
+  lastUpdated: string;
+}
+
+// NEW: SecureInfraNode with hardware capabilities
+export interface SecureInfraNode {
+  id: string;
+  name: string;
+  type: 'physical' | 'virtual' | 'container' | 'serverless';
+  hardwareCapabilities: {
+    tpm: boolean;
+    sgx: boolean;
+    sev: boolean;
+    nvdimm: boolean;
+    secureBoot: boolean;
+  };
+  networkSecurity: {
+    encryptionInTransit: boolean;
+    firewallEnabled: boolean;
+    intrusionDetection: boolean;
+    ddosProtection: boolean;
+  };
+  complianceStatus: {
+    fisma: boolean;
+    fedramp: boolean;
+    hipaa: boolean;
+    pci: boolean;
+    gdpr: boolean;
+  };
+  confidentialComputing: boolean;
+  attestationSupport: boolean;
+  patchStatus: 'up-to-date' | 'pending' | 'outdated';
+  lastScan: string;
+  threatLevel: 'minimal' | 'low' | 'medium' | 'high' | 'critical';
+}
+
+// NEW: AI-Secured Cloud Instance
+export interface AISecuredCloudInstance {
+  id: string;
+  name: string;
+  type: 'podman' | 'kubernetes' | 'openshift';
+  quantumResistant: boolean;
+  status: 'provisioning' | 'running' | 'scaling' | 'maintenance' | 'terminated';
+  securityLevel: 'standard' | 'enhanced' | 'maximum';
+  complianceStatus: {
+    nist: boolean;
+    fips: boolean;
+    iso27001: boolean;
+    gdpr: boolean;
+    hipaa: boolean;
+  };
+  aiCapabilities: {
+    intrusionDetection: boolean;
+    anomalyDetection: boolean;
+    threatPrediction: boolean;
+    selfHealing: boolean;
+    homomorphicEncryption: boolean;
+  };
+  zkAuthentication: boolean;
+  starkNetVerified: boolean;
+  ipfsStorage: {
+    enabled: boolean;
+    encryptionType: 'standard' | 'homomorphic' | 'quantum';
+    capacityGB: number;
+    replicationFactor: number;
+  };
+  containers: string[]; // IDs of SecureContainer instances
+  deployedAt: string;
+  lastSecurityScan: string;
+  threatScore: number; // 0-100, lower is better
+  autoScaling: {
+    enabled: boolean;
+    minInstances: number;
+    maxInstances: number;
+    currentInstances: number;
+  };
+}
+
+// NEW: AI-Security Automation Policy
+export interface AISecurityPolicy {
+  id: string;
+  name: string;
+  description: string;
+  policyType: 'detection' | 'prevention' | 'remediation' | 'compliance';
+  status: 'active' | 'inactive' | 'testing';
+  triggers: Array<{
+    eventType: string;
+    condition: string;
+    threshold: number;
+  }>;
+  actions: Array<{
+    type: 'alert' | 'block' | 'isolate' | 'remediate' | 'report';
+    target: string;
+    parameters: Record<string, any>;
+    escalationLevel: 'low' | 'medium' | 'high' | 'critical';
+  }>;
+  aiEnhanced: boolean;
+  selfLearning: boolean;
+  complianceFrameworks: string[];
+  created: string;
+  updatedBy: string;
+  executionStats: {
+    timesExecuted: number;
+    lastExecuted?: string;
+    averageResponseTime: number;
+    successRate: number;
+  };
+}
+
+// NEW: Homomorphic Encryption Context
+export interface HomomorphicEncryptionContext {
+  id: string;
+  scheme: 'CKKS' | 'BFV' | 'BGV' | 'TFHE';
+  keySize: number;
+  securityLevel: number; // in bits
+  multiplicativeDepth: number;
+  supportedOperations: ('addition' | 'multiplication' | 'comparison')[];
+  performanceProfile: 'balanced' | 'speed' | 'security';
+  createdAt: string;
+  status: 'active' | 'regenerating' | 'compromised';
+  publicParameters: string;
+  aiOptimized: boolean;
+}
+
+// NEW: IPFS Secure Storage Configuration
+export interface IPFSSecureStorage {
+  id: string;
+  gatewayUrl: string;
+  encryptionType: 'AES-256' | 'ChaCha20-Poly1305' | 'ML-KEM-1024';
+  redundancy: number;
+  pinningService: string;
+  aiManagedKeys: boolean;
+  keyRotationInterval: number; // in days
+  totalStorageGB: number;
+  usedStorageGB: number;
+  files: Array<{
+    cid: string;
+    name: string;
+    size: number;
+    encrypted: boolean;
+    lastAccessed: string;
+    permissions: string[];
+    verificationHash: string;
+  }>;
+  accessControls: {
+    allowedUsers: string[];
+    allowedGroups: string[];
+    publicAccessEnabled: boolean;
+  };
+}
+
+// NEW: Security Health Metrics
+export interface SecurityHealthMetrics {
+  overallScore: number; // 0-100
+  threatDetectionLatency: number; // in milliseconds
+  meanTimeToRemediate: number; // in minutes
+  falsePositiveRate: number; // percentage
+  incidentsByCategory: Record<string, number>;
+  patchComplianceRate: number; // percentage
+  encryptionCoverage: number; // percentage
+  aiAlertAccuracy: number; // percentage
+  lastUpdated: string;
+  complianceScores: Record<string, number>;
+  vulnerabilitiesByRisk: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
 }

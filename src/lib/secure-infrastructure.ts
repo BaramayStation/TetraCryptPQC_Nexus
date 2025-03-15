@@ -6,9 +6,9 @@
  * with quantum-resistant security measures for enterprise environments.
  */
 
-import { SecureNodeConfig, SecurityOptions, SecureNode, SecureContainer, SecureServiceMesh, SecureContainerConfig, SecureInfraNode } from './storage-types';
+import { SecureNodeConfig, SecurityOptions, SecureNode, SecureContainer, SecureContainerConfig, SecureInfraNode, SecureServiceMesh } from './storage-types';
 
-// For security event logging - create our own implementation since the import is missing
+// For security event logging - create our own implementation
 interface SecurityEvent {
   severity: "info" | "warning" | "error" | "critical";
   message: string;
@@ -16,7 +16,7 @@ interface SecurityEvent {
   data?: Record<string, any>;
 }
 
-// This replaces the missing logSecurityEvent function from enterprise-security
+// Security event logging function
 function logSecurityEvent(event: SecurityEvent): void {
   console.log(`[SECURITY EVENT] ${event.severity.toUpperCase()}: ${event.message}`, event.data || {});
 }
@@ -272,7 +272,7 @@ export const createSecureInfraNode = async (
 /**
  * Verifies the integrity of a container
  * 
- * @param {string} containerId - ID of the container to verify
+ * @param {string|SecureContainerConfig} containerId - ID or container to verify
  * @returns {Promise<{verified: boolean, issues: string[]}>} - Verification result
  */
 export const verifyContainerIntegrity = async (
