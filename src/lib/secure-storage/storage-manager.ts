@@ -1,271 +1,402 @@
 
 /**
- * TetraCryptPQC Storage Manager
+ * TetraCryptPQC Storage Management
  * 
- * Manages multiple storage providers with failover capabilities
+ * Implements storage management with failover capabilities
  */
 
-import { StorageProvider } from './storage-types';
-import { localStorageProvider, indexedDBProvider, sessionStorageProvider } from './storage-providers';
+import { StorageProvider, StorageOperation } from './storage-types';
+import { 
+  localStorageProvider, 
+  indexedDBProvider, 
+  sessionStorageProvider 
+} from './storage-providers';
 import { logSecurityEvent } from './security-utils';
 
-// Storage provider manager with failover capabilities
-export class FailsafeStorage {
-  private providers: StorageProvider[] = [
-    localStorageProvider,
-    indexedDBProvider,
-    sessionStorageProvider
-  ];
-  private availableProviders: StorageProvider[] = [];
+/**
+ * Memory-based storage manager
+ */
+export class MemoryStorageManager {
+  private data: Map<string, string> = new Map();
   
-  constructor() {
-    this.initialize();
+  /**
+   * Write data to memory
+   */
+  async write(key: string, value: string): Promise<boolean> {
+    try {
+      this.data.set(key, value);
+      return true;
+    } catch (error) {
+      console.error("Memory storage write error:", error);
+      return false;
+    }
   }
   
-  private async initialize() {
-    // Check which providers are available
-    for (const provider of this.providers) {
-      const available = await provider.isAvailable();
-      if (available) {
-        this.availableProviders.push(provider);
-        console.log(`Storage provider available: ${provider.name}`);
-      }
+  /**
+   * Read data from memory
+   */
+  async read(key: string): Promise<string | null> {
+    try {
+      return this.data.get(key) || null;
+    } catch (error) {
+      console.error("Memory storage read error:", error);
+      return null;
     }
+  }
+  
+  /**
+   * Delete data from memory
+   */
+  async delete(key: string): Promise<boolean> {
+    try {
+      return this.data.delete(key);
+    } catch (error) {
+      console.error("Memory storage delete error:", error);
+      return false;
+    }
+  }
+  
+  /**
+   * List all keys in memory
+   */
+  async list(): Promise<string[]> {
+    try {
+      return Array.from(this.data.keys());
+    } catch (error) {
+      console.error("Memory storage list error:", error);
+      return [];
+    }
+  }
+}
+
+/**
+ * Redundant storage with multiple providers
+ */
+export class RedundantStorage {
+  private providers: StorageProvider[];
+  
+  /**
+   * Create a new redundant storage
+   */
+  constructor(providers: StorageProvider[]) {
+    this.providers = providers;
+  }
+  
+  /**
+   * Write data to all available providers
+   */
+  async write(key: string, value: string): Promise<boolean> {
+    const timestamp = new Date().toISOString();
+    const availableProviders = await this.getAvailableProviders();
     
-    if (this.availableProviders.length === 0) {
-      console.error("No storage providers available");
+    if (availableProviders.length === 0) {
+      console.error("No storage providers available for write operation");
+      
       logSecurityEvent({
         eventType: 'storage',
-        operation: 'initialize',
+        operation: 'write',
         status: 'failure',
-        timestamp: new Date().toISOString(),
-        metadata: { reason: 'No storage providers available' }
+        timestamp,
+        metadata: { key, reason: 'no-providers-available' }
       });
-    }
-  }
-  
-  public async write(key: string, data: string): Promise<boolean> {
-    for (const provider of this.availableProviders) {
-      try {
-        const success = await provider.write(key, data);
-        if (success) return true;
-      } catch (error) {
-        console.error(`Storage provider ${provider.name} write failed:`, error);
-      }
+      
+      return false;
     }
     
-    logSecurityEvent({
-      eventType: 'storage',
-      operation: 'write',
-      status: 'failure',
-      timestamp: new Date().toISOString(),
-      metadata: { key }
-    });
+    // Write to all available providers
+    const results = await Promise.all(
+      availableProviders.map(provider => 
+        provider.write(key, value)
+          .catch(error => {
+            console.error(`Write to ${provider.name} failed:`, error);
+            return false;
+          })
+      )
+    );
     
-    return false;
-  }
-  
-  public async read(key: string): Promise<string | null> {
-    for (const provider of this.availableProviders) {
-      try {
-        const data = await provider.read(key);
-        if (data !== null) return data;
-      } catch (error) {
-        console.error(`Storage provider ${provider.name} read failed:`, error);
-      }
-    }
+    // Ensure at least one provider succeeded
+    const success = results.some(result => result === true);
     
-    return null;
-  }
-  
-  public async delete(key: string): Promise<boolean> {
-    let success = false;
-    for (const provider of this.availableProviders) {
-      try {
-        success = await provider.delete(key) || success;
-      } catch (error) {
-        console.error(`Storage provider ${provider.name} delete failed:`, error);
-      }
-    }
-    
-    if (!success) {
+    if (success) {
       logSecurityEvent({
         eventType: 'storage',
-        operation: 'delete',
+        operation: 'write',
+        status: 'success',
+        timestamp,
+        metadata: { 
+          key, 
+          providersTotal: availableProviders.length,
+          providersSuccess: results.filter(Boolean).length
+        }
+      });
+    } else {
+      logSecurityEvent({
+        eventType: 'storage',
+        operation: 'write',
         status: 'failure',
-        timestamp: new Date().toISOString(),
-        metadata: { key }
+        timestamp,
+        metadata: { 
+          key, 
+          providersTotal: availableProviders.length,
+          providersAttempted: results.length
+        }
       });
     }
     
     return success;
   }
   
-  public async list(): Promise<string[]> {
-    for (const provider of this.availableProviders) {
+  /**
+   * Read data from providers, using the first available one
+   */
+  async read(key: string): Promise<string | null> {
+    const timestamp = new Date().toISOString();
+    const availableProviders = await this.getAvailableProviders();
+    
+    if (availableProviders.length === 0) {
+      console.error("No storage providers available for read operation");
+      
+      logSecurityEvent({
+        eventType: 'storage',
+        operation: 'read',
+        status: 'failure',
+        timestamp,
+        metadata: { key, reason: 'no-providers-available' }
+      });
+      
+      return null;
+    }
+    
+    // Try each provider until we get a result
+    for (const provider of availableProviders) {
       try {
-        const keys = await provider.list();
-        if (keys.length > 0) return keys;
+        const result = await provider.read(key);
+        
+        if (result !== null) {
+          logSecurityEvent({
+            eventType: 'storage',
+            operation: 'read',
+            status: 'success',
+            timestamp,
+            metadata: { key, provider: provider.name }
+          });
+          
+          return result;
+        }
       } catch (error) {
-        console.error(`Storage provider ${provider.name} list failed:`, error);
+        console.error(`Read from ${provider.name} failed:`, error);
       }
     }
     
-    return [];
+    logSecurityEvent({
+      eventType: 'storage',
+      operation: 'read',
+      status: 'failure',
+      timestamp,
+      metadata: { key, reason: 'not-found-in-any-provider' }
+    });
+    
+    return null;
   }
-}
-
-// Initialize failsafe storage
-export const failsafeStorage = new FailsafeStorage();
-
-// Utility class for in-memory Map storage
-export class MemoryStorageManager {
-  private storage: Map<string, {
-    value: string,
-    timestamp: number
-  }> = new Map();
   
-  set(key: string, value: string): boolean {
-    try {
-      this.storage.set(key, {
-        value,
-        timestamp: Date.now()
+  /**
+   * Delete data from all available providers
+   */
+  async delete(key: string): Promise<boolean> {
+    const timestamp = new Date().toISOString();
+    const availableProviders = await this.getAvailableProviders();
+    
+    if (availableProviders.length === 0) {
+      console.error("No storage providers available for delete operation");
+      
+      logSecurityEvent({
+        eventType: 'storage',
+        operation: 'delete',
+        status: 'failure',
+        timestamp,
+        metadata: { key, reason: 'no-providers-available' }
       });
-      return true;
-    } catch (error) {
-      console.error("Memory storage set failed:", error);
+      
       return false;
     }
-  }
-  
-  get(key: string): string | null {
-    try {
-      const result = this.storage.get(key);
-      return result ? result.value : null;
-    } catch (error) {
-      console.error("Memory storage get failed:", error);
-      return null;
+    
+    // Delete from all available providers
+    const results = await Promise.all(
+      availableProviders.map(provider => 
+        provider.delete(key)
+          .catch(error => {
+            console.error(`Delete from ${provider.name} failed:`, error);
+            return false;
+          })
+      )
+    );
+    
+    // Ensure at least one provider succeeded
+    const success = results.some(result => result === true);
+    
+    if (success) {
+      logSecurityEvent({
+        eventType: 'storage',
+        operation: 'delete',
+        status: 'success',
+        timestamp,
+        metadata: { 
+          key, 
+          providersTotal: availableProviders.length,
+          providersSuccess: results.filter(Boolean).length
+        }
+      });
+    } else {
+      logSecurityEvent({
+        eventType: 'storage',
+        operation: 'delete',
+        status: 'failure',
+        timestamp,
+        metadata: { 
+          key, 
+          providersTotal: availableProviders.length,
+          providersAttempted: results.length
+        }
+      });
     }
+    
+    return success;
   }
   
-  delete(key: string): boolean {
-    try {
-      return this.storage.delete(key);
-    } catch (error) {
-      console.error("Memory storage delete failed:", error);
-      return false;
+  /**
+   * List keys from all available providers
+   */
+  async list(): Promise<string[]> {
+    const availableProviders = await this.getAvailableProviders();
+    
+    if (availableProviders.length === 0) {
+      console.error("No storage providers available for list operation");
+      return [];
     }
+    
+    // Get lists from all available providers
+    const lists = await Promise.all(
+      availableProviders.map(provider => 
+        provider.list()
+          .catch(error => {
+            console.error(`List from ${provider.name} failed:`, error);
+            return [] as string[];
+          })
+      )
+    );
+    
+    // Combine all lists and remove duplicates
+    const allKeys = lists.flat();
+    const uniqueKeys = [...new Set(allKeys)];
+    
+    return uniqueKeys;
   }
   
-  has(key: string): boolean {
-    return this.storage.has(key);
-  }
-  
-  clear(): boolean {
-    try {
-      this.storage.clear();
-      return true;
-    } catch (error) {
-      console.error("Memory storage clear failed:", error);
-      return false;
-    }
-  }
-  
-  keys(): string[] {
-    return Array.from(this.storage.keys());
+  /**
+   * Get all available providers
+   */
+  private async getAvailableProviders(): Promise<StorageProvider[]> {
+    const availabilityChecks = await Promise.all(
+      this.providers.map(async provider => {
+        try {
+          const available = await provider.isAvailable();
+          return { provider, available };
+        } catch (error) {
+          console.error(`Error checking availability of ${provider.name}:`, error);
+          return { provider, available: false };
+        }
+      })
+    );
+    
+    return availabilityChecks
+      .filter(check => check.available)
+      .map(check => check.provider);
   }
 }
 
-// Create a failsafe storage system with multiple backends
-export class RedundantStorage {
-  private memoryStorage = new MemoryStorageManager();
+/**
+ * Create a default redundant storage instance
+ */
+export const redundantStorage = new RedundantStorage([
+  localStorageProvider,
+  indexedDBProvider,
+  sessionStorageProvider
+]);
+
+/**
+ * Failsafe storage with memory backup
+ */
+export const failsafeStorage = {
+  // Memory backup for critical operations
+  memoryBackup: new MemoryStorageManager(),
   
-  // Try to store data in multiple places for redundancy
-  async set(key: string, value: string): Promise<boolean> {
+  // Write data with failover to memory
+  async write(key: string, value: string): Promise<boolean> {
     try {
-      // 1. Primary storage - failsafeStorage
-      const primarySuccess = await failsafeStorage.write(key, value);
+      const redundantResult = await redundantStorage.write(key, value);
       
-      // 2. Secondary storage - Memory Map
-      const secondarySuccess = this.memoryStorage.set(key, value);
+      // Backup to memory regardless of redundant result
+      await this.memoryBackup.write(key, value);
       
-      return primarySuccess || secondarySuccess;
+      return redundantResult;
     } catch (error) {
-      console.error("Redundant storage set failed:", error);
+      console.error("Failsafe storage write error:", error);
       
-      // If primary storage fails, at least store in memory
-      return this.memoryStorage.set(key, value);
+      // Last resort: try to write to memory
+      return this.memoryBackup.write(key, value);
     }
-  }
+  },
   
-  // Try to retrieve data from multiple storage locations
-  async get(key: string): Promise<string | null> {
-    // Try to retrieve in order of reliability and performance
+  // Read data with failover to memory
+  async read(key: string): Promise<string | null> {
     try {
-      // 1. First try failsafeStorage (most persistent)
-      const primaryValue = await failsafeStorage.read(key);
-      if (primaryValue) return primaryValue;
+      // Try redundant storage first
+      const redundantResult = await redundantStorage.read(key);
       
-      // 2. Then try memory map (fastest)
-      const memoryValue = this.memoryStorage.get(key);
-      if (memoryValue) return memoryValue;
+      if (redundantResult !== null) {
+        return redundantResult;
+      }
       
-      return null;
+      // Fall back to memory if not found
+      return this.memoryBackup.read(key);
     } catch (error) {
-      console.error("Redundant storage get failed:", error);
+      console.error("Failsafe storage read error:", error);
       
-      // If failsafeStorage access fails, try the in-memory storage
-      return this.memoryStorage.get(key);
+      // Last resort: try to read from memory
+      return this.memoryBackup.read(key);
     }
-  }
+  },
   
-  // Delete data from all storage locations
+  // Delete data from both redundant and memory
   async delete(key: string): Promise<boolean> {
     try {
-      // 1. Remove from failsafeStorage
-      const primarySuccess = await failsafeStorage.delete(key);
+      const redundantResult = await redundantStorage.delete(key);
       
-      // 2. Remove from memory map
-      const secondarySuccess = this.memoryStorage.delete(key);
+      // Also delete from memory
+      await this.memoryBackup.delete(key);
       
-      return primarySuccess || secondarySuccess;
+      return redundantResult;
     } catch (error) {
-      console.error("Redundant storage delete failed:", error);
+      console.error("Failsafe storage delete error:", error);
       
-      // At minimum, try to remove from memory
-      return this.memoryStorage.delete(key);
+      // Last resort: try to delete from memory
+      return this.memoryBackup.delete(key);
     }
-  }
+  },
   
-  // Check if data exists in any storage location
-  async exists(key: string): Promise<boolean> {
+  // List keys from both redundant and memory
+  async list(): Promise<string[]> {
     try {
-      // Check memory first (fastest)
-      if (this.memoryStorage.has(key)) return true;
+      const redundantKeys = await redundantStorage.list();
+      const memoryKeys = await this.memoryBackup.list();
       
-      // Then check failsafeStorage
-      const value = await failsafeStorage.read(key);
-      return value !== null;
+      // Combine and deduplicate
+      return [...new Set([...redundantKeys, ...memoryKeys])];
     } catch (error) {
-      console.error("Redundant storage exists check failed:", error);
-      return false;
+      console.error("Failsafe storage list error:", error);
+      
+      // Last resort: try to list from memory
+      return this.memoryBackup.list();
     }
   }
-  
-  // List all keys
-  async keys(): Promise<string[]> {
-    try {
-      const primaryKeys = await failsafeStorage.list();
-      const memoryKeys = this.memoryStorage.keys();
-      
-      // Combine and deduplicate keys
-      return [...new Set([...primaryKeys, ...memoryKeys])];
-    } catch (error) {
-      console.error("Redundant storage keys listing failed:", error);
-      return this.memoryStorage.keys();
-    }
-  }
-}
-
-// Export the redundant storage system
-export const redundantStorage = new RedundantStorage();
+};

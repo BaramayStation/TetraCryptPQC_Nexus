@@ -1,247 +1,136 @@
 
 /**
- * TetraCryptPQC Browser Storage
+ * TetraCryptPQC Browser Storage Utilities
  * 
- * Implements secure browser storage with encryption
+ * Safe abstractions for browser storage APIs
  */
 
 import { logSecurityEvent } from './security-utils';
-import { hashWithSHA3 } from '../crypto';
 
 /**
- * Get data from secure localStorage with optional encryption
+ * Get localStorage with error handling
  */
-export function getLocalStorage<T>(key: string, decrypt: boolean = false): T | null {
+export function getLocalStorage(): Storage {
   try {
-    const data = localStorage.getItem(key);
-    if (!data) return null;
-    
-    if (decrypt) {
-      try {
-        // Get the encryption key
-        const encryptionKey = localStorage.getItem('enc_key') || 'default_encryption_key';
-        
-        // Decrypt the data using Web Crypto API
-        const decryptData = async () => {
-          // Convert from Base64
-          const dataBytes = Uint8Array.from(atob(data), c => c.charCodeAt(0));
-          
-          // Extract IV (first 12 bytes)
-          const iv = dataBytes.slice(0, 12);
-          const ciphertext = dataBytes.slice(12);
-          
-          // Import the key
-          const encoder = new TextEncoder();
-          const keyMaterial = await crypto.subtle.importKey(
-            "raw",
-            encoder.encode(encryptionKey),
-            { name: "PBKDF2" },
-            false,
-            ["deriveBits", "deriveKey"]
-          );
-          
-          // Derive the key
-          const key = await crypto.subtle.deriveKey(
-            {
-              name: "PBKDF2",
-              salt: iv,
-              iterations: 100000,
-              hash: "SHA-256"
-            },
-            keyMaterial,
-            { name: "AES-GCM", length: 256 },
-            false,
-            ["decrypt"]
-          );
-          
-          // Decrypt
-          const decrypted = await crypto.subtle.decrypt(
-            {
-              name: "AES-GCM",
-              iv
-            },
-            key,
-            ciphertext
-          );
-          
-          // Convert to string
-          return new TextDecoder().decode(decrypted);
-        };
-        
-        // Create a sync-like wrapper (not ideal but necessary for API compatibility)
-        let decrypted: string | null = null;
-        let error: Error | null = null;
-        
-        // This is a workaround for async/sync impedance mismatch
-        decryptData().then(
-          result => { decrypted = result; },
-          err => { error = err instanceof Error ? err : new Error(String(err)); }
-        );
-        
-        // Wait for the promise to resolve
-        const sleepUntil = Date.now() + 1000;
-        while (!decrypted && !error && Date.now() < sleepUntil) {
-          // Busy wait (only for compatibility layer)
-        }
-        
-        if (error) throw error;
-        if (!decrypted) throw new Error("Decryption timeout");
-        
-        return JSON.parse(decrypted) as T;
-      } catch (error) {
-        console.error('Error decrypting data:', error);
-        
-        logSecurityEvent({
-          eventType: 'storage',
-          operation: 'decrypt',
-          status: 'failure',
-          timestamp: new Date().toISOString(),
-          metadata: { 
-            key,
-            error: error instanceof Error ? error.message : String(error)
-          }
-        });
-        
-        return null;
-      }
-    }
-    
-    return JSON.parse(data) as T;
+    // Test if localStorage is accessible
+    localStorage.setItem('__test_key__', '1');
+    localStorage.removeItem('__test_key__');
+    return localStorage;
   } catch (error) {
-    console.error('Error getting data from secure storage:', error);
+    // In case localStorage is disabled or in incognito mode
+    console.warn("localStorage not available, using in-memory fallback");
     
     logSecurityEvent({
       eventType: 'storage',
-      operation: 'get',
+      operation: 'localStorage-access',
       status: 'failure',
       timestamp: new Date().toISOString(),
       metadata: { 
-        key,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
+        fallback: 'in-memory'
       }
     });
     
+    // Return a memory-based storage mock
+    return createInMemoryStorage();
+  }
+}
+
+/**
+ * Get sessionStorage with error handling
+ */
+export function getSessionStorage(): Storage {
+  try {
+    // Test if sessionStorage is accessible
+    sessionStorage.setItem('__test_key__', '1');
+    sessionStorage.removeItem('__test_key__');
+    return sessionStorage;
+  } catch (error) {
+    // In case sessionStorage is disabled or in incognito mode
+    console.warn("sessionStorage not available, using in-memory fallback");
+    
+    logSecurityEvent({
+      eventType: 'storage',
+      operation: 'sessionStorage-access',
+      status: 'failure',
+      timestamp: new Date().toISOString(),
+      metadata: { 
+        error: error instanceof Error ? error.message : String(error),
+        fallback: 'in-memory'
+      }
+    });
+    
+    // Return a memory-based storage mock
+    return createInMemoryStorage();
+  }
+}
+
+/**
+ * Set an item in localStorage with error handling
+ */
+export function setLocalStorage(key: string, value: string): boolean {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    console.error("Error setting localStorage item:", error);
+    return false;
+  }
+}
+
+/**
+ * Get an item from localStorage with error handling
+ */
+export function getLocalStorageItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.error("Error getting localStorage item:", error);
     return null;
   }
 }
 
 /**
- * Encrypt data using WebCrypto API
+ * Remove an item from localStorage with error handling
  */
-async function encryptWithWebCrypto(data: string, key: string): Promise<string> {
-  // Generate IV
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  
-  // Import the key
-  const encoder = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(key),
-    { name: "PBKDF2" },
-    false,
-    ["deriveBits", "deriveKey"]
-  );
-  
-  // Derive the key
-  const derivedKey = await crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: iv,
-      iterations: 100000,
-      hash: "SHA-256"
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt"]
-  );
-  
-  // Encrypt
-  const dataBytes = encoder.encode(data);
-  const encrypted = await crypto.subtle.encrypt(
-    {
-      name: "AES-GCM",
-      iv
-    },
-    derivedKey,
-    dataBytes
-  );
-  
-  // Combine IV and ciphertext
-  const result = new Uint8Array(iv.length + encrypted.byteLength);
-  result.set(iv, 0);
-  result.set(new Uint8Array(encrypted), iv.length);
-  
-  // Convert to Base64
-  return btoa(String.fromCharCode(...result));
+export function removeLocalStorageItem(key: string): boolean {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    console.error("Error removing localStorage item:", error);
+    return false;
+  }
 }
 
 /**
- * Store data in secure localStorage with optional encryption
+ * Create an in-memory storage fallback
  */
-export function setLocalStorage<T>(key: string, data: T, encrypt: boolean = false): boolean {
-  try {
-    if (encrypt) {
-      // Get the encryption key
-      const encryptionKey = localStorage.getItem('enc_key') || 'default_encryption_key';
-      
-      // Use encryption with WebCrypto API
-      const encryptData = async () => {
-        const jsonData = JSON.stringify(data);
-        return await encryptWithWebCrypto(jsonData, encryptionKey);
-      };
-      
-      // Create a sync-like wrapper (not ideal but necessary for API compatibility)
-      let encrypted: string | null = null;
-      let error: Error | null = null;
-      
-      // This is a workaround for async/sync impedance mismatch
-      encryptData().then(
-        result => { encrypted = result; },
-        err => { error = err instanceof Error ? err : new Error(String(err)); }
-      );
-      
-      // Wait for the promise to resolve
-      const sleepUntil = Date.now() + 1000;
-      while (!encrypted && !error && Date.now() < sleepUntil) {
-        // Busy wait (only for compatibility layer)
-      }
-      
-      if (error) throw error;
-      if (!encrypted) throw new Error("Encryption timeout");
-      
-      localStorage.setItem(key, encrypted);
-    } else {
-      localStorage.setItem(key, JSON.stringify(data));
+function createInMemoryStorage(): Storage {
+  const memoryStore = new Map<string, string>();
+  
+  const storage: Storage = {
+    length: 0,
+    clear: function(): void {
+      memoryStore.clear();
+      this.length = 0;
+    },
+    getItem: function(key: string): string | null {
+      return memoryStore.has(key) ? memoryStore.get(key)! : null;
+    },
+    key: function(index: number): string | null {
+      const keys = Array.from(memoryStore.keys());
+      return index >= 0 && index < keys.length ? keys[index] : null;
+    },
+    removeItem: function(key: string): void {
+      memoryStore.delete(key);
+      this.length = memoryStore.size;
+    },
+    setItem: function(key: string, value: string): void {
+      memoryStore.set(key, value);
+      this.length = memoryStore.size;
     }
-    
-    logSecurityEvent({
-      eventType: 'storage',
-      operation: 'set',
-      status: 'success',
-      timestamp: new Date().toISOString(),
-      metadata: { 
-        key,
-        encrypted: encrypt
-      }
-    });
-    
-    return true;
-  } catch (error) {
-    console.error('Error setting data in secure storage:', error);
-    
-    logSecurityEvent({
-      eventType: 'storage',
-      operation: 'set',
-      status: 'failure',
-      timestamp: new Date().toISOString(),
-      metadata: { 
-        key,
-        encrypted: encrypt,
-        error: error instanceof Error ? error.message : String(error)
-      }
-    });
-    
-    return false;
-  }
+  };
+  
+  return storage;
 }
