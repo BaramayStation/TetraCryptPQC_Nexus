@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 import Index from './pages/Index';
 import Dashboard from './pages/Dashboard';
@@ -14,6 +14,7 @@ import Documentation from './pages/Documentation';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { logWasmSupport } from '@/lib/wasm-detection';
 import { toast } from '@/hooks/use-toast';
+import { getUserProfile } from '@/lib/storage';
 
 function App() {
   useEffect(() => {
@@ -35,6 +36,11 @@ function App() {
     });
   }, []);
 
+  // Function to check if a user profile exists
+  const hasUserProfile = () => {
+    return !!getUserProfile();
+  };
+
   return (
     <ThemeProvider defaultTheme="system" storageKey="tetracrypt-theme">
       <Router>
@@ -42,6 +48,7 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chat" element={<Chat />} />
+          <Route path="/messages" element={<Navigate to="/chat" replace />} />
           <Route path="/secure-communication" element={<SecureCommunication />} />
           <Route path="/key-management" element={<KeyManagement />} />
           <Route path="/enterprise" element={<Enterprise />} />
