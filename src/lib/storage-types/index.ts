@@ -4,55 +4,43 @@
  */
 
 // Re-export all types from specific modules
-export * from "./contacts";
-export * from "./security-types";
-export * from "./message-types";
-export * from "./user-types";
-export * from "./secure-channel-types";
-export * from "./pqc-types";
-export * from "./sync-types";
-export * from "./decentralized-storage";
-export * from "./threat-detection";
-export * from "./identity-verification";
-export * from "./hardware-types";
+export type { AIModel, AIThreatDetection, AISecurityPolicy, SecurityRule, AISecuredCloudInstance, AISyncStatus } from './ai-types';
 
-// Type re-exports for backward compatibility
-export type { Contact } from "./contacts";
-export type { Message, Conversation } from "./message-types";
-export type { UserProfile, KeyPairs, DIDDocument, HSMInfo, QKDInfo } from "./user-types";
 export type { 
+  SecurityThreshold, 
+  HealthStatus, 
   SecurityHealthMetrics, 
-  AICloudConnectionStatus, 
+  AISecurityPolicy as SecurityPolicy, 
+  SecurityRule as SecurityPolicyRule,
+  AICloudConnectionStatus,
   PodmanContainerStatus,
-  SecurityThreshold,
-  HealthStatus,
-  SecurityRule,
+  ContainerSecurityProfile,
   InfrastructureNodeType,
-  Threat,
-  AIThreatDetection,
-  AISecurityPolicy,
-  WebRTCPeerStatus
-} from "./security-types";
-export type { SecureContainerConfig, ContainerSecurityProfile } from "./security-types";
-export type { SecureServiceMesh, SecureInfraNode } from "./security-types";
-export type { SecureChannel, SecureChannelMetrics } from "./secure-channel-types";
-export type { StarkNetID, PQSCIFEnvironment, SecureCommand } from "./pqc-types";
-export type { AISyncStatus } from "./sync-types";
+  AIThreatDetection as ThreatDetection,
+  WebRTCPeerStatus,
+  SecurityEvent,
+  SecurityEventType
+} from './security-types';
+
 export type {
+  SecureContainerConfig,
+  SecureInfraNode,
+  SecureServiceMesh,
+  HSMDevice,
+  ContainerSecurityProfile as SecurityProfile,
   DecentralizedStorageNode,
-  DeploymentEnvironment,
   AirGappedBackup,
-  EMPHardenedSystem,
   SatelliteConnection,
-  MilitaryMeshNetwork,
+  EMPHardenedSystem,
+  DeploymentEnvironment,
+  BackupJob,
   UndergroundCommunicationNode,
+  MilitaryMeshNetwork,
   QuantumSecureLink
-} from "./decentralized-storage";
-export type {
-  ThreatDetectionResult,
-  SecurityAlert
-} from "./threat-detection";
-export type {
-  VerificationRequest,
-  IdentityCredential
-} from "./identity-verification";
+} from './hardware-types';
+
+// User profile and identity types
+export type { UserProfile, UserSettings, KeyPairs, BiometricData } from './user-types';
+
+// Message types
+export type { Message, SecureMessageOptions, Conversation, MessagePreview } from './message-types';

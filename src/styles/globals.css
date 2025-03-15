@@ -7,119 +7,60 @@
 
 @layer base {
   :root {
-    --background: 220 14% 8%;
-    --foreground: 220 14% 92%;
-    --card: 220 14% 9%;
-    --card-foreground: 220 14% 88%;
-    --popover: 220 14% 10%; 
-    --popover-foreground: 220 14% 90%;
-    --primary: 217 91% 60%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 220 14% 18%;
-    --secondary-foreground: 220 14% 85%;
-    --muted: 220 14% 12%;
-    --muted-foreground: 220 14% 85%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
     --accent: 217 91% 60%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
-
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 98%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 98%;
-    --info: 198 93% 60%;
-    --info-foreground: 0 0% 98%;
-    
-    /* Secure operation status colors */
-    --secure: 142 71% 45%;
-    --insecure: 0 84.2% 60.2%;
-    --quantum-safe: 217 91% 60%;
-    --processing: 38 92% 50%;
-  }
-
-  * {
-    @apply border-border selection:bg-primary/20 selection:text-primary;
-  }
-  
-  body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
-  }
-
-  .glass {
-    @apply bg-background/80 backdrop-blur-sm border border-white/10 shadow-lg;
-  }
-  
-  .terminal-text {
-    @apply font-mono text-primary;
-  }
-
-  .scanner::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background: rgba(13, 109, 253, 0.5);
-    filter: blur(1px);
-    top: 0;
-    left: 0;
-    animation: scan 3s linear infinite;
-  }
-  
-  .secure-border {
-    @apply border border-secure/50 shadow-[0_0_15px_rgba(142,71,45,0.3)];
-  }
-  
-  .quantum-border {
-    @apply border border-quantum-safe/50 shadow-[0_0_15px_rgba(23,109,253,0.3)];
+    --ring: 240 4.9% 83.9%;
   }
 }
 
-/* SCP/Black Mesa inspired custom components */
-@layer components {
-  .secure-panel {
-    @apply bg-card border border-border rounded-md shadow-md relative overflow-hidden;
+@layer base {
+  * {
+    @apply border-border;
   }
-  
-  .secure-panel::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-transparent to-black/20 pointer-events-none;
+  body {
+    @apply bg-background text-foreground;
   }
-  
-  .secure-panel-header {
-    @apply bg-secondary px-4 py-2 font-mono text-sm border-b border-border flex items-center;
-  }
-  
-  .secure-badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
-  }
-  
-  .secure-badge-quantum {
-    @apply secure-badge bg-quantum-safe/10 text-quantum-safe border border-quantum-safe/30;
-  }
-  
-  .secure-badge-encrypted {
-    @apply secure-badge bg-secure/10 text-secure border border-secure/30;
-  }
-  
-  .secure-badge-warning {
-    @apply secure-badge bg-warning/10 text-warning border border-warning/30;
-  }
-  
-  .secure-badge-danger {
-    @apply secure-badge bg-destructive/10 text-destructive border border-destructive/30;
-  }
-  
-  .secure-terminal {
-    @apply font-mono text-sm bg-muted/80 text-primary-foreground rounded p-4;
-  }
-  
-  .secure-input {
-    @apply bg-muted border border-border text-foreground focus:border-primary focus:ring-1 focus:ring-primary font-mono;
-  }
+}
+
+.glass {
+  @apply bg-background/80 backdrop-blur-sm;
 }

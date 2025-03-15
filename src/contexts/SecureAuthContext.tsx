@@ -7,30 +7,9 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { bytesToHex } from '@/utils/crypto-utils';
+import { ZKPAuthenticator, zkpAuthenticator } from '../lib/secure/zkp-auth';
 import { generateSLHDSAKeypair } from '../lib/pqcrypto';
-
-// This is a mock implementation for development
-export const zkpAuthenticator = {
-  registerTrustedKey: async (userId: string, publicKey: Uint8Array | string) => {
-    console.log("Registering trusted key for user", userId);
-    const keyStr = typeof publicKey === 'string' ? publicKey : bytesToHex(publicKey);
-    console.log("Public key:", keyStr.substring(0, 20) + "...");
-    return true;
-  },
-  verifyAuth: async (userId: string, proof: string) => {
-    return true;
-  }
-};
-
-export type ZKPAuthenticator = typeof zkpAuthenticator;
-
-// Mock SecureCompartment for development
-export const SecureCompartment = {
-  create: (name: string) => ({ name }),
-  store: async (compartment: any, key: string, value: any) => true,
-  retrieve: async (compartment: any, key: string) => null
-};
+import { SecureCompartment } from '../lib/secure/compartment';
 
 interface AuthUser {
   id: string;
@@ -98,13 +77,13 @@ export function SecureAuthProvider({ children }: { children: ReactNode }) {
         // Generate a keypair for this user
         const keypair = await generateSLHDSAKeypair();
         
-        // Create user object with string public key
+        // Create user object
         const authenticatedUser: AuthUser = {
           id: `user-${Date.now()}`,
           name: credentials.username,
           role: "military-operator",
           clearance: "top-secret",
-          publicKey: bytesToHex(keypair.publicKey), // Convert to string
+          publicKey: keypair.publicKey,
           authenticated: true
         };
         

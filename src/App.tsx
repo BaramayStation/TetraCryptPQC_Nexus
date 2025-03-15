@@ -1,10 +1,13 @@
-
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
+
+// Layout imports
 import MainLayout from '@/layout/MainLayout';
+
+// Page imports
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
@@ -37,15 +40,17 @@ import Pricing from './pages/Pricing';
 import Support from './pages/Support';
 import AccountSettings from './pages/AccountSettings';
 import TetraCryptWallet from './pages/TetraCryptWallet';
-import LaunchReadiness from './pages/LaunchReadiness';
 
+// Create a client for React Query
 const queryClient = new QueryClient();
+
+// Lazy-loaded components
 const TetraCryptDemo = React.lazy(() => import('./pages/TetraCryptDemo'));
 
 function App() {
   return (
     <div className="App">
-      <ThemeProvider>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
         <QueryClientProvider client={queryClient}>
           <Toaster />
           <Routes>
@@ -77,14 +82,21 @@ function App() {
               } />
               <Route path="tetracrypt-wallet" element={<TetraCryptWallet />} />
               <Route path="tetracrypt-nexus" element={<TetraCryptNexus />} />
-              <Route path="launch-readiness" element={<LaunchReadiness />} />
+              
+              {/* Wiki Routes */}
               <Route path="wiki/*" element={<Wiki />} />
+              
+              {/* Other routes */}
               <Route path="about" element={<About />} />
               <Route path="contact" element={<Contact />} />
               <Route path="blog" element={<Blog />} />
+              <Route path="documentation" element={<Documentation />} />
               <Route path="pricing" element={<Pricing />} />
               <Route path="support" element={<Support />} />
+              <Route path="settings" element={<Settings />} />
               <Route path="account-settings" element={<AccountSettings />} />
+              
+              {/* 404 Page */}
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
