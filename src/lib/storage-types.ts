@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Storage Types
  * 
@@ -59,6 +58,14 @@ export interface UserProfile {
       publicKey: string;
       privateKey: string;
     };
+    pqkem?: {
+      publicKey: string;
+      privateKey: string;
+      created: string;
+      algorithm: string;
+      strength: string;
+      standard: string;
+    };
   };
   didDocument?: any;
   hsmInfo?: any;
@@ -67,6 +74,8 @@ export interface UserProfile {
   starkNetId?: string;
   lastActive?: string;
   created?: string;
+  securityLevel?: 'standard' | 'enhanced' | 'maximum' | 'quantum' | 'advanced';
+  updated?: string;
 }
 
 export interface Conversation {
@@ -84,11 +93,14 @@ export interface Threat {
   description: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   timestamp: string;
-  status: 'active' | 'mitigated' | 'investigating';
+  status: 'active' | 'mitigated' | 'investigating' | 'resolved';
   source?: string;
   details?: string;
   mitigation?: string[];
   type?: string;
+  target?: string;
+  mitigationSteps?: string[];
+  affectedComponents?: string[];
 }
 
 export interface SecurityHealthMetrics {
@@ -105,8 +117,15 @@ export interface SecurityHealthMetrics {
     severity: string;
     description: string;
     status: string;
+    affectedComponents?: string[];
+    remediationSteps?: string[];
   }>;
   recommendedActions?: string[];
+  cpuUsage?: number;
+  memoryUsage?: number;
+  storageUsage?: number;
+  networkUsage?: number;
+  complianceScores?: Record<string, number>;
 }
 
 export interface AISecuredCloudInstance {
@@ -116,8 +135,8 @@ export interface AISecuredCloudInstance {
   region?: string;
   createdAt?: string;
   securityLevel?: 'standard' | 'enhanced' | 'maximum';
-  threatStatus?: 'normal' | 'investigating' | 'compromised';
-  healthStatus?: 'healthy' | 'degraded' | 'critical';
+  threatStatus?: 'normal' | 'investigating' | 'compromised' | 'elevated';
+  healthStatus?: 'healthy' | 'degraded' | 'critical' | 'warning';
   lastUpdated?: string;
   metrics?: SecurityHealthMetrics;
   homomorphicEncryptionEnabled?: boolean;
@@ -133,6 +152,7 @@ export interface AISecurityPolicy {
   createdAt: string;
   updatedAt: string;
   autoRemediationEnabled?: boolean;
+  threatDetectionLevel?: 'basic' | 'advanced' | 'maximum';
 }
 
 // Infrastructure types
@@ -244,6 +264,13 @@ export interface PodmanContainerStatus {
   ports: number[];
   volumes: string[];
   rootless?: boolean;
+  id?: string;
+  healthStatus?: 'healthy' | 'unhealthy' | 'starting';
+  uptime?: number;
+  memoryUsageMB?: number;
+  cpuUsagePercent?: number;
+  restartCount?: number;
+  lastRestart?: string;
 }
 
 export interface AICloudConnectionStatus {
@@ -252,6 +279,7 @@ export interface AICloudConnectionStatus {
   endpoint: string;
   encrypted: boolean;
   failoverActivated?: boolean;
+  id?: string;
 }
 
 export interface WebRTCPeerStatus {
@@ -259,6 +287,10 @@ export interface WebRTCPeerStatus {
   lastConnected: string;
   encrypted: boolean;
   peerId?: string;
+  id?: string;
+  connectionStatus?: 'connected' | 'disconnected' | 'connecting' | 'failed';
+  lastMessageTimestamp?: string;
+  dataTransferred?: number;
 }
 
 export interface LocalAIBackupConfig {
@@ -267,6 +299,12 @@ export interface LocalAIBackupConfig {
   config: string;
   createdAt: string;
   lastBackup: string;
+  id?: string;
+  tpmProtection?: boolean;
+  starkNetVerification?: boolean;
+  lastRestore?: string;
+  syncStatus?: AISyncStatus;
+  backups?: any[];
 }
 
 export interface AISecurityEvent {
@@ -277,4 +315,35 @@ export interface AISecurityEvent {
   source: string;
   details: string;
   resolved: boolean;
+}
+
+export enum SecurityEventType {
+  Authentication = 'authentication',
+  KeyUsage = 'key-usage',
+  DataAccess = 'data-access',
+  SystemChange = 'system-change',
+  NetworkAccess = 'network-access',
+  CryptographicOperation = 'cryptographic-operation'
+}
+
+export interface SecureNodeConfig {
+  nodeId: string;
+  name: string;
+  type: string;
+  securityLevel: string;
+}
+
+export interface SecurityOptions {
+  encryption: boolean;
+  monitoring: boolean;
+  autoRemediation: boolean;
+}
+
+export interface SecureNode {
+  nodeId: string;
+  name: string;
+  status: string;
+  type: string;
+  lastVerified?: string;
+  id?: string;
 }

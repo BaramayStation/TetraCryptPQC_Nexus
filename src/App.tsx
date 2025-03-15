@@ -1,145 +1,91 @@
-
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { Toaster } from '@/components/ui/toaster';
-import HomePage from '@/pages/Home';
-import Dashboard from '@/pages/Dashboard';
-import Enterprise from '@/pages/Enterprise';
-import WikiLayout from '@/pages/wiki/WikiLayout';
-import WikiHome from '@/pages/wiki/WikiHome';
-import NotFound from '@/pages/NotFound';
-
-// Import category pages
-import CryptographyCategory from '@/pages/wiki/cryptography/CryptographyCategory';
-import SecurityCategory from '@/pages/wiki/security/SecurityCategory';
-import IdentityCategory from '@/pages/wiki/identity/IdentityCategory';
-import EnterpriseCategory from '@/pages/wiki/enterprise/EnterpriseCategory';
-import AICategory from '@/pages/wiki/ai/AICategory';
-import MilitaryCategory from '@/pages/wiki/military/MilitaryCategory';
-import DevCategory from '@/pages/wiki/development/DevCategory';
-
-// Import cryptography subpages
-import PostQuantumBasics from '@/pages/wiki/cryptography/PostQuantumBasics';
-import KyberAlgorithm from '@/pages/wiki/cryptography/KyberAlgorithm';
-import DilithiumAlgorithm from '@/pages/wiki/cryptography/DilithiumAlgorithm';
-import ZeroKnowledgeProofs from '@/pages/wiki/cryptography/ZeroKnowledgeProofs';
-import HomomorphicEncryption from '@/pages/wiki/cryptography/HomomorphicEncryption';
-
-// Import security subpages
-import ThreatModels from '@/pages/wiki/security/ThreatModels';
-import SecurityArchitecture from '@/pages/wiki/security/SecurityArchitecture';
-import HardwareSecurity from '@/pages/wiki/security/HardwareSecurity';
-import TPMIntegration from '@/pages/wiki/security/TPMIntegration';
-import OfflineResilience from '@/pages/wiki/security/OfflineResilience';
-
-// Import identity subpages
-import DecentralizedIdentity from '@/pages/wiki/identity/DecentralizedIdentity';
-import BiometricAuth from '@/pages/wiki/identity/BiometricAuth';
-import KeyManagement from '@/pages/wiki/identity/KeyManagement';
-import IdentityVerification from '@/pages/wiki/identity/IdentityVerification';
-import StarkNetID from '@/pages/wiki/identity/StarkNetID';
-
-// Import enterprise subpages
-import EnterpriseDeployment from '@/pages/wiki/enterprise/EnterpriseDeployment';
-import CloudInfrastructure from '@/pages/wiki/enterprise/CloudInfrastructure';
-import ComplianceFrameworks from '@/pages/wiki/enterprise/ComplianceFrameworks';
-import EnterpriseGovernance from '@/pages/wiki/enterprise/EnterpriseGovernance';
-import SecureSupplyChain from '@/pages/wiki/enterprise/SecureSupplyChain';
-
-// Import AI subpages
-import AISecurityModels from '@/pages/wiki/ai/AISecurityModels';
-import FederatedLearning from '@/pages/wiki/ai/FederatedLearning';
-import AnomalyDetection from '@/pages/wiki/ai/AnomalyDetection';
-import AIGovernance from '@/pages/wiki/ai/AIGovernance';
-import AIEthics from '@/pages/wiki/ai/AIEthics';
-
-// Import military subpages
-import MilitarySecurity from '@/pages/wiki/military/MilitarySecurity';
-import TacticalComms from '@/pages/wiki/military/TacticalComms';
-import BattlefieldEncryption from '@/pages/wiki/military/BattlefieldEncryption';
-import ZeroTrustArchitecture from '@/pages/wiki/military/ZeroTrustArchitecture';
-import CyberWarfare from '@/pages/wiki/military/CyberWarfare';
-
-// Import development subpages
-import APIReference from '@/pages/wiki/development/APIReference';
-import SDKDocumentation from '@/pages/wiki/development/SDKDocumentation';
-import IntegrationGuides from '@/pages/wiki/development/IntegrationGuides';
-import CodeExamples from '@/pages/wiki/development/CodeExamples';
-import BestPractices from '@/pages/wiki/development/BestPractices';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from "@/components/theme-provider"
+import './App.css';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Enterprise from './pages/Enterprise';
+import Blog from './pages/Blog';
+import Pricing from './pages/Pricing';
+import Support from './pages/Support';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import AccountSettings from './pages/AccountSettings';
+import KeyManagement from './pages/KeyManagement';
+import AISecurity from './pages/AISecurity';
+import DecentralizedID from './pages/DecentralizedID';
+import SecureExecution from './pages/SecureExecution';
+import P2PAIMessaging from './pages/P2PAIMessaging';
+import Wiki from './pages/Wiki';
+import AIEthics from './pages/wiki/ai/AIEthics';
+import AIGovernance from './pages/wiki/ai/AIGovernance';
+import AISecurityModels from './pages/wiki/ai/AISecurityModels';
+import FederatedLearning from './pages/wiki/ai/FederatedLearning';
+import AnomalyDetection from './pages/wiki/ai/AnomalyDetection';
+import CloudInfrastructure from './pages/wiki/enterprise/CloudInfrastructure';
+import ComplianceFrameworks from './pages/wiki/enterprise/ComplianceFrameworks';
+import EnterpriseGovernance from './pages/wiki/enterprise/EnterpriseGovernance';
+import SecureSupplyChain from './pages/wiki/enterprise/SecureSupplyChain';
+import MilitarySecurity from './pages/wiki/military/MilitarySecurity';
+import TacticalComms from './pages/wiki/military/TacticalComms';
+import BattlefieldEncryption from './pages/wiki/military/BattlefieldEncryption';
+import ZeroTrustArchitecture from './pages/wiki/military/ZeroTrustArchitecture';
+import CyberWarfare from './pages/wiki/military/CyberWarfare';
+import TetraCrypt2025Vision from './pages/wiki/roadmap/TetraCrypt2025Vision';
 
 function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/enterprise" element={<Enterprise />} />
-        
-        {/* Wiki structure */}
-        <Route path="/wiki" element={<WikiLayout />}>
-          <Route index element={<WikiHome />} />
+    <ThemeProvider defaultTheme="dark" storageKey="tetracrypt-theme">
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/enterprise" element={<Enterprise />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           
-          {/* Cryptography Category */}
-          <Route path="cryptography" element={<CryptographyCategory />} />
-          <Route path="cryptography/post-quantum-basics" element={<PostQuantumBasics />} />
-          <Route path="cryptography/kyber-algorithm" element={<KyberAlgorithm />} />
-          <Route path="cryptography/dilithium-algorithm" element={<DilithiumAlgorithm />} />
-          <Route path="cryptography/zero-knowledge-proofs" element={<ZeroKnowledgeProofs />} />
-          <Route path="cryptography/homomorphic-encryption" element={<HomomorphicEncryption />} />
+          {/* Dashboard Routes - Requires Authentication */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/account-settings" element={<AccountSettings />} />
+          <Route path="/key-management" element={<KeyManagement />} />
+          <Route path="/ai-security" element={<AISecurity />} />
+          <Route path="/decentralized-id" element={<DecentralizedID />} />
+          <Route path="/secure-execution" element={<SecureExecution />} />
+          <Route path="/p2p-ai-messaging" element={<P2PAIMessaging />} />
           
-          {/* Security Category */}
-          <Route path="security" element={<SecurityCategory />} />
-          <Route path="security/threat-models" element={<ThreatModels />} />
-          <Route path="security/architecture" element={<SecurityArchitecture />} />
-          <Route path="security/hardware-security" element={<HardwareSecurity />} />
-          <Route path="security/tpm-integration" element={<TPMIntegration />} />
-          <Route path="security/offline-resilience" element={<OfflineResilience />} />
+          {/* Wiki Routes */}
+          <Route path="/wiki" element={<Wiki />} />
+          <Route path="/wiki/ai/aiethics" element={<AIEthics />} />
+          <Route path="/wiki/ai/aigovernance" element={<AIGovernance />} />
+          <Route path="/wiki/ai/aisecuritymodels" element={<AISecurityModels />} />
+          <Route path="/wiki/ai/federatedlearning" element={<FederatedLearning />} />
+          <Route path="/wiki/ai/anomalydetection" element={<AnomalyDetection />} />
           
-          {/* Identity Category */}
-          <Route path="identity" element={<IdentityCategory />} />
-          <Route path="identity/decentralized-identity" element={<DecentralizedIdentity />} />
-          <Route path="identity/biometric-authentication" element={<BiometricAuth />} />
-          <Route path="identity/key-management" element={<KeyManagement />} />
-          <Route path="identity/verification" element={<IdentityVerification />} />
-          <Route path="identity/starknet-id" element={<StarkNetID />} />
+          <Route path="/wiki/enterprise/cloudinfrastructure" element={<CloudInfrastructure />} />
+          <Route path="/wiki/enterprise/complianceframeworks" element={<ComplianceFrameworks />} />
+          <Route path="/wiki/enterprise/enterprisegovernance" element={<EnterpriseGovernance />} />
+          <Route path="/wiki/enterprise/securesupplychain" element={<SecureSupplyChain />} />
           
-          {/* Enterprise Category */}
-          <Route path="enterprise" element={<EnterpriseCategory />} />
-          <Route path="enterprise/deployment" element={<EnterpriseDeployment />} />
-          <Route path="enterprise/cloud-infrastructure" element={<CloudInfrastructure />} />
-          <Route path="enterprise/compliance" element={<ComplianceFrameworks />} />
-          <Route path="enterprise/governance" element={<EnterpriseGovernance />} />
-          <Route path="enterprise/supply-chain" element={<SecureSupplyChain />} />
+          <Route path="/wiki/military/militarysecurity" element={<MilitarySecurity />} />
+          <Route path="/wiki/military/tacticalcomms" element={<TacticalComms />} />
+          <Route path="/wiki/military/battlefieldencryption" element={<BattlefieldEncryption />} />
+          <Route path="/wiki/military/zerotrustarchitecture" element={<ZeroTrustArchitecture />} />
+          <Route path="/wiki/military/cyberwarfare" element={<CyberWarfare />} />
           
-          {/* AI Category */}
-          <Route path="ai" element={<AICategory />} />
-          <Route path="ai/security-models" element={<AISecurityModels />} />
-          <Route path="ai/federated-learning" element={<FederatedLearning />} />
-          <Route path="ai/anomaly-detection" element={<AnomalyDetection />} />
-          <Route path="ai/governance" element={<AIGovernance />} />
-          <Route path="ai/ethics" element={<AIEthics />} />
+          {/* New Roadmap Route */}
+          <Route path="/wiki/roadmap/tetracrypt2025vision" element={<TetraCrypt2025Vision />} />
           
-          {/* Military Category */}
-          <Route path="military" element={<MilitaryCategory />} />
-          <Route path="military/security" element={<MilitarySecurity />} />
-          <Route path="military/tactical-communications" element={<TacticalComms />} />
-          <Route path="military/battlefield-encryption" element={<BattlefieldEncryption />} />
-          <Route path="military/zero-trust" element={<ZeroTrustArchitecture />} />
-          <Route path="military/cyber-warfare" element={<CyberWarfare />} />
-          
-          {/* Development Category */}
-          <Route path="development" element={<DevCategory />} />
-          <Route path="development/api-reference" element={<APIReference />} />
-          <Route path="development/sdk-documentation" element={<SDKDocumentation />} />
-          <Route path="development/integration-guides" element={<IntegrationGuides />} />
-          <Route path="development/code-examples" element={<CodeExamples />} />
-          <Route path="development/best-practices" element={<BestPractices />} />
-        </Route>
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster />
-    </>
+          {/* Catch-all route for 404 */}
+          <Route path="*" element={<div>404 Not Found</div>} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 
