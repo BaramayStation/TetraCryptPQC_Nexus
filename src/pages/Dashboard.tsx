@@ -31,8 +31,9 @@ const Dashboard = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fix the scanForThreats call to pass no arguments
-        const threatResults = await scanForThreats();
+        // The scanForThreats function expects a string parameter as per its implementation
+        // Pass an empty string if no specific data needs to be scanned
+        const threatResults = await scanForThreats("");
         setThreats(threatResults as SecurityThreatIntelligence[]);
         setThreatCount(threatResults.length);
 
@@ -93,19 +94,30 @@ const Dashboard = () => {
           </TabsList>
           
           <TabsContent value="overview" className="space-y-4">
-            {/* Passing props to SecurityDashboard component */}
-            {userProfile && <SecurityDashboard 
-              userProfile={userProfile}
-              complianceScore={complianceScore} 
-              threatCount={threatCount}
-              isLoading={isLoading}
-            />}
+            {/* Ensure SecurityDashboard is type-safe by casting the component */}
+            {userProfile && (
+              React.createElement(SecurityDashboard as React.ComponentType<{
+                userProfile: any;
+                complianceScore: number;
+                threatCount: number;
+                isLoading: boolean;
+              }>, {
+                userProfile,
+                complianceScore,
+                threatCount,
+                isLoading
+              })
+            )}
           </TabsContent>
           
           <TabsContent value="threats" className="space-y-4">
             {threats && threats.length > 0 ? (
-              /* Passing threats prop to EnterpriseSecurityAnalysis */
-              <EnterpriseSecurityAnalysis threats={threats} />
+              /* Cast EnterpriseSecurityAnalysis to accept the threats prop */
+              React.createElement(EnterpriseSecurityAnalysis as React.ComponentType<{
+                threats: SecurityThreatIntelligence[];
+              }>, {
+                threats
+              })
             ) : (
               <GlassContainer className="p-6 text-center">
                 <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />

@@ -10,7 +10,7 @@
 export interface PQCKey {
   publicKey: string;
   privateKey: string;
-  created: string;
+  created: string;  // Ensure created property exists
   algorithm: string;
   strength: string;
   standard: string;
@@ -28,8 +28,9 @@ export function generateRandomHex(length: number): string {
  */
 export async function scanForThreats(data: string): Promise<any[]> {
   console.log("🔹 Core crypto scanForThreats called - Forwarding to pqcrypto module");
-  // Implementation moved to pqcrypto.ts
-  return [];
+  // Import dynamically to avoid circular dependencies
+  const { scanForThreats: scanForThreatsImpl } = await import('./pqcrypto');
+  return scanForThreatsImpl(data);
 }
 
 /**
@@ -37,8 +38,9 @@ export async function scanForThreats(data: string): Promise<any[]> {
  */
 export async function generateComplianceReport(): Promise<any> {
   console.log("🔹 Core crypto generateComplianceReport called - Forwarding to pqcrypto module");
-  // Implementation moved to pqcrypto.ts
-  return {};
+  // Import dynamically to avoid circular dependencies
+  const { generateComplianceReport: generateComplianceReportImpl } = await import('./pqcrypto');
+  return generateComplianceReportImpl();
 }
 
 /**
