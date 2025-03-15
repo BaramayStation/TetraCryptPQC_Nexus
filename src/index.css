@@ -3,68 +3,51 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "./styles/animations.css";
+
 @layer base {
   :root {
-    --background: 0 0% 99%;
-    --foreground: 240 10% 4%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
-
-    --primary: 240 6% 10%;
+    --background: 240 10% 4%;
+    --foreground: 240 5% 85%;
+    --card: 240 10% 4%;
+    --card-foreground: 240 5% 85%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 240 5% 85%;
+    --primary: 240 5.9% 10%;
     --primary-foreground: 0 0% 98%;
-
-    --secondary: 240 4% 96%;
-    --secondary-foreground: 240 6% 10%;
-
-    --muted: 240 4% 96%;
-    --muted-foreground: 240 5% 40%;
-
-    --accent: 215 98% 60%;
+    --secondary: 240 4% 12%;
+    --secondary-foreground: 240 5% 85%;
+    --muted: 240 4% 12%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 84% 60%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
     --ring: 240 5% 65%;
-
-    --radius: 0.75rem;
-
-    --font-sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji';
+    --radius: 0.4rem;
   }
 
   .dark {
     --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
-
+    --foreground: 240 5% 85%;
     --card: 240 10% 4%;
-    --card-foreground: 0 0% 98%;
-
+    --card-foreground: 240 5% 85%;
     --popover: 240 10% 4%;
-    --popover-foreground: 0 0% 98%;
-
+    --popover-foreground: 240 5% 85%;
     --primary: 0 0% 98%;
     --primary-foreground: 240 5.9% 10%;
-
     --secondary: 240 4% 12%;
-    --secondary-foreground: 0 0% 98%;
-
+    --secondary-foreground: 240 5% 85%;
     --muted: 240 4% 12%;
-    --muted-foreground: 240 5% 65%;
-
-    --accent: 215 98% 60%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 98%;
-
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
-
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
     --ring: 240 5% 65%;
   }
 }
@@ -85,6 +68,8 @@
     @apply bg-background text-foreground antialiased overflow-x-hidden min-h-screen;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
     line-height: 1.5;
+    background-image: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.9) 100%),
+                      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23134074' fill-opacity='0.05'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -125,22 +110,22 @@
 @layer components {
   /* Glass container styling */
   .glass-container {
-    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-md 
-           border border-white/20 dark:border-slate-800/50
-           shadow-[0_4px_24px_-8px_rgba(0,0,0,0.15)]
+    @apply bg-black/70 dark:bg-slate-900/80 backdrop-blur-md 
+           border border-accent/20 dark:border-slate-800/50
+           shadow-[0_4px_24px_-8px_rgba(0,0,0,0.8)]
            transition-all duration-300;
   }
   
   .glass-container-hover {
-    @apply hover:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.2)] 
-           hover:bg-white/90 dark:hover:bg-slate-900/90
-           hover:border-white/30 dark:hover:border-slate-700/70;
+    @apply hover:shadow-[0_8px_32px_-4px_rgba(0,0,0,0.3)] 
+           hover:bg-black/80 dark:hover:bg-slate-900/90
+           hover:border-accent/40 dark:hover:border-slate-700/70;
   }
 
   /* Button styles */
   .btn-minimal {
     @apply transition-all duration-300 rounded-md px-4 py-2
-           hover:bg-black/5 dark:hover:bg-white/5 
+           hover:bg-accent/10 dark:hover:bg-white/5 
            active:scale-[0.98];
   }
 
@@ -172,6 +157,51 @@
   .caption {
     @apply text-xs text-muted-foreground;
   }
+  
+  /* Terminal text */
+  .terminal-text {
+    @apply font-mono text-accent;
+  }
+  
+  /* Classified badge */
+  .classified-badge {
+    @apply px-2 py-0.5 rounded bg-destructive/80 text-destructive-foreground text-xs font-bold;
+  }
+  
+  /* Clearance level indicators */
+  .clearance-level {
+    @apply px-2 py-0.5 rounded-sm text-xs font-mono border;
+  }
+  
+  .clearance-level-1 {
+    @apply clearance-level border-green-700 bg-green-900/30 text-green-400;
+  }
+  
+  .clearance-level-2 {
+    @apply clearance-level border-blue-700 bg-blue-900/30 text-blue-400;
+  }
+  
+  .clearance-level-3 {
+    @apply clearance-level border-amber-700 bg-amber-900/30 text-amber-400;
+  }
+  
+  .clearance-level-4 {
+    @apply clearance-level border-red-700 bg-red-900/30 text-red-400;
+  }
+  
+  /* Text gradient */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-accent to-blue-400 bg-clip-text text-transparent;
+  }
+  
+  /* Scanner effect */
+  .scanner-effect {
+    @apply relative overflow-hidden;
+  }
+  
+  .scanner-effect::after {
+    @apply content-[''] absolute top-0 left-0 w-full h-[2px] bg-accent/40 animate-scan;
+  }
 }
 
 /* Custom animations */
@@ -188,13 +218,187 @@
   animation: reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes scan {
+  0% {
+    top: 0%;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+.animate-scan {
+  animation: scan 1.5s ease-in-out infinite;
+}
+
+/* Glitch effect */
+.glitch {
+  position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch::before {
+  left: 2px;
+  text-shadow: -1px 0 #ff00cc;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch::after {
+  left: -2px;
+  text-shadow: 1px 0 #00ffff;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% {
+    clip: rect(42px, 9999px, 44px, 0);
+  }
+  5% {
+    clip: rect(12px, 9999px, 59px, 0);
+  }
+  10% {
+    clip: rect(48px, 9999px, 29px, 0);
+  }
+  15.0% {
+    clip: rect(42px, 9999px, 73px, 0);
+  }
+  20% {
+    clip: rect(63px, 9999px, 27px, 0);
+  }
+  25% {
+    clip: rect(34px, 9999px, 55px, 0);
+  }
+  30.0% {
+    clip: rect(86px, 9999px, 73px, 0);
+  }
+  35% {
+    clip: rect(20px, 9999px, 20px, 0);
+  }
+  40% {
+    clip: rect(26px, 9999px, 60px, 0);
+  }
+  45% {
+    clip: rect(25px, 9999px, 66px, 0);
+  }
+  50% {
+    clip: rect(57px, 9999px, 98px, 0);
+  }
+  55.0% {
+    clip: rect(5px, 9999px, 46px, 0);
+  }
+  60.0% {
+    clip: rect(82px, 9999px, 31px, 0);
+  }
+  65% {
+    clip: rect(54px, 9999px, 27px, 0);
+  }
+  70% {
+    clip: rect(28px, 9999px, 99px, 0);
+  }
+  75% {
+    clip: rect(45px, 9999px, 69px, 0);
+  }
+  80% {
+    clip: rect(23px, 9999px, 85px, 0);
+  }
+  85.0% {
+    clip: rect(54px, 9999px, 84px, 0);
+  }
+  90% {
+    clip: rect(45px, 9999px, 47px, 0);
+  }
+  95% {
+    clip: rect(37px, 9999px, 20px, 0);
+  }
+  100% {
+    clip: rect(4px, 9999px, 91px, 0);
+  }
+}
+
+@keyframes glitch-anim2 {
+  0% {
+    clip: rect(65px, 9999px, 100px, 0);
+  }
+  5% {
+    clip: rect(52px, 9999px, 74px, 0);
+  }
+  10% {
+    clip: rect(79px, 9999px, 85px, 0);
+  }
+  15% {
+    clip: rect(75px, 9999px, 5px, 0);
+  }
+  20% {
+    clip: rect(67px, 9999px, 61px, 0);
+  }
+  25% {
+    clip: rect(14px, 9999px, 79px, 0);
+  }
+  30% {
+    clip: rect(1px, 9999px, 66px, 0);
+  }
+  35% {
+    clip: rect(86px, 9999px, 30px, 0);
+  }
+  40% {
+    clip: rect(23px, 9999px, 98px, 0);
+  }
+  45% {
+    clip: rect(85px, 9999px, 72px, 0);
+  }
+  50% {
+    clip: rect(71px, 9999px, 75px, 0);
+  }
+  55% {
+    clip: rect(2px, 9999px, 48px, 0);
+  }
+  60% {
+    clip: rect(30px, 9999px, 16px, 0);
+  }
+  65% {
+    clip: rect(59px, 9999px, 50px, 0);
+  }
+  70% {
+    clip: rect(41px, 9999px, 62px, 0);
+  }
+  75% {
+    clip: rect(2px, 9999px, 82px, 0);
+  }
+  80% {
+    clip: rect(47px, 9999px, 73px, 0);
+  }
+  85% {
+    clip: rect(3px, 9999px, 27px, 0);
+  }
+  90% {
+    clip: rect(26px, 9999px, 55px, 0);
+  }
+  95% {
+    clip: rect(42px, 9999px, 97px, 0);
+  }
+  100% {
+    clip: rect(38px, 9999px, 49px, 0);
+  }
+}
+
 /* Lazy loading animation */
 .blur-load::before {
   content: "";
   position: absolute;
   inset: 0;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  @apply bg-gradient-to-r from-gray-200/80 via-gray-100/80 to-gray-200/80 rounded-md;
+  @apply bg-gradient-to-r from-gray-800/80 via-gray-700/80 to-gray-800/80 rounded-md;
 }
 
 @keyframes pulse {
