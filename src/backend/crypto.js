@@ -1,6 +1,9 @@
 
+/**
+ * Backend TetraCryptPQC Post-Quantum Cryptography Implementation
+ */
+
 import { detectSimdSupport, isWasmSupported } from "../lib/wasm-detection.js";
-import { subtle } from "crypto"; // Web Crypto API for AES-GCM
 
 // Error logging for enterprise environments
 const logError = (error, operation) => {

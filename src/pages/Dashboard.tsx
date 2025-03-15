@@ -1,242 +1,202 @@
 
 import React, { useState, useEffect } from "react";
-import { MainLayout } from "@/layout/MainLayout";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { GlassContainer } from "@/components/ui/glass-container";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Shield, Lock, Key, Database, Server, ExternalLink, AlertTriangle } from "lucide-react";
+import { getUserProfile } from "@/lib/storage";
+import { generateComplianceReport, scanForThreats } from "@/lib/pqcrypto";
+import { useToast } from "@/components/ui/use-toast";
+import MainLayout from "@/layout/MainLayout";
 import SecurityDashboard from "@/components/dashboard/SecurityDashboard";
 import EnterpriseSecurityAnalysis from "@/components/enterprise/EnterpriseSecurityAnalysis";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, FileCheck, AlertTriangle, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { getUserProfile } from "@/lib/storage";
-import { generateComplianceReport, scanForThreats } from "@/backend/crypto";
-import { ComplianceReport, SecurityThreatIntelligence } from "@/lib/storage-types";
 
-const Dashboard = () => {
+import { useNavigate } from "react-router-dom";
+
+// Define types for our threat intelligence
+interface SecurityThreatIntelligence {
+  id: string;
+  source: string;
+  detectedAt: string;
+  severity: string;
+  affectedSystems: string[];
+  description: string;
+  mitigationSteps: string[];
+  status: string;
+}
+
+interface ComplianceFinding {
+  id: string;
+  standard: string;
+  control: string;
+  status: string;
+  description: string;
+  remediation?: string;
+}
+
+interface ComplianceReport {
+  id: string;
+  generatedAt: string;
+  standards: string[];
+  status: string;
+  findings: ComplianceFinding[];
+  overallScore: number;
+  validUntil: string;
+}
+
+const Dashboard: React.FC = () => {
   const { toast } = useToast();
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("overview");
   const [complianceReport, setComplianceReport] = useState<ComplianceReport | null>(null);
   const [securityThreats, setSecurityThreats] = useState<SecurityThreatIntelligence[]>([]);
-  const [user, setUser] = useState(getUserProfile());
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const userProfile = getUserProfile();
+
   useEffect(() => {
-    const checkSecurityStatus = async () => {
-      try {
-        if (user) {
-          const threats = await scanForThreats(user);
-          setSecurityThreats(threats);
-          
-          // Check if there are any critical threats
-          const criticalThreats = threats.filter(t => t.severity === 'critical');
-          if (criticalThreats.length > 0) {
-            toast({
-              title: "Critical Security Alert",
-              description: `${criticalThreats.length} critical security ${criticalThreats.length === 1 ? 'issue' : 'issues'} detected.`,
-              variant: "destructive",
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error scanning for threats:", error);
-      }
-    };
+    if (!userProfile) {
+      toast({
+        title: "Profile Not Found",
+        description: "Please set up your TetraCryptPQC profile first",
+        variant: "destructive",
+      });
+      navigate("/");
+      return;
+    }
+
+    loadSecurityData();
+  }, []);
+
+  const loadSecurityData = async () => {
+    if (!userProfile) return;
     
-    checkSecurityStatus();
-  }, [toast, user]);
-  
-  const handleGenerateReport = async () => {
+    setIsLoading(true);
     try {
-      setIsGeneratingReport(true);
-      
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "User profile not found. Please log in again.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const report = await generateComplianceReport(user);
+      // Generate compliance report
+      const report = await generateComplianceReport(userProfile);
       setComplianceReport(report);
       
-      toast({
-        title: "Compliance Report Generated",
-        description: `Overall compliance score: ${report.overallScore}%`,
-      });
+      // Scan for security threats
+      const threats = await scanForThreats(userProfile);
+      setSecurityThreats(threats);
     } catch (error) {
-      console.error("Error generating compliance report:", error);
+      console.error("Failed to load security data:", error);
       toast({
-        title: "Report Generation Failed",
-        description: "There was an error generating the compliance report.",
+        title: "Data Load Failed",
+        description: "Could not load security data. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsGeneratingReport(false);
+      setIsLoading(false);
     }
   };
-  
-  const handleDownloadReport = () => {
-    if (!complianceReport) return;
-    
-    // Create a JSON blob and download it
-    const reportBlob = new Blob([JSON.stringify(complianceReport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(reportBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `compliance-report-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Report Downloaded",
-      description: "Compliance report has been downloaded successfully.",
-    });
-  };
+
+  if (!userProfile) {
+    return null; // Redirect handled in useEffect
+  }
+
+  const highSeverityThreats = securityThreats.filter(threat => threat.severity === "high" || threat.severity === "critical").length;
 
   return (
     <MainLayout>
       <div className="container py-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <Shield className="h-8 w-8 text-accent" />
-              Enterprise Security Center
-            </h1>
-            <p className="text-muted-foreground">
-              Comprehensive post-quantum security monitoring and compliance
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            <Button 
-              className="flex items-center gap-2 text-sm"
-              onClick={handleGenerateReport}
-              disabled={isGeneratingReport}
-            >
-              <FileCheck className="h-4 w-4" />
-              {isGeneratingReport ? "Generating..." : "Generate Compliance Report"}
-            </Button>
-            
-            {complianceReport && (
-              <Button 
-                variant="outline"
-                className="flex items-center gap-2 text-sm"
-                onClick={handleDownloadReport}
-              >
-                <Download className="h-4 w-4" />
-                Download Report
-              </Button>
-            )}
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <Shield className="h-8 w-8 text-accent" />
+            TetraCryptPQC Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Monitor your post-quantum cryptographic security status
+          </p>
         </div>
-        
-        {securityThreats.length > 0 && (
-          <div className="bg-destructive/10 border border-destructive rounded-lg p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
-            <div>
-              <h3 className="font-medium text-destructive">Security Alerts Detected</h3>
-              <p className="text-sm text-muted-foreground">
-                {securityThreats.length} security {securityThreats.length === 1 ? 'alert' : 'alerts'} require your attention. 
-                View the Analysis tab for details.
-              </p>
-            </div>
-          </div>
-        )}
-        
-        <Tabs defaultValue="dashboard" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="dashboard">Security Dashboard</TabsTrigger>
-            <TabsTrigger value="analysis">Enterprise Analysis</TabsTrigger>
-            {complianceReport && (
-              <TabsTrigger value="compliance">Compliance Report</TabsTrigger>
-            )}
+
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+            <TabsTrigger value="enterprise">Enterprise</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="dashboard">
-            <SecurityDashboard />
+          <TabsContent value="overview">
+            <SecurityDashboard 
+              userProfile={userProfile}
+              complianceScore={complianceReport?.overallScore || 0}
+              threatCount={securityThreats.length}
+              isLoading={isLoading}
+            />
           </TabsContent>
           
-          <TabsContent value="analysis">
-            <EnterpriseSecurityAnalysis securityThreats={securityThreats} />
-          </TabsContent>
-          
-          {complianceReport && (
-            <TabsContent value="compliance">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-card border rounded-lg p-4 flex flex-col items-center justify-center">
-                    <div className="text-4xl font-bold mb-2">
-                      {complianceReport.overallScore}%
+          <TabsContent value="compliance">
+            <GlassContainer className="p-6">
+              <h2 className="text-2xl font-semibold mb-4">NIST FIPS Compliance Status</h2>
+              
+              {isLoading ? (
+                <p>Loading compliance data...</p>
+              ) : complianceReport ? (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-medium">Overall Score: {complianceReport.overallScore}%</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Status: <span className={`font-semibold ${
+                          complianceReport.status === "compliant" ? "text-green-500" : 
+                          complianceReport.status === "partially-compliant" ? "text-amber-500" : 
+                          "text-red-500"
+                        }`}>
+                          {complianceReport.status.toUpperCase()}
+                        </span>
+                      </p>
                     </div>
-                    <div className="text-sm text-muted-foreground text-center">
-                      Overall Compliance Score
-                    </div>
+                    <Button onClick={loadSecurityData}>Refresh Report</Button>
                   </div>
                   
-                  <div className="bg-card border rounded-lg p-4 flex flex-col items-center justify-center">
-                    <div className="text-lg font-medium mb-2">
-                      Status: <span className={
-                        complianceReport.status === "compliant" ? "text-green-500" :
-                        complianceReport.status === "partially-compliant" ? "text-yellow-500" :
-                        "text-destructive"
-                      }>
-                        {complianceReport.status.replace("-", " ")}
-                      </span>
-                    </div>
-                    <div className="text-sm text-muted-foreground text-center">
-                      Valid until {new Date(complianceReport.validUntil).toLocaleDateString()}
-                    </div>
-                  </div>
-                  
-                  <div className="bg-card border rounded-lg p-4">
-                    <h3 className="font-medium mb-2">Applied Standards</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {complianceReport.standards.map((standard, index) => (
-                        <div key={index} className="bg-accent/10 text-accent px-2 py-1 rounded text-xs">
-                          {standard}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-card border rounded-lg overflow-hidden">
-                  <div className="p-4 border-b">
-                    <h3 className="font-medium">Compliance Findings</h3>
-                  </div>
-                  <div className="divide-y">
-                    {complianceReport.findings.map((finding) => (
-                      <div key={finding.id} className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="font-medium">{finding.control}</div>
-                          <div className={`px-2 py-1 rounded text-xs ${
-                            finding.status === "pass" ? "bg-green-500/10 text-green-600" :
-                            finding.status === "warning" ? "bg-yellow-500/10 text-yellow-600" :
-                            "bg-destructive/10 text-destructive"
-                          }`}>
-                            {finding.status.toUpperCase()}
+                  <div className="space-y-4">
+                    {complianceReport.findings.map(finding => (
+                      <Card key={finding.id}>
+                        <CardHeader className="py-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-base">{finding.control}</CardTitle>
+                              <CardDescription>{finding.standard}</CardDescription>
+                            </div>
+                            <div className={`px-2 py-1 rounded-md text-xs font-medium ${
+                              finding.status === "pass" ? "bg-green-500/10 text-green-600" : 
+                              finding.status === "warning" ? "bg-amber-500/10 text-amber-600" : 
+                              "bg-red-500/10 text-red-600"
+                            }`}>
+                              {finding.status.toUpperCase()}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-sm text-muted-foreground mb-1">
-                          {finding.description}
-                        </div>
-                        {finding.remediation && (
-                          <div className="text-sm mt-2">
-                            <span className="font-medium">Remediation: </span>
-                            {finding.remediation}
-                          </div>
-                        )}
-                        <div className="text-xs text-muted-foreground mt-2">
-                          Standard: {finding.standard}
-                        </div>
-                      </div>
+                        </CardHeader>
+                        <CardContent className="py-2">
+                          <p className="text-sm">{finding.description}</p>
+                          {finding.remediation && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Recommendation: {finding.remediation}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
                     ))}
                   </div>
                 </div>
-              </div>
-            </TabsContent>
-          )}
+              ) : (
+                <div className="text-center py-12">
+                  <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No compliance report available</p>
+                  <Button onClick={loadSecurityData} className="mt-4">Generate Report</Button>
+                </div>
+              )}
+            </GlassContainer>
+          </TabsContent>
+          
+          <TabsContent value="enterprise">
+            {securityThreats.length > 0 && (
+              <EnterpriseSecurityAnalysis threats={securityThreats} />
+            )}
+          </TabsContent>
         </Tabs>
       </div>
     </MainLayout>

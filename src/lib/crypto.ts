@@ -7,8 +7,8 @@
  * these would be implemented using actual WebAssembly PQC libraries.
  */
 
-// Import wasm-feature-detect correctly (ES module import)
-import { simd } from 'wasm-feature-detect';
+// Import our custom detection function
+import { detectSimdSupport } from './wasm-detection';
 
 // Utility function to generate hex strings
 const generateRandomHex = (length: number): string => {
@@ -24,7 +24,7 @@ export async function initPQCEnvironment() {
   console.log("🔹 Initializing PQC environment");
   
   // Check for SIMD support (optional enhancement)
-  const simdSupported = await simd();
+  const simdSupported = await detectSimdSupport();
   console.log(`🔹 WebAssembly SIMD support: ${simdSupported ? "Available" : "Not available"}`);
   
   return {
