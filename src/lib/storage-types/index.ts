@@ -33,7 +33,10 @@ export type {
   SatelliteConnection,
   EMPHardenedSystem,
   DeploymentEnvironment,
-  BackupJob
+  BackupJob,
+  UndergroundCommunicationNode,
+  MilitaryMeshNetwork,
+  QuantumSecureLink
 } from './hardware-types';
 
 // User profile and identity types

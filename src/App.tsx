@@ -2,49 +2,33 @@
 import { useState } from "react";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-import ErrorPage from "./pages/ErrorPage";
-import FileEncryption from "./pages/FileEncryption";
-import KeyManagement from "./pages/KeyManagement";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import SettingsPage from "./pages/SettingsPage";
 import Chat from "./pages/Chat";
 import DecentralizedCloud from "./pages/DecentralizedCloud";
 import SecureMessaging from "./pages/SecureMessaging";
-import { isUserAuthenticated } from "./lib/storage";
+import UndergroundNetwork from "./pages/UndergroundNetwork";
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(isUserAuthenticated());
+  // This is a placeholder - in a real implementation, you would use proper auth
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
 
   const router = createBrowserRouter([
     {
       path: "/",
       element: isAuthenticated ? <Dashboard /> : <Navigate to="/login" />,
-      errorElement: <ErrorPage />,
     },
     {
       path: "/login",
-      element: <Login onLoginSuccess={() => setIsAuthenticated(true)} />,
+      element: <Login />,
     },
     {
       path: "/register",
-      element: <Register onRegisterSuccess={() => setIsAuthenticated(true)} />,
+      element: <Register />,
     },
     {
       path: "/dashboard",
       element: isAuthenticated ? <Dashboard /> : <Navigate to="/login" />,
-    },
-    {
-      path: "/file-encryption",
-      element: isAuthenticated ? <FileEncryption /> : <Navigate to="/login" />,
-    },
-    {
-      path: "/key-management",
-      element: isAuthenticated ? <KeyManagement /> : <Navigate to="/login" />,
-    },
-    {
-      path: "/settings",
-      element: isAuthenticated ? <SettingsPage /> : <Navigate to="/login" />,
     },
     {
       path: "/chat",
@@ -57,6 +41,10 @@ const App = () => {
     {
       path: "/secure-messaging",
       element: isAuthenticated ? <SecureMessaging /> : <Navigate to="/login" />,
+    },
+    {
+      path: "/underground-network",
+      element: isAuthenticated ? <UndergroundNetwork /> : <Navigate to="/login" />,
     },
   ]);
 
