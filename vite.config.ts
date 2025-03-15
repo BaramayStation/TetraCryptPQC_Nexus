@@ -1,15 +1,12 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import wasm from "@rollup/plugin-wasm"; // Replaced `vite-plugin-wasm` for stability
-import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => {
   const plugins = [
     react(), // Optimized React rendering with SWC
-    wasm(), // Ensures WebAssembly ESM compatibility
-    topLevelAwait(), // Enables async/await WebAssembly support
     mode === "development" ? componentTagger() : null, // Only used in development
   ].filter(Boolean);
 
@@ -28,7 +25,6 @@ export default defineConfig(({ mode }) => {
       host: "0.0.0.0", // Allows external access (securely)
       port: 8080,
       strictPort: true, // Ensures no fallback ports
-      https: true, // Enforces TLS encryption during local development
     },
     plugins,
     resolve: {
@@ -37,12 +33,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      exclude: ["@syntect/wasm"], // Exclude problematic WebAssembly modules
       esbuildOptions: {
         target: "esnext", // Ensures support for latest JavaScript features
         supported: {
           bigint: true, // Enables BigInt support for cryptographic ops
-          wasm: true, // Enables direct WebAssembly imports
         },
       },
     },
@@ -52,25 +46,13 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       minify: "terser", // Highly secure minification
       rollupOptions: {
-        external: [
-          "class-variance-authority", // ✅ Fix Rollup Issue
-          "@radix-ui/react-tooltip", // ✅ Ensure Radix Tooltip Works
-          "@radix-ui/react-popover", // ✅ Prevent Rollup Failures
-        ],
         output: {
           manualChunks: {
-            vendor: ["ethers", "starknet", "helia"], // Splits Web3 & IPFS dependencies
+            vendor: ["ethers", "starknet"], // Splits Web3 dependencies
           },
         },
       },
       chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
-    },
-    worker: {
-      format: "es", // Ensures compatibility with modern ES module workers
-      plugins: [
-        wasm(),
-        topLevelAwait(),
-      ],
     },
     define: {
       global: "globalThis", // Ensures compatibility across all JS environments

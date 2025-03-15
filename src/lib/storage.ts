@@ -1,106 +1,154 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import wasm from "vite-plugin-wasm";  // Official WebAssembly support
-import topLevelAwait from "vite-plugin-top-level-await"; // Enables async WebAssembly
-import path from "path";
-import { createHelia } from "helia"; // IPFS Helia integration
-import { blockstore } from "@helia/blockstore-memory"; // Future-proofed blockstore integration
 
-export default defineConfig(({ mode }) => {
-  const plugins = [
-    react(), // Optimized React rendering with SWC
-    wasm(), // Ensures WebAssembly ESM compatibility
-    topLevelAwait(), // Enables async/await WebAssembly support
-  ];
+/**
+ * TetraCryptPQC Storage Utility
+ * Provides secure storage mechanisms for cryptographic keys and messages
+ */
 
-  // Conditionally include viteInspect if installed
-  try {
-    const viteInspect = require("vite-plugin-inspect");
-    if (viteInspect) plugins.push(viteInspect.default());
-  } catch (e) {
-    console.warn("vite-plugin-inspect not installed, skipping...");
-  }
-
-  return {
-    server: {
-      host: "0.0.0.0", // Allows external access (securely)
-      port: 8080,
-      strictPort: true, // Ensures no fallback ports
-      https: true, // Enforces TLS encryption during local development
-      headers: {
-        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-        "X-Content-Type-Options": "nosniff",
-        "X-Frame-Options": "DENY",
-        "X-XSS-Protection": "1; mode=block",
-      },
-    },
-    plugins,
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "./src"),
-      },
-    },
-    optimizeDeps: {
-      exclude: ["@syntect/wasm", "helia"], // Ensure Helia is optimized separately
-      esbuildOptions: {
-        target: "esnext", // Ensures support for latest JavaScript features
-        supported: {
-          bigint: true, // Enables BigInt support for cryptographic ops
-          wasm: true, // Enables direct WebAssembly imports
-        },
-      },
-    },
-    build: {
-      target: "esnext",
-      outDir: "dist",
-      sourcemap: true,
-      minify: "terser", // Highly secure minification
-      rollupOptions: {
-        external: ["@radix-ui/react-tooltip", "helia"], // Ensure Helia is treated as an external module
-        output: {
-          manualChunks: {
-            vendor: ["ethers", "starknet", "helia"], // Splits Web3 and IPFS dependencies
-          },
-        },
-      },
-      chunkSizeWarningLimit: 1500, // Avoid warnings for large cryptographic modules
-    },
-    worker: {
-      format: "es", // Ensures compatibility with modern ES module workers
-      plugins: () => [wasm(), topLevelAwait()],
-    },
-    define: {
-      global: "globalThis", // Ensures compatibility across all JS environments
-      "process.env": {}, // Prevents environment variable leakage
-    },
+// User profile type definition
+export interface UserProfile {
+  id: string;
+  name: string;
+  keyPairs: {
+    pqkem: {
+      algorithm: string;
+      publicKey: string;
+      privateKey: string;
+      strength: string;
+      standard: string;
+    };
+    signature: {
+      algorithm: string;
+      publicKey: string;
+      privateKey: string;
+      strength: string;
+      standard: string;
+    };
   };
-});
-
-// ✅ Future-Proofed IPFS Helia Utility Functions for Secure Storage
-import { unixfs } from "@helia/unixfs";
-
-let heliaInstance = null;
-
-export async function getHeliaInstance() {
-  if (!heliaInstance) {
-    heliaInstance = await createHelia({ blockstore: blockstore() });
-  }
-  return heliaInstance;
+  didDocument?: any;
+  qkdInfo?: any;
+  hsmInfo?: any;
+  createdAt: string;
 }
 
-export async function addFileToIPFS(data) {
-  const helia = await getHeliaInstance();
-  const fs = unixfs(helia);
-  const cid = await fs.addBytes(new TextEncoder().encode(data));
-  return cid.toString(); // Returns the CID
+// Contact type definition
+export interface Contact {
+  id: string;
+  name: string;
+  publicKey: string;
+  didDocument?: any;
+  lastMessage?: string;
+  lastMessageTime?: string;
 }
 
-export async function getFileFromIPFS(cid) {
-  const helia = await getHeliaInstance();
-  const fs = unixfs(helia);
-  const data = [];
-  for await (const chunk of fs.cat(cid)) {
-    data.push(chunk);
+// Message type definition
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  encrypted: boolean;
+  signature?: string;
+  timestamp: string;
+}
+
+// In-memory storage (would be replaced with IndexedDB or other persistent storage in production)
+const storage = {
+  currentUser: null as UserProfile | null,
+  contacts: [] as Contact[],
+  messages: [] as Message[],
+};
+
+/**
+ * Save user profile to storage
+ */
+export function saveUserProfile(profile: UserProfile): void {
+  storage.currentUser = profile;
+  localStorage.setItem('userProfile', JSON.stringify(profile));
+  console.log("User profile saved:", profile.id);
+}
+
+/**
+ * Get current user profile
+ */
+export function getUserProfile(): UserProfile | null {
+  if (!storage.currentUser) {
+    const storedProfile = localStorage.getItem('userProfile');
+    if (storedProfile) {
+      storage.currentUser = JSON.parse(storedProfile);
+    }
   }
-  return new TextDecoder().decode(Buffer.concat(data));
+  return storage.currentUser;
+}
+
+/**
+ * Save a contact
+ */
+export function saveContact(contact: Contact): void {
+  const existingIndex = storage.contacts.findIndex(c => c.id === contact.id);
+  if (existingIndex >= 0) {
+    storage.contacts[existingIndex] = contact;
+  } else {
+    storage.contacts.push(contact);
+  }
+  localStorage.setItem('contacts', JSON.stringify(storage.contacts));
+  console.log("Contact saved:", contact.id);
+}
+
+/**
+ * Get all contacts
+ */
+export function getContacts(): Contact[] {
+  if (storage.contacts.length === 0) {
+    const storedContacts = localStorage.getItem('contacts');
+    if (storedContacts) {
+      storage.contacts = JSON.parse(storedContacts);
+    }
+  }
+  return storage.contacts;
+}
+
+/**
+ * Get a contact by ID
+ */
+export function getContactById(id: string): Contact | undefined {
+  return getContacts().find(contact => contact.id === id);
+}
+
+/**
+ * Add a message
+ */
+export function addMessage(message: Message): void {
+  storage.messages.push(message);
+  localStorage.setItem('messages', JSON.stringify(storage.messages));
+  console.log("Message added:", message.id);
+}
+
+/**
+ * Get messages between two users
+ */
+export function getMessages(userId1: string, userId2: string): Message[] {
+  if (storage.messages.length === 0) {
+    const storedMessages = localStorage.getItem('messages');
+    if (storedMessages) {
+      storage.messages = JSON.parse(storedMessages);
+    }
+  }
+  
+  return storage.messages.filter(message => 
+    (message.senderId === userId1 && message.receiverId === userId2) ||
+    (message.senderId === userId2 && message.receiverId === userId1)
+  );
+}
+
+/**
+ * Clear all storage (for testing/development)
+ */
+export function clearStorage(): void {
+  storage.currentUser = null;
+  storage.contacts = [];
+  storage.messages = [];
+  localStorage.removeItem('userProfile');
+  localStorage.removeItem('contacts');
+  localStorage.removeItem('messages');
+  console.log("Storage cleared");
 }
