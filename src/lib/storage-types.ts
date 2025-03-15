@@ -1,197 +1,32 @@
+
 /**
  * TetraCryptPQC Storage Types
  * 
- * This module defines the core types used across the application for storage,
- * communication, and security operations.
+ * This module defines types used across the TetraCrypt application.
  */
 
-// Core communication types
-export interface Contact {
-  id: string;
-  name: string;
-  publicKeys: string[];
-  status: string;
-  lastMessage?: string;
-  lastMessageTime?: string;
-  unreadCount?: number;
-  displayName?: string;
-  signatureKey?: string;
-  address?: string;
-}
-
-export interface Message {
-  id: string;
-  senderId: string;
-  recipientId: string;
-  content: string;
-  timestamp: string;
-  encrypted?: boolean;
-  signature?: string;
-  verified?: boolean;
-  encryptionType?: string;
-  status?: "sent" | "delivered" | "read" | "failed";
-  kemType?: string;
-  pqSignatureType?: string;
-  selfHealingStatus?: "active" | "healing" | "compromised";
-  webrtcSecured?: boolean;
-  zkProofVerified?: boolean;
-  didVerified?: boolean;
-  starkNetValidated?: boolean;
-  encryptedContent?: string;
-  encryptionAlgorithm?: string;
-}
-
-export interface UserProfile {
-  id: string;
-  userId: string;
-  name: string;
-  displayName: string;
-  username: string;
-  publicKey: string;
-  privateKey: string;
-  keyPairs?: {
-    encryption?: {
-      publicKey: string;
-      privateKey: string;
-    };
-    signature?: {
-      publicKey: string;
-      privateKey: string;
-    };
-    pqkem?: {
-      publicKey: string;
-      privateKey: string;
-      created: string;
-      algorithm: string;
-      strength: string;
-      standard: string;
-    };
-  };
-  didDocument?: any;
-  hsmInfo?: any;
-  qkdInfo?: any;
-  signatureKey?: string;
-  starkNetId?: string;
-  lastActive?: string;
-  created?: string;
-  securityLevel?: 'standard' | 'enhanced' | 'maximum' | 'quantum' | 'advanced';
-  updated?: string;
-}
-
-export interface Conversation {
-  id: string;
-  participants: string[];
-  messages: Message[];
-  createdAt: string;
-  updatedAt: string;
-  metadata?: Record<string, any>;
-}
-
-// Security and threat types
-export interface Threat {
-  id: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  timestamp: string;
-  status: 'active' | 'mitigated' | 'investigating' | 'resolved';
-  source?: string;
-  details?: string;
-  mitigation?: string[];
-  type?: string;
-  target?: string;
-  mitigationSteps?: string[];
-  affectedComponents?: string[];
-}
-
-export interface SecurityHealthMetrics {
-  uptime: number;
-  incidents: number;
-  overallScore?: number;
-  threatDetectionRate?: number;
-  incidentResponseTime?: number;
-  complianceScore?: number;
-  threatDetectionLatency?: number;
-  falsePositiveRate?: number;
-  vulnerabilities?: Array<{
-    id: string;
-    severity: string;
-    description: string;
-    status: string;
-    affectedComponents?: string[];
-    remediationSteps?: string[];
-  }>;
-  recommendedActions?: string[];
-  cpuUsage?: number;
-  memoryUsage?: number;
-  storageUsage?: number;
-  networkUsage?: number;
-  complianceScores?: Record<string, number>;
-}
-
-export interface AISecuredCloudInstance {
-  id: string;
-  name: string;
-  status: string;
-  region?: string;
-  createdAt?: string;
-  securityLevel?: 'standard' | 'enhanced' | 'maximum';
-  threatStatus?: 'normal' | 'investigating' | 'compromised' | 'elevated';
-  healthStatus?: 'healthy' | 'degraded' | 'critical' | 'warning';
-  lastUpdated?: string;
-  metrics?: SecurityHealthMetrics;
-  homomorphicEncryptionEnabled?: boolean;
-  ipfsStorageEnabled?: boolean;
-  zeroKnowledgeAuthEnabled?: boolean;
-}
-
-export interface AISecurityPolicy {
-  id: string;
-  name: string;
-  rules: string[];
-  enabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-  autoRemediationEnabled?: boolean;
-  threatDetectionLevel?: 'basic' | 'advanced' | 'maximum';
-}
-
-// Infrastructure types
+// Secure container configuration
 export interface SecureContainerConfig {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-  createdAt: string;
-  immutableRootfs?: boolean;
-  rotationPolicy?: {
-    enabled: boolean;
-    intervalDays: number;
-    lastRotation?: string;
-    interval?: number;
-  };
+  name?: string;
+  type: string;  // This is required
   network?: {
     ingress: boolean;
     egress: boolean;
     allowedPorts: number[];
   };
+  storage?: {
+    persistent: boolean;
+    encrypted: boolean;
+    size: number;
+  };
+  resources?: {
+    cpu: number;
+    memory: number;
+    gpu?: boolean;
+  };
 }
 
-export interface SecureInfraNode {
-  nodeId: string;
-  name: string;
-  status: string;
-  type: string;
-  lastVerified?: string;
-}
-
-export interface SecureServiceMesh {
-  id: string;
-  name: string;
-  endpoints: string[];
-  status: string;
-  createdAt: string;
-}
-
+// Secure container
 export interface SecureContainer {
   id: string;
   name: string;
@@ -200,20 +35,49 @@ export interface SecureContainer {
   createdAt: string;
 }
 
-// Decentralized identity types
-export interface StarkNetID {
-  id: string;
+// Secure infrastructure node
+export interface SecureInfraNode {
+  nodeId: string;
+  name: string;
+  status: string;
   type: string;
-  address: string;
-  starkKey: string;
-  created: string;
-  publicKey: string;
-  controller: string;
-  updated: string;
-  verified: boolean;
+  lastVerified: string;
 }
 
-// PQ-SCIF specific types
+// Secure service mesh
+export interface SecureServiceMesh {
+  id: string;
+  name: string;
+  endpoints: string[];
+  status: string;
+  createdAt: string;
+}
+
+// Secure node configuration
+export interface SecureNodeConfig {
+  nodeId?: string;
+  name: string;
+  type: string;
+}
+
+// Security options
+export interface SecurityOptions {
+  encryption: boolean;
+  firewallEnabled: boolean;
+  intrusionDetection: boolean;
+  aiMonitoring?: boolean;
+}
+
+// Secure node
+export interface SecureNode {
+  nodeId: string;
+  name: string;
+  status: string;
+  type: string;
+  lastVerified: string;
+}
+
+// PQ-SCIF Environment
 export interface PQSCIFEnvironment {
   id: string;
   name: string;
@@ -224,6 +88,7 @@ export interface PQSCIFEnvironment {
   createdAt: string;
 }
 
+// Secure Channel
 export interface SecureChannel {
   id: string;
   peerEndpoint: string;
@@ -234,6 +99,7 @@ export interface SecureChannel {
   status: 'active' | 'inactive' | 'compromised';
 }
 
+// Secure Command
 export interface SecureCommand {
   id: string;
   commandPayload: string;
@@ -247,103 +113,139 @@ export interface SecureCommand {
   };
 }
 
-// Types from local-ai-backup.ts
-export type EncryptionType = 'ML-KEM-768' | 'ML-KEM-1024' | 'Hybrid';
-
-export enum AISyncStatus {
-  Synced = 'synced',
-  Pending = 'pending',
-  Failed = 'failed'
+// Contact
+export interface Contact {
+  id: string;
+  displayName: string;
+  userId: string;
+  publicKeys: { // Changed from publicKey to publicKeys
+    encryption: string;
+    signature: string;
+  };
+  lastSeen?: string;
+  status: 'online' | 'offline' | 'away';
+  verified: boolean;
 }
 
+// Threat type for AI security
+export interface Threat {
+  id: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  detectedAt: string;
+  status: 'active' | 'mitigated' | 'false-positive';
+  source: string;
+  targetSystem: string;
+  mitigationSteps?: string[];
+}
+
+// AI Secured Cloud Instance
+export interface AISecuredCloudInstance {
+  id: string;
+  name: string;
+  status: 'running' | 'stopped' | 'provisioning' | 'error';
+  securityLevel: 'standard' | 'enhanced' | 'maximum';
+  region: string;
+  createdAt: string;
+  lastHealthCheck: string;
+  aiProtectionEnabled: boolean;
+}
+
+// Security Health Metrics
+export interface SecurityHealthMetrics {
+  uptime: number;
+  incidents: number;
+  threatsPrevented: number;
+  lastScan: string;
+  securityScore: number;
+  patchStatus: 'up-to-date' | 'updates-available' | 'critical-updates-needed';
+  lastUpdated?: string; // Added fields that were causing errors
+  activeUsers?: number;
+}
+
+// AI Security Policy
+export interface AISecurityPolicy {
+  id: string;
+  name: string;
+  rules: string[];
+  createdAt: string;
+  updatedAt: string;
+  enabled: boolean;
+  aiThreatDetection: boolean;
+  homomorphicEncryptionEnabled?: boolean; // Added field
+}
+
+// StarkNet ID
+export interface StarkNetID {
+  id: string;
+  type: string;
+  address: string;
+  starkKey: string; // Added field
+  created: string;
+  publicKey: string; // Added fields
+  controller: string;
+  updated: string;
+  verified: boolean;
+}
+
+// AI Sync Status
+export enum AISyncStatus {
+  SYNCED = 'synced',
+  SYNCING = 'syncing',
+  FAILED = 'failed',
+  PENDING = 'pending'
+}
+
+// Podman Container Status
 export interface PodmanContainerStatus {
-  containerId: string;
-  running: boolean;
+  id: string;
+  status: 'running' | 'stopped' | 'paused' | 'error';
   image: string;
   created: string;
   ports: number[];
-  volumes: string[];
-  rootless?: boolean;
-  id?: string;
-  healthStatus?: 'healthy' | 'unhealthy' | 'starting';
-  uptime?: number;
-  memoryUsageMB?: number;
-  cpuUsagePercent?: number;
-  restartCount?: number;
-  lastRestart?: string;
+  containerName?: string; // Added field
 }
 
+// AI Cloud Connection Status
 export interface AICloudConnectionStatus {
-  connected: boolean;
-  lastPing: string;
-  endpoint: string;
-  encrypted: boolean;
-  failoverActivated?: boolean;
-  id?: string;
+  status: 'connected' | 'disconnected' | 'connecting' | 'error';
+  lastConnection: string;
+  errorMessage?: string;
+  latency?: number;
+  lastConnectionAttempt?: string; // Added field
 }
 
+// WebRTC Peer Status
 export interface WebRTCPeerStatus {
-  connected: boolean;
-  lastConnected: string;
-  encrypted: boolean;
-  peerId?: string;
-  id?: string;
-  connectionStatus?: 'connected' | 'disconnected' | 'connecting' | 'failed';
-  lastMessageTimestamp?: string;
-  dataTransferred?: number;
+  peerId: string;
+  status: 'connected' | 'disconnected' | 'connecting' | 'error';
+  lastSeen: string;
+  latency?: number;
+  encryptionEnabled?: boolean; // Added field
 }
 
-export interface LocalAIBackupConfig {
-  backupId: string;
-  name: string;
-  config: string;
-  createdAt: string;
-  lastBackup: string;
-  id?: string;
-  tpmProtection?: boolean;
-  starkNetVerification?: boolean;
-  lastRestore?: string;
-  syncStatus?: AISyncStatus;
-  backups?: any[];
-}
-
-export interface AISecurityEvent {
+// Extended AI Sync Status
+export interface ExtendedAISyncStatus {
   id: string;
-  timestamp: string;
-  eventType: string;
-  severity: 'info' | 'warning' | 'critical';
-  source: string;
-  details: string;
-  resolved: boolean;
+  lastCloudSync: string;
+  lastLocalSync: string;
+  pendingUploads: number;
+  pendingDownloads: number;
+  syncErrors: any[];
+  cloudAvailable: boolean;
+  p2pAvailable: boolean;
+  offlineMode: boolean;
+  lastError?: string;
+  selfHealingAttempts: number;
+  lastSelfHealingAction?: string;
+  zkProofsVerified: number;
 }
 
-export enum SecurityEventType {
-  Authentication = 'authentication',
-  KeyUsage = 'key-usage',
-  DataAccess = 'data-access',
-  SystemChange = 'system-change',
-  NetworkAccess = 'network-access',
-  CryptographicOperation = 'cryptographic-operation'
-}
-
-export interface SecureNodeConfig {
-  nodeId: string;
-  name: string;
+// Hardware Security Module Configuration
+export interface HSMConfig {
   type: string;
-  securityLevel: string;
-}
-
-export interface SecurityOptions {
-  encryption: boolean;
-  monitoring: boolean;
-  autoRemediation: boolean;
-}
-
-export interface SecureNode {
-  nodeId: string;
-  name: string;
   status: string;
-  type: string;
   lastVerified?: string;
   id?: string;
+  provider?: string; // Added field
 }

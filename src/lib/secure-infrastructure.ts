@@ -1,3 +1,4 @@
+
 /**
  * TetraCryptPQC Secure Infrastructure Management
  * 
@@ -235,5 +236,76 @@ export async function getInfrastructureHealthMetrics(): Promise<{
   } catch (error) {
     console.error("❌ Error getting infrastructure health metrics:", error);
     throw error;
+  }
+}
+
+/**
+ * Check hardware security capabilities
+ * This function adds hardware security capabilities checking
+ */
+export async function checkHardwareSecurityCapabilities(): Promise<{
+  available: boolean;
+  tpm: boolean;
+  secureBoot: boolean;
+  encryptedMemory: boolean;
+  hardwareKeys: boolean;
+}> {
+  console.log("🔹 Checking hardware security capabilities");
+  
+  try {
+    // Simulate hardware check
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Return mock data - in a real system this would check actual hardware
+    return {
+      available: true,
+      tpm: true,
+      secureBoot: true,
+      encryptedMemory: Math.random() > 0.5,
+      hardwareKeys: Math.random() > 0.3
+    };
+  } catch (error) {
+    console.error("❌ Error checking hardware security capabilities:", error);
+    return {
+      available: false,
+      tpm: false,
+      secureBoot: false,
+      encryptedMemory: false,
+      hardwareKeys: false
+    };
+  }
+}
+
+/**
+ * Verify container integrity
+ */
+export async function verifyContainerIntegrity(containerId: string): Promise<boolean> {
+  console.log(`🔹 Verifying integrity of container: ${containerId}`);
+  
+  try {
+    // Simulate verification
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return true;
+  } catch (error) {
+    console.error(`❌ Error verifying container integrity: ${containerId}`, error);
+    return false;
+  }
+}
+
+/**
+ * Rotate container keys
+ */
+export async function rotateContainer(containerId: string): Promise<boolean> {
+  console.log(`🔹 Rotating keys for container: ${containerId}`);
+  
+  try {
+    // Simulate key rotation
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return true;
+  } catch (error) {
+    console.error(`❌ Error rotating container keys: ${containerId}`, error);
+    return false;
   }
 }

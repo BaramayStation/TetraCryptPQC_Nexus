@@ -3,12 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import WikiLayout from '@/components/layout/WikiLayout';
-import { 
-  Calendar, Shield, Zap, Clock, Cpu, 
-  Brain, Network, Globe, Lock, Rocket, 
-  Database, CheckCircle2
-} from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Rocket, Shield, Lock, Cpu, Zap, Globe, FileCheck, Brain, Code } from 'lucide-react';
 
 const TetraCrypt2025Vision: React.FC = () => {
   return (
@@ -16,403 +11,193 @@ const TetraCrypt2025Vision: React.FC = () => {
       <div className="space-y-6 max-w-4xl mx-auto">
         <div className="border-b pb-4">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-6 w-6 text-primary" />
+            <Rocket className="h-6 w-6 text-primary" />
             <Badge variant="outline" className="text-xs">Roadmap</Badge>
-            <Badge variant="outline" className="text-xs">PQ-SCIF</Badge>
           </div>
           <h1 className="text-3xl font-bold">2025: The Year of TetraCryptPQC</h1>
           <p className="mt-2 text-muted-foreground">
-            A comprehensive roadmap for breakthrough post-quantum security implementation
+            Our breakthrough vision for post-quantum security and AI integration
           </p>
         </div>
-
-        {/* Introduction */}
+        
         <Card>
-          <CardContent className="pt-6">
-            <h2 className="text-xl font-semibold mb-4">The Breakthrough in Post-Quantum Security</h2>
-            <p className="mb-4">
-              TetraCryptPQC is positioned to revolutionize security in the quantum computing era 
-              by implementing NIST-standardized post-quantum cryptography integrated with AI-driven 
-              threat detection and decentralized verification systems. This roadmap outlines our 
-              strategic vision for 2025.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Phase 1 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Phase 1: Securing the Digital Future</h2>
+          <CardContent className="pt-6 space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Rocket className="h-5 w-5 text-primary" />
+                Phase 1: Securing the Digital Future with TetraCryptPQC
+              </h2>
+              
+              <div className="space-y-4 pl-7">
+                <div>
+                  <h3 className="text-lg font-medium">Enterprise-Ready Post-Quantum Cryptography Deployment</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>TetraCryptPQC Fully Integrated with Podman – Ensuring secure, isolated execution</li>
+                    <li>StarkNet & Zero-Knowledge Proofs for Secure On-Chain Identity Verification</li>
+                    <li>Supabase Integration for Quantum-Safe Encrypted Storage</li>
+                    <li>Automated Key Rotation & Self-Healing Encryption Mechanisms</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">AI-Powered Quantum-Safe Communication & Authentication</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>P2P Encrypted Messaging Similar to Matrix but Fully Quantum-Secure</li>
+                    <li>Decentralized Identity Verification via AI-Managed Cryptographic Signatures</li>
+                    <li>Quantum-Resistant Multi-Factor Authentication (MFA) for Enterprise Use</li>
+                    <li>Decentralized AI-Driven Threat Detection & Intrusion Prevention</li>
+                  </ul>
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2">1️⃣ Enterprise-Ready Post-Quantum Cryptography Deployment</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>TetraCryptPQC Fully Integrated with Podman – Ensuring secure, isolated execution</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>StarkNet & Zero-Knowledge Proofs for Secure On-Chain Identity Verification</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Supabase Integration for Quantum-Safe Encrypted Storage</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Automated Key Rotation & Self-Healing Encryption Mechanisms</span>
-                  </li>
-                </ul>
+            <div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                Phase 2: Next-Gen Post-Quantum Encryption for AI & Cloud
+              </h2>
+              
+              <div className="space-y-4 pl-7">
+                <div>
+                  <h3 className="text-lg font-medium">TetraCryptPQC-Based AI-Encrypted Cloud Computing</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>AI-Governed Encrypted Cloud for Enterprises – Maximum security & automation</li>
+                    <li>Post-Quantum VPN for AI Data Transmission</li>
+                    <li>Self-Adapting Encryption for AI-Powered Data Centers</li>
+                    <li>Fully Automated Post-Quantum Encrypted AI Assistants</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">Quantum-Resistant AI Model Training & Privacy</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>Secure AI Model Hosting with TetraCryptPQC</li>
+                    <li>Fully Encrypted AI Training Pipelines</li>
+                    <li>Zero-Knowledge Proof-Based AI Model Validation</li>
+                    <li>AI-Governed Cryptographic Policy Enforcement</li>
+                  </ul>
+                </div>
               </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2">2️⃣ AI-Powered Quantum-Safe Communication & Authentication</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>P2P Encrypted Messaging Similar to Matrix but Fully Quantum-Secure</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Decentralized Identity Verification via AI-Managed Cryptographic Signatures</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Quantum-Resistant Multi-Factor Authentication (MFA) for Enterprise Use</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Decentralized AI-Driven Threat Detection & Intrusion Prevention</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Phase 2 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Cpu className="h-5 w-5 text-blue-500" />
-              <h2 className="text-xl font-semibold">Phase 2: Next-Gen Post-Quantum Encryption for AI & Cloud</h2>
             </div>
             
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2">3️⃣ TetraCryptPQC-Based AI-Encrypted Cloud Computing</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>AI-Governed Encrypted Cloud for Enterprises – Maximum security & automation</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Post-Quantum VPN for AI Data Transmission</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Self-Adapting Encryption for AI-Powered Data Centers</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Fully Automated Post-Quantum Encrypted AI Assistants</span>
-                  </li>
-                </ul>
+            <div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Cpu className="h-5 w-5 text-primary" />
+                Phase 3: Decentralized & Autonomous AI Security Systems
+              </h2>
+              
+              <div className="space-y-4 pl-7">
+                <div>
+                  <h3 className="text-lg font-medium">AI-Powered Quantum Security for Decentralized Applications</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>Quantum-Resistant Decentralized AI Governance</li>
+                    <li>StarkNet-Based AI DAO for Managing Security Policies</li>
+                    <li>Self-Healing Decentralized AI Security Clusters</li>
+                    <li>TetraCryptPQC Smart Contracts for Quantum-Secure Transactions</li>
+                  </ul>
+                </div>
               </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2">4️⃣ Quantum-Resistant AI Model Training & Privacy</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Secure AI Model Hosting with TetraCryptPQC</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Fully Encrypted AI Training Pipelines</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Zero-Knowledge Proof-Based AI Model Validation</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>AI-Governed Cryptographic Policy Enforcement</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Phase 3 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Brain className="h-5 w-5 text-purple-500" />
-              <h2 className="text-xl font-semibold">Phase 3: Decentralized & Autonomous AI Security Systems</h2>
             </div>
             
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2">5️⃣ AI-Powered Quantum Security for Decentralized Applications</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Quantum-Resistant Decentralized AI Governance</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>StarkNet-Based AI DAO for Managing Security Policies</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Self-Healing Decentralized AI Security Clusters</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>TetraCryptPQC Smart Contracts for Quantum-Secure Transactions</span>
-                  </li>
-                </ul>
+            <div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Advanced Quantum-Secure Applications
+              </h2>
+              
+              <div className="space-y-4 pl-7">
+                <div>
+                  <h3 className="text-lg font-medium">AI-Secured Digital Nation-State</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>Quantum-Secure Digital IDs for citizens</li>
+                    <li>AI-Powered DAO Governance (prevents dictatorship)</li>
+                    <li>Smart Contract-Verified Voting Systems (no fraud)</li>
+                    <li>TetraCryptPQC-Secured Taxation & Public Services</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">AI-Powered Post-Quantum Passwordless Authentication</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>TetraCryptPQC-Secured Biometric Encryption</li>
+                    <li>AI Behavior-Based Authentication (instead of passwords)</li>
+                    <li>Decentralized Identity System (No Single Point of Failure)</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">Post-Quantum AI Battle Simulation & Wargaming</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>TetraCryptPQC-Secured AI Combat Decision Systems</li>
+                    <li>Quantum-Encrypted War & Economic Simulation Models</li>
+                    <li>AI-Generated Strategies Resistant to AI-Based Deception</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">AI-Powered Quantum-Secure Genetic Engineering</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>TetraCryptPQC-Protected DNA Data Vaults</li>
+                    <li>AI-Driven Personalized Genetic Security</li>
+                    <li>Zero-Knowledge-Proof Genetic Identification</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">Quantum-Secure Interstellar Communications</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>Post-Quantum Encrypted AI-Controlled Spacecraft</li>
+                    <li>Quantum-Safe Autonomous Decision Making for Space Missions</li>
+                    <li>AI-Based Space-Time Anomaly Detection</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">AI-Powered Quantum-Secure Global Supply Chain</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>AI-Based Quantum-Secure Logistics Tracking</li>
+                    <li>Decentralized Smart Contracts for Automated Trade</li>
+                    <li>TetraCryptPQC-Secured Blockchain for Supply Chain Integrity</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">Post-Quantum AI-Powered Energy Grid</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>AI-Managed, TetraCryptPQC-Secured Energy Market</li>
+                    <li>Post-Quantum Encrypted Energy Trading System</li>
+                    <li>Decentralized AI for Autonomous Power Grid Management</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium">Post-Quantum AI for Digital Forensics</h3>
+                  <ul className="list-disc pl-6 pt-2 space-y-1 text-muted-foreground">
+                    <li>AI-Powered Quantum-Secure Digital Forensics</li>
+                    <li>Post-Quantum Encrypted Historical Record Integrity</li>
+                    <li>Decentralized Digital Proof Systems (ZK-Proofs)</li>
+                  </ul>
+                </div>
               </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2">6️⃣ Secure, AI-Managed IoT & Edge Devices</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Post-Quantum Encrypted AI Edge Nodes</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Zero-Trust AI-Based Access Control</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Quantum-Secure Key Exchange for IoT Networks</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Autonomous Threat Detection for AI-Powered Smart Infrastructure</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Phase 4 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Database className="h-5 w-5 text-green-500" />
-              <h2 className="text-xl font-semibold">Phase 4: Post-Quantum Finance & AI-Powered Economy</h2>
             </div>
             
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2">7️⃣ Launching the TetraCrypt Token (TCT)</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Quantum-Secure StarkNet-Based Cryptocurrency</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Zero-Knowledge Proofs for Private Transactions</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Post-Quantum Secure Staking & Governance Mechanisms</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Enterprise-Grade DeFi Platform with AI-Driven Risk Analysis</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2">8️⃣ Building a Quantum-Safe Digital Economy</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>TetraCryptPQC-Enforced AI-Driven Financial Security</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Post-Quantum Secured Digital Identities for Business & Government</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Encrypted Decentralized Marketplaces for AI-Powered Enterprises</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Quantum-Secure Micropayments & Cross-Border Transactions</span>
-                  </li>
-                </ul>
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <FileCheck className="h-5 w-5 text-primary" />
+                2025 Vision Summary
+              </h2>
+              <p className="text-muted-foreground">
+                With TetraCryptPQC, we will provide the world's first post-quantum secure, 
+                AI-driven cybersecurity ecosystem. We are developing quantum-resistant 
+                self-sovereign AI intelligence that no corporation can control, leading AI-powered 
+                decentralized post-quantum finance, energy, and communication systems. 
+                Our mission is to secure deep space, DNA storage, quantum energy, and 
+                AI-enhanced humanity for millennia to come.
+              </p>
+              <div className="mt-4 font-medium">
+                2025 is the Year of AI + Quantum Security Leadership!
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Phase 5 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Lock className="h-5 w-5 text-red-500" />
-              <h2 className="text-xl font-semibold">Phase 5: AI-Optimized Quantum Defense Systems</h2>
-            </div>
-            
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium mb-2">9️⃣ AI-Powered Cybersecurity Frameworks</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Decentralized AI Threat Hunting & Incident Response</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Post-Quantum Intrusion Detection with Fully Automated Response</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>AI-Based Quantum Honeypots to Counter Future Threats</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Post-Quantum Secure Air-Gapped Enterprise Security Systems</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-medium mb-2">🔟 Encrypted AI-Driven Intelligence & Research Networks</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>TetraCryptPQC-Backed AI-Driven Research Collaboration</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Zero-Knowledge Proofs for Secure AI Model Sharing</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Post-Quantum Secure Scientific Computing Clusters</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Quantum-Safe Global AI Knowledge Exchange Networks</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Advanced Applications */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="h-5 w-5 text-amber-500" />
-              <h2 className="text-xl font-semibold">Advanced TetraCryptPQC Applications</h2>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="border p-4 rounded-md">
-                <h3 className="font-medium mb-2">Quantum-Resistant AI Threat Defense Grid</h3>
-                <p className="text-sm mb-2">
-                  An AI-powered global quantum cybersecurity mesh that autonomously detects 
-                  nation-state cyber threats using TetraCryptPQC hybrid cryptography.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Why it matters: The future of cyber warfare is quantum-powered AI malware—only 
-                  AI-driven quantum-secure IDS can counter it.
-                </p>
-              </div>
-
-              <div className="border p-4 rounded-md">
-                <h3 className="font-medium mb-2">Self-Sovereign AI with Post-Quantum Privacy</h3>
-                <p className="text-sm mb-2">
-                  Autonomous AI agents running inside quantum-proof enclaves secured by TetraCryptPQC,
-                  with models stored across quantum-safe IPFS and encrypted decentralized networks.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Why it matters: Open-source AI models are at risk of corporate theft & surveillance—this 
-                  makes them sovereign & unbreakable.
-                </p>
-              </div>
-
-              <div className="border p-4 rounded-md">
-                <h3 className="font-medium mb-2">Post-Quantum Secure Neural Implants</h3>
-                <p className="text-sm mb-2">
-                  TetraCryptPQC post-quantum encryption to secure Neuralink-style AI brain interfaces,
-                  preventing brain-hacking, thought surveillance, and memory manipulation.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Why it matters: Mind-hacking is an emerging cyber-threat—post-quantum encryption ensures 
-                  only the user controls their own thoughts.
-                </p>
-              </div>
-
-              <div className="border p-4 rounded-md">
-                <h3 className="font-medium mb-2">Quantum-Secure Biodefense Systems</h3>
-                <p className="text-sm mb-2">
-                  TetraCryptPQC-powered AI that detects, encrypts, and isolates biothreats in real-time,
-                  using AI-driven pathogen analysis to prevent biohacking and AI-generated viruses.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Why it matters: AI-driven biohacking is a serious security risk—post-quantum security prevents 
-                  genetic cyberterrorism.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Final Summary */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Rocket className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">2025: The Year of AI + Quantum Security Leadership</h2>
-            </div>
-            
-            <p className="mb-4">
-              With TetraCryptPQC, AI, and StarkNet integration, we will build:
-            </p>
-
-            <ul className="space-y-2">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>The world's first post-quantum secure, AI-driven cybersecurity ecosystem</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Quantum-resistant self-sovereign AI intelligence that no corporation can control</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Leading AI-powered decentralized post-quantum finance, energy, and communication systems</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>Secure deep space, DNA storage, quantum energy, and AI-enhanced humanity for millennia</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>An AI-Governed, Post-Quantum Secure Digital Civilization</span>
-              </li>
-            </ul>
           </CardContent>
         </Card>
       </div>
