@@ -3,949 +3,751 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Shield, Server, Lock, FileCode, Database, CreditCard, GitFork, Fingerprint, List, BookOpen, AlertTriangle } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Shield, FileText, Code, Server, HardDrive, Lock, KeyRound } from "lucide-react";
 
-const Documentation = () => {
+const Documentation: React.FC = () => {
   return (
-    <div className="container py-8 max-w-6xl mx-auto">
-      <header className="mb-8">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-2">
+    <div className="container py-8 space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold flex items-center gap-2">
+          <FileText className="h-7 w-7 text-primary" />
           TetraCryptPQC Documentation
         </h1>
-        <p className="text-xl text-muted-foreground">
-          Complete technical reference for the post-quantum cryptography framework
+        <p className="text-muted-foreground max-w-3xl">
+          Comprehensive documentation for the TetraCryptPQC framework, including technical specifications,
+          implementation guidelines, and deployment instructions.
         </p>
-      </header>
+      </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 w-full">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            <span className="hidden md:inline">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="architecture" className="flex items-center gap-2">
-            <Server className="h-4 w-4" />
-            <span className="hidden md:inline">Architecture</span>
-          </TabsTrigger>
-          <TabsTrigger value="cryptography" className="flex items-center gap-2">
-            <Lock className="h-4 w-4" />
-            <span className="hidden md:inline">Cryptography</span>
-          </TabsTrigger>
-          <TabsTrigger value="implementation" className="flex items-center gap-2">
-            <FileCode className="h-4 w-4" />
-            <span className="hidden md:inline">Implementation</span>
-          </TabsTrigger>
-          <TabsTrigger value="deployment" className="flex items-center gap-2">
-            <Database className="h-4 w-4" />
-            <span className="hidden md:inline">Deployment</span>
-          </TabsTrigger>
+      <Alert>
+        <Shield className="h-4 w-4" />
+        <AlertTitle>FIPS 205/206 Compliance Notice</AlertTitle>
+        <AlertDescription>
+          This framework implements NIST FIPS 205 (ML-KEM) and FIPS 206 (SLH-DSA) standards for post-quantum cryptography,
+          providing quantum-resistant security for critical applications.
+        </AlertDescription>
+      </Alert>
+
+      <Tabs defaultValue="architecture" className="space-y-4">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full">
+          <TabsTrigger value="architecture">Architecture</TabsTrigger>
+          <TabsTrigger value="implementation">Implementation</TabsTrigger>
+          <TabsTrigger value="deployment">Deployment</TabsTrigger>
+          <TabsTrigger value="examples">Examples</TabsTrigger>
         </TabsList>
 
-        {/* OVERVIEW TAB */}
-        <TabsContent value="overview" className="space-y-6">
+        <TabsContent value="architecture" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" /> 
-                TetraCryptPQC Overview
-              </CardTitle>
+              <CardTitle>System Architecture</CardTitle>
               <CardDescription>
-                A comprehensive post-quantum cryptography framework for secure messaging and identity verification
+                Overview of TetraCryptPQC's post-quantum cryptographic architecture
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <p>
-                TetraCryptPQC is a fully-featured post-quantum cryptography framework designed to protect 
-                systems and communications against both classical and quantum computing threats. It implements
-                NIST FIPS 205/206 compliant cryptographic algorithms and provides a robust, future-proof
-                security infrastructure.
-              </p>
+            <CardContent className="space-y-4">
+              <h3 className="text-lg font-semibold">Core Cryptographic Components</h3>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>ML-KEM (Kyber)</strong>: FIPS 205 compliant Key Encapsulation Mechanism with 256-bit security level (ML-KEM-1024)</li>
+                <li><strong>SLH-DSA (Dilithium)</strong>: FIPS 206 compliant digital signature algorithm with 256-bit security level (Dilithium5)</li>
+                <li><strong>FALCON</strong>: Alternative lattice-based signature scheme with efficient signature sizes</li>
+                <li><strong>SPHINCS+</strong>: Stateless hash-based signature scheme for long-term security assurance</li>
+                <li><strong>AES-256-GCM</strong>: Symmetric encryption in hybrid mode with ML-KEM</li>
+                <li><strong>SHAKE-256</strong>: Extendable-output function (XOF) for key derivation and hashing</li>
+              </ul>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Key Features</h3>
-                  <ul className="list-disc pl-6 space-y-1">
-                    <li>NIST-standardized post-quantum cryptography</li>
-                    <li>Multi-layer cryptographic failsafe system</li>
-                    <li>Zero-knowledge proof authentication</li>
-                    <li>Decentralized identity verification</li>
-                    <li>Secure P2P messaging with quantum resistance</li>
-                    <li>Enterprise-grade key management</li>
-                    <li>Formal verification and security auditing</li>
+              <h3 className="text-lg font-semibold mt-4">Resilient Architecture</h3>
+              <p>TetraCryptPQC implements a multi-layered failsafe approach:</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium">Primary Layer</h4>
+                  <ul className="list-disc pl-6 mt-2">
+                    <li>ML-KEM-1024 (Kyber)</li>
+                    <li>SLH-DSA-Dilithium5</li>
+                    <li>AES-256-GCM with ML-KEM</li>
                   </ul>
                 </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Security Standards</h3>
-                  <ul className="list-disc pl-6 space-y-1">
-                    <li>NIST FIPS 205 (ML-KEM) compliant</li>
-                    <li>NIST FIPS 206 (SLH-DSA) compliant</li>
-                    <li>Designed for 256-bit quantum security level</li>
-                    <li>Beyond 2060 future-proofing</li>
-                    <li>Compatible with DoD, NSA, and NATO requirements</li>
-                    <li>Hardware security module integration</li>
-                    <li>Formal verification of critical components</li>
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium">Secondary Layer</h4>
+                  <ul className="list-disc pl-6 mt-2">
+                    <li>FALCON-1024</li>
+                    <li>BIKE (Code-based KEM)</li>
+                    <li>ChaCha20-Poly1305</li>
+                  </ul>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium">Tertiary Layer</h4>
+                  <ul className="list-disc pl-6 mt-2">
+                    <li>SPHINCS+</li>
+                    <li>FrodoKEM</li>
+                    <li>HMAC-SHAKE256</li>
+                  </ul>
+                </div>
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium">Hybrid Protection</h4>
+                  <ul className="list-disc pl-6 mt-2">
+                    <li>Quantum + Classical encryption</li>
+                    <li>Multiple algorithm families</li>
+                    <li>Cross-verification protocols</li>
                   </ul>
                 </div>
               </div>
-
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Important Security Notice</AlertTitle>
-                <AlertDescription>
-                  TetraCryptPQC is designed for high-security environments. Proper key management and 
-                  implementation are critical. Always follow the recommended deployment guidelines
-                  and security best practices.
-                </AlertDescription>
-              </Alert>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                Documentation Guide
-              </CardTitle>
+              <CardTitle>Crypto Agility Framework</CardTitle>
               <CardDescription>
-                How to use this documentation effectively
+                Dynamic cryptographic algorithm selection and fallback mechanisms
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="mb-4">
-                This documentation is organized into several sections to help you understand
-                and implement TetraCryptPQC effectively:
+                TetraCryptPQC implements a crypto-agility framework that allows for seamless transitions
+                between cryptographic algorithms as standards evolve or vulnerabilities are discovered.
               </p>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Section</TableHead>
-                    <TableHead>Description</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-semibold">Architecture</TableCell>
-                    <TableCell>System design, components, and interactions</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-semibold">Cryptography</TableCell>
-                    <TableCell>Detailed information on the cryptographic algorithms and protocols</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-semibold">Implementation</TableCell>
-                    <TableCell>Code examples, API references, and integration guidelines</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-semibold">Deployment</TableCell>
-                    <TableCell>Installation, configuration, and operational security</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ARCHITECTURE TAB */}
-        <TabsContent value="architecture" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Server className="h-5 w-5 text-primary" />
-                System Architecture
-              </CardTitle>
-              <CardDescription>
-                High-level design and component structure
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p>
-                TetraCryptPQC follows a modular, layered architecture with redundant security mechanisms
-                and failsafe protocols. The system is designed to maintain security even if individual
-                components are compromised.
-              </p>
-
-              <h3 className="text-lg font-semibold mt-4">Core Components</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Cryptographic Core</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>ML-KEM (Kyber) implementation</li>
-                    <li>SLH-DSA (Dilithium) implementation</li>
-                    <li>SPHINCS+ backup signatures</li>
-                    <li>Hybrid encryption system</li>
-                    <li>Key generation and management</li>
-                  </ul>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Failsafe System</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>Multi-layered cryptographic redundancy</li>
-                    <li>Automatic key rotation protocols</li>
-                    <li>Algorithm agility framework</li>
-                    <li>Fallback mechanisms</li>
-                    <li>Emergency recovery systems</li>
-                  </ul>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Identity & Authentication</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>Decentralized identity verification</li>
-                    <li>Zero-knowledge proof authentication</li>
-                    <li>Multi-factor authentication</li>
-                    <li>Hardware security integration</li>
-                    <li>Biometric verification protocols</li>
-                  </ul>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Secure Communication</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>End-to-end encrypted messaging</li>
-                    <li>P2P secure networking</li>
-                    <li>Perfect forward secrecy</li>
-                    <li>Metadata protection</li>
-                    <li>Secure group communications</li>
-                  </ul>
-                </div>
+              
+              <div className="bg-muted p-4 rounded-md my-4">
+                <h4 className="font-medium mb-2">Algorithm Selection Strategy</h4>
+                <p className="text-sm mb-2">The system automatically selects the appropriate algorithm based on:</p>
+                <ul className="list-disc pl-6 text-sm">
+                  <li>Security requirements</li>
+                  <li>Performance constraints</li>
+                  <li>Threat intelligence</li>
+                  <li>Compliance requirements</li>
+                  <li>Available hardware acceleration</li>
+                </ul>
               </div>
-
-              <h3 className="text-lg font-semibold mt-6">Architectural Principles</h3>
-
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="item-1">
-                  <AccordionTrigger>Defense in Depth</AccordionTrigger>
-                  <AccordionContent>
-                    TetraCryptPQC employs multiple layers of security controls. Each layer provides
-                    different security mechanisms, and the compromise of one layer does not compromise
-                    the entire system. This includes cryptographic redundancy, with multiple algorithms
-                    protecting the same data.
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="item-2">
-                  <AccordionTrigger>Cryptographic Agility</AccordionTrigger>
-                  <AccordionContent>
-                    The framework is designed to seamlessly transition between cryptographic algorithms
-                    without disrupting operations. This ensures that as vulnerabilities are discovered
-                    or new standards emerge, the system can quickly adapt without major reengineering.
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="item-3">
-                  <AccordionTrigger>Secure by Default</AccordionTrigger>
-                  <AccordionContent>
-                    All components are configured with the strongest security settings by default.
-                    No insecure fallbacks are permitted, and cryptographic parameters always default
-                    to the highest security level (256-bit quantum security).
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="item-4">
-                  <AccordionTrigger>Zero Trust Architecture</AccordionTrigger>
-                  <AccordionContent>
-                    The system assumes no implicit trust between components. All communications are
-                    authenticated and encrypted, even within internal subsystems. Every operation
-                    requires verification of identity and authorization.
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="item-5">
-                  <AccordionTrigger>Formal Verification</AccordionTrigger>
-                  <AccordionContent>
-                    Critical components undergo formal mathematical verification to prove correctness
-                    and security properties. This ensures that implementation flaws cannot compromise
-                    the theoretical security guarantees of the underlying algorithms.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+              
+              <h4 className="font-medium mt-4">Implementation Architecture</h4>
+              <p className="text-sm mb-2">
+                The framework uses a coordinator pattern with strategy implementations for each algorithm:
+              </p>
+              <pre className="bg-secondary p-3 rounded-md text-xs my-2 overflow-auto">
+{`// Coordinator manages algorithm selection and fallback
+class CryptoFailsafeCoordinator {
+  // Registers available implementations
+  registerImplementation(impl: FailsafeImplementation<CryptoImplementation>): void
+  
+  // Monitors and automatically switches algorithms when needed
+  monitorAlgorithmHealth(): void
+  
+  // API for manual algorithm selection
+  switchToAlgorithm(algorithm: CryptoAlgorithm): Promise<boolean>
+}`}
+              </pre>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* CRYPTOGRAPHY TAB */}
-        <TabsContent value="cryptography" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5 text-primary" />
-                Post-Quantum Cryptographic Algorithms
-              </CardTitle>
-              <CardDescription>
-                NIST-standardized algorithms and implementation details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert className="mb-6">
-                <Shield className="h-4 w-4" />
-                <AlertTitle>NIST/FIPS Compliance</AlertTitle>
-                <AlertDescription>
-                  TetraCryptPQC implements NIST FIPS 205 and FIPS 206 standard algorithms with the highest
-                  security parameters, ensuring compatibility with government and military requirements.
-                </AlertDescription>
-              </Alert>
-
-              <h3 className="text-lg font-semibold mt-4">Core Algorithms</h3>
-
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Algorithm</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Security Level</TableHead>
-                    <TableHead>Standard</TableHead>
-                    <TableHead>Usage</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">ML-KEM-1024</TableCell>
-                    <TableCell>Key Encapsulation</TableCell>
-                    <TableCell>256-bit quantum</TableCell>
-                    <TableCell>FIPS 205</TableCell>
-                    <TableCell>Encryption, Key Exchange</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">SLH-DSA-65</TableCell>
-                    <TableCell>Digital Signature</TableCell>
-                    <TableCell>192-bit quantum</TableCell>
-                    <TableCell>FIPS 206</TableCell>
-                    <TableCell>Authentication, Document Signing</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">SLH-DSA-87</TableCell>
-                    <TableCell>Digital Signature</TableCell>
-                    <TableCell>256-bit quantum</TableCell>
-                    <TableCell>FIPS 206</TableCell>
-                    <TableCell>Long-term Document Signing</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">FALCON-1024</TableCell>
-                    <TableCell>Digital Signature</TableCell>
-                    <TableCell>256-bit quantum</TableCell>
-                    <TableCell>NIST Round 3</TableCell>
-                    <TableCell>Backup Signature Algorithm</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">SPHINCS+-256</TableCell>
-                    <TableCell>Digital Signature</TableCell>
-                    <TableCell>256-bit quantum</TableCell>
-                    <TableCell>NIST Round 3</TableCell>
-                    <TableCell>Hash-based Fallback Signatures</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">AES-256-GCM</TableCell>
-                    <TableCell>Symmetric Encryption</TableCell>
-                    <TableCell>256-bit classical</TableCell>
-                    <TableCell>FIPS 197</TableCell>
-                    <TableCell>Hybrid Encryption</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">SHA-3 / SHAKE-256</TableCell>
-                    <TableCell>Hash Function / XOF</TableCell>
-                    <TableCell>256-bit</TableCell>
-                    <TableCell>FIPS 202</TableCell>
-                    <TableCell>Hashing, KDF, PRNG</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-
-              <h3 className="text-lg font-semibold mt-6">Hybrid Cryptography Implementation</h3>
-              <p className="mb-4">
-                TetraCryptPQC implements a hybrid cryptographic approach that combines 
-                post-quantum algorithms with well-established classical algorithms,
-                providing defense-in-depth against both quantum and classical attacks.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Hybrid Encryption Protocol</h4>
-                  <ol className="list-decimal pl-6 space-y-1 text-sm">
-                    <li>Generate a random AES-256 symmetric key</li>
-                    <li>Encapsulate the key using ML-KEM-1024</li>
-                    <li>Also encapsulate using a classical algorithm (optional)</li>
-                    <li>Encrypt the message with AES-256-GCM</li>
-                    <li>Combine encapsulated keys and ciphertext</li>
-                    <li>Sign the entire package with SLH-DSA</li>
-                  </ol>
-                </div>
-
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Hybrid Authentication Protocol</h4>
-                  <ol className="list-decimal pl-6 space-y-1 text-sm">
-                    <li>Generate message digest using SHAKE-256</li>
-                    <li>Sign the digest with SLH-DSA-87</li>
-                    <li>Also sign with FALCON-1024 as backup</li>
-                    <li>Include timestamps and nonces</li>
-                    <li>Combine signatures into an authentication package</li>
-                    <li>Verify using corresponding public keys</li>
-                  </ol>
-                </div>
-              </div>
-
-              <h3 className="text-lg font-semibold mt-6">Key Management</h3>
-              <p>
-                Proper key management is critical for ensuring the security of post-quantum cryptography.
-                TetraCryptPQC implements robust key management practices including:
-              </p>
-
-              <Accordion type="single" collapsible className="w-full mt-2">
-                <AccordionItem value="key-1">
-                  <AccordionTrigger>Key Generation</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="mb-2">All keys are generated using quantum-resistant algorithms with proper entropy sources:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Hardware-based entropy sources when available</li>
-                      <li>NIST SP 800-90A compliant DRBGs</li>
-                      <li>Strict parameter validation and testing</li>
-                      <li>Key quality verification before use</li>
-                      <li>Hardware security module (HSM) integration where available</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="key-2">
-                  <AccordionTrigger>Key Storage and Protection</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="mb-2">Private keys are stored with the highest level of protection:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Hardware-based secure storage when available (TPM, HSM)</li>
-                      <li>Encrypted storage with strong KDF (SHAKE-256 based)</li>
-                      <li>Memory protection against side-channel attacks</li>
-                      <li>Anti-tampering mechanisms and monitoring</li>
-                      <li>Secure key backup and recovery mechanisms</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="key-3">
-                  <AccordionTrigger>Key Distribution</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="mb-2">Public keys are distributed through secure channels:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Certificate-based authentication</li>
-                      <li>Decentralized verification through multiple paths</li>
-                      <li>Transparency logs and verification</li>
-                      <li>Trust-on-first-use with verification</li>
-                      <li>Out-of-band verification mechanisms</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="key-4">
-                  <AccordionTrigger>Key Rotation and Revocation</AccordionTrigger>
-                  <AccordionContent>
-                    <p className="mb-2">Keys are regularly rotated and can be immediately revoked:</p>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Automatic key rotation based on time and usage</li>
-                      <li>Immediate key revocation through multiple channels</li>
-                      <li>Revocation status verification before key use</li>
-                      <li>Forward secrecy through continuous key updating</li>
-                      <li>Cryptographic proof of revocation</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* IMPLEMENTATION TAB */}
         <TabsContent value="implementation" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileCode className="h-5 w-5 text-primary" />
-                Implementation Guidelines
-              </CardTitle>
+              <CardTitle>FIPS 205/206 Implementation</CardTitle>
               <CardDescription>
-                Code examples, API usage, and integration patterns
+                Technical implementation details for ML-KEM and SLH-DSA algorithms
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Required Dependencies</h3>
-                  <ul className="list-disc pl-6 space-y-1">
-                    <li>liboqs: Open Quantum Safe library</li>
-                    <li>libsodium: For hybrid cryptography</li>
-                    <li>OpenSSL 3.x: For classical algorithms</li>
-                    <li>CIRCL: Cloudflare's cryptographic library</li>
-                    <li>libpqcrypto: PQCrypto library</li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Integration Options</h3>
-                  <ul className="list-disc pl-6 space-y-1">
-                    <li>Direct API integration</li>
-                    <li>WebAssembly module for web applications</li>
-                    <li>Native libraries for desktop applications</li>
-                    <li>Mobile SDK for iOS and Android</li>
-                    <li>Microservice architecture via gRPC</li>
-                  </ul>
-                </div>
-              </div>
-
-              <h3 className="text-lg font-semibold mt-4">API Examples</h3>
-              
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="code-1">
-                  <AccordionTrigger>Key Generation Example</AccordionTrigger>
-                  <AccordionContent>
-                    <pre className="bg-muted p-4 rounded-md overflow-auto">
-                      <code className="text-sm font-mono">
-{`// Generate ML-KEM keys
-const generateMLKEMKeypair = async () => {
-  try {
-    // Use the TetraCryptPQC API
-    const keypair = await tetracrypt.crypto.generateKeypair({
-      algorithm: 'ML-KEM-1024',
-      format: 'spki',  // SubjectPublicKeyInfo format
-      extractable: false,
-      hardwareBackedIfAvailable: true
-    });
-    
-    return {
-      publicKey: keypair.publicKey,
-      privateKey: keypair.privateKey,
-      algorithm: 'ML-KEM-1024',
-      strength: '256-bit quantum security',
-      standard: 'NIST FIPS 205',
-      created: new Date().toISOString(),
-      hardwareProtected: keypair.hardwareProtected
-    };
-  } catch (error) {
-    console.error('Error generating ML-KEM keypair:', error);
-    throw new Error('Key generation failed');
-  }
-};`}
-                      </code>
-                    </pre>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="code-2">
-                  <AccordionTrigger>Encryption and Decryption Example</AccordionTrigger>
-                  <AccordionContent>
-                    <pre className="bg-muted p-4 rounded-md overflow-auto">
-                      <code className="text-sm font-mono">
-{`// Encrypt data using hybrid encryption
-const encryptWithPQC = async (data, recipientPublicKey) => {
-  try {
-    // Convert data to Uint8Array if it's a string
-    const dataBuffer = typeof data === 'string' 
-      ? new TextEncoder().encode(data) 
-      : data;
-    
-    // Use the TetraCryptPQC API for hybrid encryption
-    const encryptedData = await tetracrypt.crypto.encrypt({
-      data: dataBuffer,
-      recipientPublicKey,
-      algorithm: 'HYBRID-ML-KEM-AES',
-      aesBits: 256,
-      aad: null,  // Additional authenticated data
-      padding: 'OAEP'
-    });
-    
-    return encryptedData;
-  } catch (error) {
-    console.error('Error encrypting data:', error);
-    throw new Error('Encryption failed');
-  }
-};
-
-// Decrypt data using hybrid decryption
-const decryptWithPQC = async (encryptedData, privateKey) => {
-  try {
-    // Use the TetraCryptPQC API for hybrid decryption
-    const decryptedData = await tetracrypt.crypto.decrypt({
-      encryptedData,
-      privateKey,
-      algorithm: 'HYBRID-ML-KEM-AES'
-    });
-    
-    // Convert Uint8Array to string if needed
-    return decryptedData;
-  } catch (error) {
-    console.error('Error decrypting data:', error);
-    throw new Error('Decryption failed');
-  }
-};`}
-                      </code>
-                    </pre>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="code-3">
-                  <AccordionTrigger>Signing and Verification Example</AccordionTrigger>
-                  <AccordionContent>
-                    <pre className="bg-muted p-4 rounded-md overflow-auto">
-                      <code className="text-sm font-mono">
-{`// Sign data using SLH-DSA
-const signMessage = async (data, privateKey) => {
-  try {
-    // Convert data to Uint8Array if it's a string
-    const dataBuffer = typeof data === 'string' 
-      ? new TextEncoder().encode(data) 
-      : data;
-    
-    // Use the TetraCryptPQC API for digital signatures
-    const signature = await tetracrypt.crypto.sign({
-      data: dataBuffer,
-      privateKey,
-      algorithm: 'SLH-DSA-87',
-      includeCertificate: true,
-      timestamp: true
-    });
-    
-    return signature;
-  } catch (error) {
-    console.error('Error signing data:', error);
-    throw new Error('Signing failed');
-  }
-};
-
-// Verify a signature using SLH-DSA
-const verifySignature = async (data, signature, publicKey) => {
-  try {
-    // Convert data to Uint8Array if it's a string
-    const dataBuffer = typeof data === 'string' 
-      ? new TextEncoder().encode(data) 
-      : data;
-    
-    // Use the TetraCryptPQC API for signature verification
-    const result = await tetracrypt.crypto.verify({
-      data: dataBuffer,
-      signature,
-      publicKey,
-      algorithm: 'SLH-DSA-87',
-      checkRevocation: true,
-      maxAgeSeconds: 86400 // 24 hours
-    });
-    
-    return result.valid;
-  } catch (error) {
-    console.error('Error verifying signature:', error);
-    return false;
-  }
-};`}
-                      </code>
-                    </pre>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="code-4">
-                  <AccordionTrigger>Key Exchange Example</AccordionTrigger>
-                  <AccordionContent>
-                    <pre className="bg-muted p-4 rounded-md overflow-auto">
-                      <code className="text-sm font-mono">
-{`// Establish a secure session using ML-KEM key exchange
-const establishSecureSession = async (remotePublicKey) => {
-  try {
-    // Generate ephemeral keypair
-    const ephemeralKeypair = await tetracrypt.crypto.generateKeypair({
-      algorithm: 'ML-KEM-1024',
-      ephemeral: true
-    });
-    
-    // Use the TetraCryptPQC API for key encapsulation
-    const encapsulation = await tetracrypt.crypto.encapsulate({
-      recipientPublicKey: remotePublicKey,
-      senderKeyPair: ephemeralKeypair,
-      kdfAlgorithm: 'SHAKE-256',
-      outputBits: 256,
-      info: 'session-key'
-    });
-    
-    return {
-      sessionKey: encapsulation.sharedSecret,
-      encapsulatedKey: encapsulation.ciphertext,
-      ephemeralPublicKey: ephemeralKeypair.publicKey
-    };
-  } catch (error) {
-    console.error('Error establishing secure session:', error);
-    throw new Error('Key exchange failed');
-  }
-};
-
-// Receive a session key using ML-KEM key decapsulation
-const receiveSecureSession = async (encapsulatedKey, privateKey) => {
-  try {
-    // Use the TetraCryptPQC API for key decapsulation
-    const decapsulation = await tetracrypt.crypto.decapsulate({
-      encapsulatedKey,
-      privateKey,
-      kdfAlgorithm: 'SHAKE-256',
-      outputBits: 256,
-      info: 'session-key'
-    });
-    
-    return {
-      sessionKey: decapsulation.sharedSecret
-    };
-  } catch (error) {
-    console.error('Error receiving secure session:', error);
-    throw new Error('Key exchange failed');
-  }
-};`}
-                      </code>
-                    </pre>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-              
-              <h3 className="text-lg font-semibold mt-6">Integration Patterns</h3>
-              
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Secure Messaging Integration</h4>
-                  <p className="text-sm mb-2">
-                    Implement end-to-end encrypted messaging using TetraCryptPQC:
+                <div>
+                  <h3 className="text-lg font-semibold">ML-KEM (Kyber) Implementation</h3>
+                  <p className="text-sm mt-2">
+                    TetraCryptPQC implements ML-KEM-1024 (formerly Kyber1024) as specified in FIPS 205,
+                    providing 256-bit post-quantum security level.
                   </p>
-                  <ol className="list-decimal pl-6 space-y-1 text-sm">
-                    <li>Generate ML-KEM keypairs for all users</li>
-                    <li>Exchange public keys through secure channels</li>
-                    <li>Encrypt messages with recipient's public key</li>
-                    <li>Sign messages with sender's private key</li>
-                    <li>Implement perfect forward secrecy with key rotation</li>
-                    <li>Verify signatures before displaying messages</li>
-                  </ol>
+                  
+                  <h4 className="font-medium mt-4">Example Usage:</h4>
+                  <pre className="bg-secondary p-3 rounded-md text-xs mt-2 overflow-auto">
+{`// Generate ML-KEM keypair
+const { publicKey, privateKey } = await mlkem.generateKeypair();
+
+// Encapsulate a shared secret using the public key
+const { ciphertext, sharedSecret } = 
+  await mlkem.encapsulate(publicKey);
+
+// Decapsulate the shared secret using the private key
+const decapsulatedSecret = 
+  await mlkem.decapsulate(ciphertext, privateKey);
+
+// Use the shared secret for encryption
+const encrypted = await aes.encrypt(message, sharedSecret);`}
+                  </pre>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Secure API Authentication</h4>
-                  <p className="text-sm mb-2">
-                    Implement quantum-resistant API authentication:
+                <div>
+                  <h3 className="text-lg font-semibold">SLH-DSA (Dilithium) Implementation</h3>
+                  <p className="text-sm mt-2">
+                    TetraCryptPQC implements SLH-DSA-Dilithium5 as specified in FIPS 206,
+                    providing 256-bit post-quantum security for digital signatures.
                   </p>
-                  <ol className="list-decimal pl-6 space-y-1 text-sm">
-                    <li>Generate SLH-DSA keypairs for API clients</li>
-                    <li>Sign API requests with client's private key</li>
-                    <li>Include timestamp and nonce in signed data</li>
-                    <li>Verify signatures on the server side</li>
-                    <li>Implement key rotation and revocation</li>
-                    <li>Use ML-KEM for secure session establishment</li>
-                  </ol>
+                  
+                  <h4 className="font-medium mt-4">Example Usage:</h4>
+                  <pre className="bg-secondary p-3 rounded-md text-xs mt-2 overflow-auto">
+{`// Generate SLH-DSA keypair
+const { publicKey, privateKey } = await slhdsa.generateKeypair();
+
+// Sign a message using the private key
+const signature = await slhdsa.sign(message, privateKey);
+
+// Verify the signature using the public key
+const isValid = await slhdsa.verify(
+  message, 
+  signature, 
+  publicKey
+);
+
+console.log(isValid ? "Signature valid" : "Invalid signature");`}
+                  </pre>
                 </div>
               </div>
+
+              <h3 className="text-lg font-semibold mt-6">Integration with Open Quantum Safe (OQS)</h3>
+              <p className="text-sm">
+                TetraCryptPQC leverages the Open Quantum Safe project's libraries for core cryptographic operations:
+              </p>
               
-              <Alert className="mt-4">
-                <Fingerprint className="h-4 w-4" />
-                <AlertTitle>Best Practices</AlertTitle>
-                <AlertDescription>
-                  <ul className="list-disc pl-6 mt-2">
-                    <li>Never implement cryptography from scratch. Use the provided APIs.</li>
-                    <li>Always verify signatures before processing encrypted data.</li>
-                    <li>Implement regular key rotation and secure key backup procedures.</li>
-                    <li>Use hardware security modules when available for key storage.</li>
-                    <li>Monitor for cryptographic failures and implement appropriate alerts.</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium">WebAssembly Integration</h4>
+                  <p className="text-xs mt-2">
+                    TetraCryptPQC uses WebAssembly modules compiled from C/C++ liboqs implementations
+                    to provide high-performance post-quantum cryptography in the browser.
+                  </p>
+                  <pre className="bg-secondary p-2 rounded-md text-xs mt-2 overflow-auto">
+{`// Initialize WASM modules
+await initializeOQSWasm();
+
+// Use OQS through WebAssembly
+const result = await oqs.kemEncapsulate(publicKey);`}
+                  </pre>
+                </div>
+                
+                <div className="border rounded-lg p-4">
+                  <h4 className="font-medium">React Hooks API</h4>
+                  <p className="text-xs mt-2">
+                    The framework provides React hooks for easy integration with React applications.
+                  </p>
+                  <pre className="bg-secondary p-2 rounded-md text-xs mt-2 overflow-auto">
+{`// In a React component
+function SecureComponent() {
+  const { 
+    generateKeypair, 
+    encrypt, 
+    decrypt,
+    sign,
+    verify,
+    isLoading
+  } = usePQCrypto();
+  
+  // Use PQC operations in React components
+}`}
+                  </pre>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Hybrid Encryption Implementation</CardTitle>
+              <CardDescription>
+                Technical details for implementing hybrid classical/post-quantum encryption
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <h3 className="font-medium">Hybrid Encryption Flow</h3>
+              <p className="text-sm mt-2 mb-4">
+                TetraCryptPQC implements hybrid encryption combining ML-KEM with AES-256-GCM for
+                maximum security against both classical and quantum threats.
+              </p>
+
+              <div className="relative overflow-hidden rounded-xl border bg-background p-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="text-sm font-medium">Encryption Process</h4>
+                    <ol className="list-decimal pl-6 text-xs mt-2 space-y-1">
+                      <li>Generate random AES-256 data encryption key (DEK)</li>
+                      <li>Encrypt message using AES-256-GCM with DEK</li>
+                      <li>Use ML-KEM to encapsulate a key for the recipient</li>
+                      <li>Encrypt DEK with the encapsulated ML-KEM shared secret</li>
+                      <li>Combine encrypted DEK, ML-KEM ciphertext, and encrypted message</li>
+                      <li>Sign the entire package with SLH-DSA (optional)</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-4 border rounded-lg">
+                    <h4 className="text-sm font-medium">Decryption Process</h4>
+                    <ol className="list-decimal pl-6 text-xs mt-2 space-y-1">
+                      <li>Verify signature if present</li>
+                      <li>Extract ML-KEM ciphertext</li>
+                      <li>Decapsulate shared secret using ML-KEM private key</li>
+                      <li>Decrypt DEK using decapsulated ML-KEM shared secret</li>
+                      <li>Use decrypted DEK to decrypt message with AES-256-GCM</li>
+                      <li>Verify message authentication tag</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-4 border rounded-lg">
+                  <h4 className="text-sm font-medium">Example Implementation</h4>
+                  <pre className="bg-secondary p-3 rounded-md text-xs mt-2 overflow-auto">
+{`// Hybrid encryption function
+async function hybridEncrypt(message, recipientPublicKey) {
+  // Generate random AES key (DEK)
+  const dek = crypto.getRandomValues(new Uint8Array(32));
+  
+  // Encrypt message with AES-GCM
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await aesGcmEncrypt(message, dek, iv);
+  
+  // Encapsulate key with ML-KEM
+  const { ciphertext, sharedSecret } = 
+    await mlkem.encapsulate(recipientPublicKey);
+    
+  // Encrypt DEK with shared secret
+  const encryptedDek = await aesGcmEncrypt(dek, sharedSecret);
+  
+  // Return complete encrypted package
+  return {
+    mlkemCiphertext: ciphertext,
+    encryptedDek: encryptedDek,
+    iv: iv,
+    encryptedMessage: encrypted
+  };
+}`}
+                  </pre>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* DEPLOYMENT TAB */}
         <TabsContent value="deployment" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-primary" />
-                Deployment and Operations
-              </CardTitle>
+              <CardTitle>Deployment Instructions</CardTitle>
               <CardDescription>
-                Installation, configuration, and operational security
+                Guidelines for secure deployment of TetraCryptPQC in various environments
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <h3 className="text-lg font-semibold">Secure Deployment Options</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Containerized Deployment</h4>
-                  <Badge className="mb-2">Recommended</Badge>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>Podman/Docker containers with SELinux</li>
-                    <li>Container-specific security policies</li>
-                    <li>Immutable infrastructure patterns</li>
-                    <li>Kubernetes with security operators</li>
-                    <li>Secure CI/CD pipeline integration</li>
-                  </ul>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold">Browser-Based Deployment</h3>
+                  <p className="text-sm mt-2">
+                    TetraCryptPQC can be deployed as a client-side application with WebAssembly
+                    modules for cryptographic operations:
+                  </p>
+                  <ol className="list-decimal pl-6 text-sm mt-2 space-y-1">
+                    <li>Install the TetraCryptPQC package via npm or yarn</li>
+                    <li>Include the WebAssembly modules in your build process</li>
+                    <li>Configure CSP headers to allow WebAssembly execution</li>
+                    <li>Initialize the cryptographic modules at application startup</li>
+                    <li>Implement secure key storage using browser capabilities (WebCrypto)</li>
+                  </ol>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">On-Premises Deployment</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>Hardened Linux installation</li>
-                    <li>Physical security requirements</li>
-                    <li>Air-gapped deployment options</li>
-                    <li>Hardware security module integration</li>
-                    <li>Secure boot and TPM verification</li>
-                  </ul>
+                <div>
+                  <h3 className="text-lg font-semibold">Server-Side Deployment</h3>
+                  <p className="text-sm mt-2">
+                    For server environments, TetraCryptPQC can be deployed as:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="border rounded-lg p-4">
+                      <Server className="h-5 w-5 text-primary mb-2" />
+                      <h4 className="font-medium">Node.js Service</h4>
+                      <p className="text-xs mt-2">
+                        Deploy as a Node.js microservice with native bindings to liboqs
+                      </p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <HardDrive className="h-5 w-5 text-primary mb-2" />
+                      <h4 className="font-medium">Container Deployment</h4>
+                      <p className="text-xs mt-2">
+                        Deploy as a Podman/Docker container with SELinux policies
+                      </p>
+                    </div>
+                    <div className="border rounded-lg p-4">
+                      <Lock className="h-5 w-5 text-primary mb-2" />
+                      <h4 className="font-medium">HSM Integration</h4>
+                      <p className="text-xs mt-2">
+                        Deploy with hardware security module (HSM) for key protection
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Cloud Deployment</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>Confidential computing platforms</li>
-                    <li>Cloud HSM integration</li>
-                    <li>Zero-trust network architecture</li>
-                    <li>Encrypted storage and in-transit data</li>
-                    <li>Cloud provider security best practices</li>
+                <div>
+                  <h3 className="text-lg font-semibold">Security Guidelines</h3>
+                  <p className="text-sm mt-2">
+                    When deploying TetraCryptPQC, follow these security guidelines:
+                  </p>
+                  <ul className="list-disc pl-6 text-sm mt-2 space-y-1">
+                    <li>Use hardware security modules (HSMs) when available for key storage</li>
+                    <li>Implement proper key management with regular rotation policies</li>
+                    <li>Configure secure application headers (HSTS, CSP, etc.)</li>
+                    <li>Monitor for cryptographic operation failures and implement fallbacks</li>
+                    <li>Maintain an up-to-date threat model and security assessment</li>
+                    <li>Establish a vulnerability disclosure process</li>
                   </ul>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <h3 className="text-lg font-semibold mt-6">Security Hardening</h3>
-              
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="deploy-1">
-                  <AccordionTrigger>Operating System Hardening</AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Minimal installation with only required components</li>
-                      <li>SELinux/AppArmor mandatory access control</li>
-                      <li>Regular security updates and patch management</li>
-                      <li>Secure boot and firmware verification</li>
-                      <li>File integrity monitoring and logging</li>
-                      <li>Memory protection and ASLR enforcement</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="deploy-2">
-                  <AccordionTrigger>Network Security</AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Zero-trust network architecture</li>
-                      <li>Post-quantum TLS (PQ-TLS) for all communications</li>
-                      <li>Network segmentation and microsegmentation</li>
-                      <li>Encrypted DNS and DNSSEC implementation</li>
-                      <li>Intrusion detection and prevention systems</li>
-                      <li>Regular network security audits and penetration testing</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="deploy-3">
-                  <AccordionTrigger>Container and Application Security</AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Rootless container deployment</li>
-                      <li>Minimal container images with security scanning</li>
-                      <li>Read-only file systems for containers</li>
-                      <li>Application sandboxing and isolation</li>
-                      <li>Runtime application self-protection (RASP)</li>
-                      <li>Regular vulnerability scanning and patching</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-                
-                <AccordionItem value="deploy-4">
-                  <AccordionTrigger>Key Management Infrastructure</AccordionTrigger>
-                  <AccordionContent>
-                    <ul className="list-disc pl-6 space-y-1">
-                      <li>Hardware security modules (HSMs) for key storage</li>
-                      <li>Secure key backup and recovery procedures</li>
-                      <li>Role-based access control for key management</li>
-                      <li>Key usage auditing and monitoring</li>
-                      <li>Automated key rotation and lifecycle management</li>
-                      <li>Split knowledge procedures for critical keys</li>
-                    </ul>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-
-              <h3 className="text-lg font-semibold mt-6">Continuous Security</h3>
-              
+          <Card>
+            <CardHeader>
+              <CardTitle>Enterprise Integration Patterns</CardTitle>
+              <CardDescription>
+                Patterns for integrating TetraCryptPQC with enterprise systems
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Monitoring and Detection</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>Cryptographic operation monitoring</li>
-                    <li>Anomaly detection for key usage patterns</li>
-                    <li>Security information and event management (SIEM)</li>
-                    <li>Real-time threat intelligence integration</li>
-                    <li>Behavioral analysis and heuristic detection</li>
+                <div>
+                  <h3 className="text-lg font-semibold">Identity Integration</h3>
+                  <p className="text-sm mt-2">
+                    TetraCryptPQC can integrate with existing identity providers using:
+                  </p>
+                  <ul className="list-disc pl-6 text-sm mt-2 space-y-1">
+                    <li><strong>SAML/OIDC Extensions</strong>: Post-quantum extensions for SAML and OIDC</li>
+                    <li><strong>X.509 Integration</strong>: Hybrid certificates with classical and PQC signatures</li>
+                    <li><strong>Zero-Knowledge Proofs</strong>: PQC-secured ZKP for authentication</li>
                   </ul>
                 </div>
 
-                <div className="border rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Incident Response</h4>
-                  <ul className="list-disc pl-6 space-y-1 text-sm">
-                    <li>Predefined cryptographic compromise procedures</li>
-                    <li>Emergency key rotation capabilities</li>
-                    <li>Secure backup and recovery mechanisms</li>
-                    <li>Forensic readiness and evidence collection</li>
-                    <li>Tabletop exercises and response simulation</li>
+                <div>
+                  <h3 className="text-lg font-semibold">API Security</h3>
+                  <p className="text-sm mt-2">
+                    Secure API communications with:
+                  </p>
+                  <ul className="list-disc pl-6 text-sm mt-2 space-y-1">
+                    <li><strong>PQC TLS</strong>: Hybrid TLS with post-quantum key exchange</li>
+                    <li><strong>Message-Level Security</strong>: End-to-end PQC encryption for API payloads</li>
+                    <li><strong>Token Security</strong>: PQC-signed JWTs and authorization tokens</li>
                   </ul>
                 </div>
               </div>
 
-              <h3 className="text-lg font-semibold mt-6">Compliance and Auditing</h3>
-              
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Standard</TableHead>
-                    <TableHead>Compliance Features</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow>
-                    <TableCell className="font-medium">NIST SP 800-207</TableCell>
-                    <TableCell>Zero Trust Architecture implementation</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">FIPS 140-3</TableCell>
-                    <TableCell>Cryptographic module validation</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Common Criteria</TableCell>
-                    <TableCell>Evaluation Assurance Level (EAL) certification</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">NIST SP 800-53</TableCell>
-                    <TableCell>Security and privacy controls</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">ISO/IEC 27001</TableCell>
-                    <TableCell>Information security management system</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold">Compliance Documentation</h3>
+                <p className="text-sm mt-2">
+                  TetraCryptPQC provides documentation to support compliance requirements:
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium">NIST Compliance</h4>
+                    <p className="text-xs mt-2">
+                      Documentation for FIPS 140-3, 800-53, 800-207 (Zero Trust)
+                    </p>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium">DoD/Military Standards</h4>
+                    <p className="text-xs mt-2">
+                      Documentation for military-grade security requirements
+                    </p>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium">Regulated Industries</h4>
+                    <p className="text-xs mt-2">
+                      Documentation for HIPAA, PCI-DSS, GDPR, and financial regulations
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <Alert>
-                <CreditCard className="h-4 w-4" />
-                <AlertTitle>Enterprise Support</AlertTitle>
-                <AlertDescription>
-                  Enterprise customers have access to additional deployment options,
-                  including on-site implementation assistance, customized security configurations,
-                  and 24/7 operational support. Contact our enterprise team for more details.
-                </AlertDescription>
-              </Alert>
+        <TabsContent value="examples" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Code Examples</CardTitle>
+              <CardDescription>
+                Example code snippets for common TetraCryptPQC usage patterns
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold">React Component Example</h3>
+                  <p className="text-sm mt-2">
+                    Using TetraCryptPQC in a React application:
+                  </p>
+                  <pre className="bg-secondary p-3 rounded-md text-xs mt-2 overflow-auto">
+{`import React, { useState } from 'react';
+import { usePQCrypto } from '@/hooks/usePQCrypto';
+import { Button } from '@/components/ui/button';
+
+function SecureMessageComponent() {
+  const [message, setMessage] = useState('');
+  const [encryptedMessage, setEncryptedMessage] = useState('');
+  const [decryptedMessage, setDecryptedMessage] = useState('');
+  
+  const { 
+    generateKeypair, 
+    encryptMessage, 
+    decryptMessage,
+    isLoading
+  } = usePQCrypto();
+  
+  const [keyPair, setKeyPair] = useState(null);
+  
+  const handleGenerateKeys = async () => {
+    const newKeyPair = await generateKeypair();
+    setKeyPair(newKeyPair);
+  };
+  
+  const handleEncrypt = async () => {
+    if (!keyPair) return;
+    
+    const encrypted = await encryptMessage(
+      message, 
+      keyPair.publicKey
+    );
+    setEncryptedMessage(encrypted);
+  };
+  
+  const handleDecrypt = async () => {
+    if (!keyPair) return;
+    
+    const decrypted = await decryptMessage(
+      encryptedMessage, 
+      keyPair.privateKey
+    );
+    setDecryptedMessage(decrypted);
+  };
+  
+  return (
+    <div className="space-y-4">
+      <Button onClick={handleGenerateKeys} disabled={isLoading}>
+        Generate PQC Keypair
+      </Button>
+      
+      {keyPair && (
+        <div className="space-y-4">
+          <textarea 
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Enter message to encrypt"
+            className="w-full p-2 border rounded"
+          />
+          
+          <Button onClick={handleEncrypt} disabled={isLoading}>
+            Encrypt with ML-KEM
+          </Button>
+          
+          {encryptedMessage && (
+            <>
+              <div className="p-2 bg-muted rounded font-mono text-xs break-all">
+                {encryptedMessage}
+              </div>
+              
+              <Button onClick={handleDecrypt} disabled={isLoading}>
+                Decrypt with ML-KEM
+              </Button>
+              
+              {decryptedMessage && (
+                <div className="p-4 border rounded">
+                  <h4>Decrypted Message:</h4>
+                  <p>{decryptedMessage}</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}`}
+                  </pre>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold">Authentication Example</h3>
+                  <p className="text-sm mt-2">
+                    Using TetraCryptPQC for secure authentication:
+                  </p>
+                  <pre className="bg-secondary p-3 rounded-md text-xs mt-2 overflow-auto">
+{`import { slhdsa } from '@/lib/pqcrypto';
+
+// Authentication challenge-response using SLH-DSA
+async function authChallengeResponse(challenge, privateKey, publicKey) {
+  // Sign the challenge with SLH-DSA private key
+  const signature = await slhdsa.sign(challenge, privateKey);
+  
+  // Send the signature and public key to the server
+  const response = await fetch('/api/auth/verify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      challenge,
+      signature,
+      publicKey
+    })
+  });
+  
+  return response.json();
+}
+
+// Server-side verification (Node.js example)
+app.post('/api/auth/verify', async (req, res) => {
+  const { challenge, signature, publicKey } = req.body;
+  
+  // Verify the signature
+  const isValid = await slhdsa.verify(
+    challenge, 
+    signature, 
+    publicKey
+  );
+  
+  if (isValid) {
+    // Create and sign a session token
+    const token = await createSessionToken(publicKey);
+    res.json({ success: true, token });
+  } else {
+    res.status(401).json({ 
+      success: false, 
+      error: 'Invalid signature' 
+    });
+  }
+});`}
+                  </pre>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Integration Examples</CardTitle>
+              <CardDescription>
+                Examples of integrating TetraCryptPQC with other systems
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold">Secure Communication Channel</h3>
+                  <p className="text-sm mt-2">
+                    Establishing a secure communication channel with PQC:
+                  </p>
+                  <pre className="bg-secondary p-3 rounded-md text-xs mt-2 overflow-auto">
+{`import { mlkem, aes, slhdsa } from '@/lib/pqcrypto';
+
+// Create a secure channel
+async function createSecureChannel(peerPublicKey, ourKeypair) {
+  // Key establishment
+  const { ciphertext, sharedSecret } = 
+    await mlkem.encapsulate(peerPublicKey);
+  
+  // Sign the ciphertext
+  const signature = await slhdsa.sign(
+    ciphertext, 
+    ourKeypair.slhdsaPrivateKey
+  );
+  
+  // Derive channel keys from shared secret
+  const encryptionKey = await deriveKey(sharedSecret, 'enc');
+  const macKey = await deriveKey(sharedSecret, 'mac');
+  
+  // Return secure channel interface
+  return {
+    // Send encrypted message
+    send: async (message) => {
+      const encrypted = await aes.encrypt(
+        message, 
+        encryptionKey
+      );
+      return { encrypted, signature };
+    },
+    
+    // Receive encrypted message
+    receive: async (data) => {
+      // Verify signature if present
+      if (data.signature) {
+        const isValid = await slhdsa.verify(
+          data.encrypted,
+          data.signature,
+          peerPublicKey
+        );
+        if (!isValid) throw new Error('Invalid signature');
+      }
+      
+      // Decrypt the message
+      return aes.decrypt(data.encrypted, encryptionKey);
+    }
+  };
+}`}
+                  </pre>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold">Failsafe Protocol Example</h3>
+                  <p className="text-sm mt-2">
+                    Using the failsafe protocol for resilient communications:
+                  </p>
+                  <pre className="bg-secondary p-3 rounded-md text-xs mt-2 overflow-auto">
+{`import { 
+  CryptoFailsafeCoordinator,
+  switchCryptoAlgorithm,
+  CryptoAlgorithm
+} from '@/lib/failsafe/crypto';
+
+// Setup failsafe protocol
+async function setupFailsafeProtocol() {
+  const failsafe = new CryptoFailsafeCoordinator();
+  
+  // Register implementations in priority order
+  failsafe.registerImplementation({
+    id: \`\${CryptoAlgorithm.ML_KEM}-primary\`,
+    priority: 100,
+    // Implementation details...
+  });
+  
+  failsafe.registerImplementation({
+    id: \`\${CryptoAlgorithm.BIKE}-secondary\`,
+    priority: 50,
+    // Implementation details...
+  });
+  
+  failsafe.registerImplementation({
+    id: \`\${CryptoAlgorithm.FRODO_KEM}-tertiary\`,
+    priority: 25,
+    // Implementation details...
+  });
+  
+  // Monitor algorithm health
+  failsafe.monitorAlgorithmHealth();
+  
+  return failsafe;
+}
+
+// Handle crypto failures with automatic fallback
+async function sendSecureMessageWithFailsafe(message, recipientKey) {
+  const failsafe = await setupFailsafeProtocol();
+  
+  try {
+    // Try with primary algorithm
+    return await failsafe.encryptMessage(message, recipientKey);
+  } catch (error) {
+    console.error('Primary algorithm failed:', error);
+    
+    // Switch to secondary algorithm
+    await failsafe.switchToAlgorithm(CryptoAlgorithm.BIKE);
+    
+    // Retry with secondary algorithm
+    return await failsafe.encryptMessage(message, recipientKey);
+  }
+}`}
+                  </pre>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-
-      <Separator className="my-8" />
-
-      <footer className="text-center text-sm text-muted-foreground space-y-2">
-        <div className="flex justify-center items-center gap-2">
-          <GitFork className="h-4 w-4" />
-          <span>TetraCryptPQC is open source and available under MIT license</span>
-        </div>
-        <p>Documentation Version 2.0.0 | Last Updated: {new Date().toLocaleDateString()}</p>
-      </footer>
     </div>
   );
 };
