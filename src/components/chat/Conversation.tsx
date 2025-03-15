@@ -1,327 +1,192 @@
-import React, { useState, useRef, useEffect } from "react";
+
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Shield, Send, Info, Clock, Check, CheckCheck, Lock, FileText, Paperclip, Smile, MoreVertical, MessageSquare } from "lucide-react";
-import { cn } from "@/lib/utils";
-import ChatInfoModal from "./ChatInfoModal";
-import EncryptionSelector from "./EncryptionSelector";
+import { 
+  Shield, 
+  Send, 
+  Check, 
+  CheckCheck, 
+  Lock, 
+  FileText, 
+  Image, 
+  Paperclip,
+  MoreHorizontal,
+  AlertTriangle
+} from "lucide-react";
+import { Contact, Message, Conversation as ConversationType } from "@/lib/storage-types";
+import { formatDistanceToNow } from "date-fns";
+import { EncryptionSelector } from "./EncryptionSelector";
+import { MessageList } from "./MessageList";
+import { MessageInput } from "./MessageInput";
+import { encryptAES, signMessage } from "@/lib/crypto";
+import { getUserProfile } from "@/lib/storage";
 
-interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "contact";
-  timestamp: Date;
-  status: "sending" | "sent" | "delivered" | "read";
-  encrypted: boolean;
+export interface ConversationProps {
+  contact: Contact;
+  onBack?: () => void;
 }
 
-interface ConversationProps {
-  contactName: string;
-  contactAvatar?: string;
-  contactInitials: string;
-  isOnline?: boolean;
-  lastSeen?: Date;
-}
+const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [encryptionType, setEncryptionType] = useState<"ML-KEM-1024" | "Hybrid" | "ChaCha20-Poly1305">("ML-KEM-1024");
+  const [isEncrypting, setIsEncrypting] = useState(false);
+  const messageEndRef = useRef<HTMLDivElement>(null);
+  const userProfile = getUserProfile();
 
-const Conversation: React.FC<ConversationProps> = ({
-  contactName,
-  contactAvatar,
-  contactInitials,
-  isOnline = false,
-  lastSeen,
-}) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      content: "Hi there! I'm using TetraCryptPQC for secure messaging.",
-      sender: "contact",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-      status: "read",
-      encrypted: true,
-    },
-    {
-      id: "2",
-      content: "That's great! I've been looking for a quantum-secure messaging platform.",
-      sender: "user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1), // 1 hour ago
-      status: "read",
-      encrypted: true,
-    },
-    {
-      id: "3",
-      content: "Have you checked out the new ML-KEM-1024 encryption? It's resistant to quantum attacks.",
-      sender: "contact",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-      status: "read",
-      encrypted: true,
-    },
-    {
-      id: "4",
-      content: "Yes, I'm impressed by the post-quantum cryptography implementation here.",
-      sender: "user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 25), // 25 minutes ago
-      status: "read",
-      encrypted: true,
-    },
-    {
-      id: "5",
-      content: "The zero-knowledge proofs for identity verification are also quite innovative.",
-      sender: "contact",
-      timestamp: new Date(Date.now() - 1000 * 60 * 20), // 20 minutes ago
-      status: "read",
-      encrypted: true,
-    },
-    {
-      id: "6",
-      content: "Absolutely. And I like how it integrates with StarkNet for decentralized message storage.",
-      sender: "user",
-      timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-      status: "delivered",
-      encrypted: true,
-    },
-    {
-      id: "7",
-      content: "The UM1 token integration for million-year sustainability is fascinating too.",
-      sender: "contact",
-      timestamp: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes ago
-      status: "read",
-      encrypted: true,
-    },
-  ]);
-
-  const [newMessage, setNewMessage] = useState("");
-  const [encryptionType, setEncryptionType] = useState("kyber");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Load conversation messages
   useEffect(() => {
-    scrollToBottom();
+    // Simulate loading messages from storage
+    const simulatedMessages: Message[] = [
+      {
+        id: "1",
+        sender: contact.id,
+        receiver: userProfile?.userId || "",
+        content: "Hey, how are you? Let's test this post-quantum encryption!",
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        encrypted: true,
+        signature: "valid-signature-hash",
+        verified: true,
+        encryptionType: "ML-KEM-1024"
+      },
+      {
+        id: "2",
+        sender: userProfile?.userId || "",
+        receiver: contact.id,
+        content: "I'm good! The ML-KEM-1024 encryption is working great. Let's see if we can also integrate StarkNet for identity.",
+        timestamp: new Date(Date.now() - 1800000).toISOString(),
+        encrypted: true,
+        signature: "valid-signature-hash",
+        verified: true,
+        encryptionType: "ML-KEM-1024"
+      },
+      {
+        id: "3",
+        sender: contact.id,
+        receiver: userProfile?.userId || "",
+        content: "Perfect! We should also test the hardware security module integration when you get a chance.",
+        timestamp: new Date(Date.now() - 900000).toISOString(),
+        encrypted: true,
+        signature: "valid-signature-hash",
+        verified: true,
+        encryptionType: "ML-KEM-1024"
+      }
+    ];
+    
+    setMessages(simulatedMessages);
+  }, [contact.id]);
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() === "") return;
-
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender: "user",
-      timestamp: new Date(),
-      status: "sending",
-      encrypted: true,
-    };
-
-    setMessages([...messages, message]);
-    setNewMessage("");
-
-    // Simulate message being sent
-    setTimeout(() => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) =>
-          msg.id === message.id ? { ...msg, status: "sent" } : msg
-        )
-      );
-
-      // Simulate message being delivered
-      setTimeout(() => {
-        setMessages((prevMessages) =>
-          prevMessages.map((msg) =>
-            msg.id === message.id ? { ...msg, status: "delivered" } : msg
-          )
-        );
-
-        // Simulate message being read
-        setTimeout(() => {
-          setMessages((prevMessages) =>
-            prevMessages.map((msg) =>
-              msg.id === message.id ? { ...msg, status: "read" } : msg
-            )
-          );
-        }, 2000);
-      }, 1000);
-    }, 1000);
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const getStatusIcon = (status: Message["status"]) => {
-    switch (status) {
-      case "sending":
-        return <Clock className="h-3 w-3 text-muted-foreground" />;
-      case "sent":
-        return <Check className="h-3 w-3 text-muted-foreground" />;
-      case "delivered":
-        return <CheckCheck className="h-3 w-3 text-muted-foreground" />;
-      case "read":
-        return <CheckCheck className="h-3 w-3 text-primary" />;
+  const handleSend = async () => {
+    if (!inputValue.trim() || !userProfile) return;
+    
+    try {
+      setIsEncrypting(true);
+      
+      // Generate a unique message ID
+      const messageId = crypto.randomUUID();
+      
+      // Get current timestamp
+      const timestamp = new Date().toISOString();
+      
+      // Encrypt the message content (in a real app, this would use the contact's public key)
+      // For demo purposes, we're just simulating the encryption
+      const encryptedContent = await encryptAES(inputValue, "demo-key");
+      
+      // Sign the message for authentication
+      const signature = await signMessage(inputValue, userProfile.keyPairs?.signature?.privateKey || "");
+      
+      // Create the new message
+      const newMessage: Message = {
+        id: messageId,
+        sender: userProfile.userId,
+        receiver: contact.id,
+        content: inputValue, // In a real app, this would be the encrypted content
+        timestamp,
+        encrypted: true,
+        signature,
+        verified: true, // Self-messages are always verified
+        encryptionType
+      };
+      
+      // Add to messages
+      setMessages(prev => [...prev, newMessage]);
+      
+      // Clear input
+      setInputValue("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    } finally {
+      setIsEncrypting(false);
     }
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Conversation Header */}
-      <div className="flex items-center justify-between p-3 border-b">
+      {/* Conversation header */}
+      <div className="flex items-center justify-between p-4 border-b">
+        {onBack && (
+          <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>
+          </Button>
+        )}
+        
         <div className="flex items-center gap-3">
           <Avatar>
-            {contactAvatar && <AvatarImage src={contactAvatar} alt={contactName} />}
-            <AvatarFallback>{contactInitials}</AvatarFallback>
+            <AvatarFallback>{contact.name[0]}</AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium">{contactName}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1">
-              {isOnline ? (
-                <>
-                  <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
-                  <span>Online</span>
-                </>
-              ) : lastSeen ? (
-                <>Last seen {lastSeen.toLocaleString()}</>
-              ) : (
-                <>Offline</>
-              )}
+            <h3 className="font-medium">{contact.name}</h3>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <span className="text-xs text-muted-foreground">Online</span>
             </div>
           </div>
         </div>
+        
         <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Paperclip className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs">Attach File (End-to-End Encrypted)</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <ChatInfoModal>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Info className="h-4 w-4" />
-            </Button>
-          </ChatInfoModal>
-
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreVertical className="h-4 w-4" />
+          <Badge variant="outline" className="flex items-center gap-1 bg-accent/10">
+            <Lock className="h-3 w-3" />
+            <span>{encryptionType}</span>
+          </Badge>
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal className="h-5 w-5" />
           </Button>
         </div>
       </div>
-
-      {/* Messages Area */}
+      
+      {/* Message list */}
       <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                "flex",
-                message.sender === "user" ? "justify-end" : "justify-start"
-              )}
-            >
-              <div className="flex flex-col max-w-[80%]">
-                <div
-                  className={cn(
-                    "px-4 py-2 rounded-lg",
-                    message.sender === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-none"
-                      : "bg-muted rounded-bl-none"
-                  )}
-                >
-                  {message.content}
-                </div>
-                <div
-                  className={cn(
-                    "flex items-center gap-1 mt-1 text-xs",
-                    message.sender === "user" ? "justify-end" : "justify-start"
-                  )}
-                >
-                  <div className="text-muted-foreground">
-                    {formatTime(message.timestamp)}
-                  </div>
-                  {message.encrypted && (
-                    <Lock className="h-3 w-3 text-muted-foreground" />
-                  )}
-                  {message.sender === "user" && (
-                    <div>{getStatusIcon(message.status)}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+        <MessageList 
+          messages={messages} 
+          currentUserId={userProfile?.userId || ""}
+          contactName={contact.name}
+        />
+        <div ref={messageEndRef} />
       </ScrollArea>
-
-      {/* Encryption Info Card */}
-      <Card className="mx-4 mb-4 border-accent/50 bg-accent/5">
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-accent" />
-              <div className="text-xs font-medium">Post-Quantum Encrypted</div>
-            </div>
-            <Badge variant="outline" className="text-xs h-5 px-2 gap-1 flex items-center">
-              <Lock className="h-3 w-3" />
-              <span>ML-KEM-1024</span>
-            </Badge>
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Your messages are secured with NIST-standardized post-quantum cryptography
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Message Input */}
-      <div className="p-4 border-t">
-        <div className="flex items-center justify-between mb-2">
-          <EncryptionSelector
-            value={encryptionType}
-            onChange={setEncryptionType}
-          />
-          <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
-            <a href="/documentation">
-              <FileText className="h-3.5 w-3.5 mr-1" />
-              Security Docs
-            </a>
-          </Button>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" className="h-10 w-10">
-            <Smile className="h-5 w-5" />
-          </Button>
-          <Input
-            placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            className="flex-1"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={newMessage.trim() === ""}
-            size="icon"
-            className="h-10 w-10"
-          >
-            <Send className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
+      
+      {/* Encryption selector */}
+      <EncryptionSelector 
+        value={encryptionType} 
+        onChange={setEncryptionType} 
+      />
+      
+      {/* Message input */}
+      <MessageInput
+        value={inputValue}
+        onChange={setInputValue}
+        onSend={handleSend}
+        isEncrypting={isEncrypting}
+      />
     </div>
   );
 };
