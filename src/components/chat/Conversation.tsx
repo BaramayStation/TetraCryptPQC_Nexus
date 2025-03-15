@@ -1,18 +1,12 @@
+
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { Button } from "@/components/ui/button";
 import { User, Check, CheckCheck, ChevronLeft, Shield, Database, Fingerprint, Lock } from "lucide-react";
 import MessageInput from "./MessageInput";
-import { Contact, Message, getMessagesForContact, markMessagesAsRead, getUserProfile, addMessage } from "@/lib/storage";
+import { Contact, Message, getMessages, getUserProfile, addMessage } from "@/lib/storage";
 import { cn } from "@/lib/utils";
-import { 
-  encryptMessage, 
-  encryptMessageChaCha,
-  signMessage, 
-  generateSessionKey,
-  homomorphicEncrypt,
-  verifyDID
-} from "@/lib/crypto";
+import { encryptAES, signMessage, generateSessionKey } from "@/lib/crypto";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -30,9 +24,9 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
   
   // Load user profile for security features
   const user = getUserProfile();
-  const hasWebDID = user && (user as any).didDocument;
-  const hasQKD = user && (user as any).qkdInfo;
-  const hasHSM = user && (user as any).hsmInfo;
+  const hasWebDID = user && user.didDocument;
+  const hasQKD = user && user.qkdInfo;
+  const hasHSM = user && user.hsmInfo;
 
   // Load Messages on Mount and Listen for Updates
   useEffect(() => {
@@ -45,7 +39,6 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
 
     initializeSessionKey();
     loadMessages();
-    markMessagesAsRead(contact.id);
 
     const interval = setInterval(loadMessages, 3000);
     return () => clearInterval(interval);
@@ -56,10 +49,10 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
   }, [messages]);
 
   const loadMessages = useCallback(() => {
-    const fetchedMessages = getMessagesForContact(contact.id);
+    if (!user) return;
+    const fetchedMessages = getMessages(user.id, contact.id);
     setMessages(fetchedMessages);
-    markMessagesAsRead(contact.id);
-  }, [contact.id]);
+  }, [contact.id, user]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -69,22 +62,10 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
     if (!user || !sessionKey) return;
 
     try {
-      // Encrypt message based on selected encryption mode
-      let encryptedContent: string;
-      switch (encryptionMode) {
-        case "chacha":
-          encryptedContent = await encryptMessageChaCha(content, sessionKey);
-          break;
-        case "homomorphic":
-          encryptedContent = await homomorphicEncrypt(content);
-          break;
-        case "aes":
-        default:
-          encryptedContent = await encryptMessage(content, sessionKey);
-          break;
-      }
-
-      // Sign message using SLH-DSA (NIST FIPS 205)
+      // Encrypt message
+      const encryptedContent = await encryptAES(content, sessionKey);
+      
+      // Sign message
       const signature = await signMessage(encryptedContent, user.keyPairs.signature.privateKey);
 
       // Create message object
@@ -92,20 +73,14 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
         id: crypto.randomUUID(),
         senderId: user.id,
         receiverId: contact.id,
-        encryptedContent,
-        timestamp: new Date().toISOString(),
+        content: content,
+        encrypted: true,
+        encryptedContent: encryptedContent,
         signature,
         status: 'sent',
+        timestamp: new Date().toISOString(),
         sessionKey,
       };
-
-      // Attach encryption metadata
-      (newMessage as any).encryptionMode = encryptionMode;
-
-      // If Web3 DID is available, verify it
-      if (hasWebDID) {
-        (newMessage as any).didVerified = await verifyDID((user as any).didDocument);
-      }
 
       // Store message
       addMessage(newMessage);
@@ -125,7 +100,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
     return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const renderEncryptionBadge = (mode: "aes" | "chacha" | "homomorphic") => {
+  const renderEncryptionBadge = (mode: string) => {
     return <Badge variant="outline" className="text-xs py-0">{mode.toUpperCase()}</Badge>;
   };
 
@@ -160,15 +135,15 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
           <p className="text-muted-foreground text-center">No messages yet.</p>
         ) : (
           messages.map((message) => {
-            const isUserMessage = message.senderId === user.id;
+            const isUserMessage = message.senderId === user?.id;
             return (
               <div key={message.id} className={cn("flex", isUserMessage ? "justify-end" : "justify-start")}>
                 <div className={cn("max-w-[75%] rounded-lg px-4 py-2", isUserMessage ? "bg-accent" : "glass")}>
-                  <p>{message.encryptedContent}</p>
+                  <p>{message.content}</p>
                   <div className="flex items-center justify-end gap-1 mt-1 text-xs">
-                    {renderEncryptionBadge((message as any).encryptionMode)}
+                    {renderEncryptionBadge(encryptionMode)}
                     <span>{formatTime(message.timestamp)}</span>
-                    {isUserMessage && renderMessageStatus(message.status)}
+                    {isUserMessage && message.status && renderMessageStatus(message.status)}
                   </div>
                 </div>
               </div>

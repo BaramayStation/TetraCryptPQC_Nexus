@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Contact, UserProfile, getContacts, getUserProfile } from "@/lib/storage";
 import UserSetup from "@/components/user/UserSetup";
@@ -8,11 +9,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Account, Contract } from "starknet";
-import { getFileFromIPFS } from "@/lib/helia";
-
-// ✅ StarkNet Messaging Contract Address
-const STARKNET_MESSAGING_CONTRACT = "0xYourStarkNetMessagingContractAddress";
 
 const Chat = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -52,50 +48,6 @@ const Chat = () => {
   const goToSettings = () => {
     navigate("/settings");
   };
-
-  // ✅ Fetch Messages from StarkNet & IPFS
-  const fetchMessagesFromStarkNet = async () => {
-    if (!user || !selectedContactId) return;
-
-    try {
-      const account = new Account(user.provider, user.starknetAddress);
-      const messagingContract = new Contract(
-        [
-          {
-            name: "get_message",
-            type: "function",
-            inputs: [
-              { name: "sender", type: "felt" },
-              { name: "receiver", type: "felt" },
-            ],
-            outputs: [{ name: "cid", type: "felt" }],
-          },
-        ],
-        STARKNET_MESSAGING_CONTRACT,
-        account
-      );
-
-      const response = await messagingContract.call("get_message", [
-        user.starknetAddress,
-        selectedContactId,
-      ]);
-
-      const cid = response.cid;
-      if (cid) {
-        console.log("🔹 Retrieved CID from StarkNet:", cid);
-        const encryptedMessage = await getFileFromIPFS(cid);
-        console.log("🔹 Decrypted Message:", encryptedMessage);
-      }
-    } catch (error) {
-      console.error("❌ StarkNet Message Fetch Failed:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedContactId) {
-      fetchMessagesFromStarkNet();
-    }
-  }, [selectedContactId]);
 
   if (loading) {
     return (
@@ -161,14 +113,14 @@ const Chat = () => {
           {selectedContact ? (
             <>
               <Conversation contact={selectedContact} />
-              <MessageList />
+              <MessageList contactId={selectedContact.id} />
             </>
           ) : (
             <div className="h-full flex items-center justify-center text-center p-4">
               <div className="max-w-md">
                 <h2 className="text-2xl font-semibold mb-2">Select a Contact</h2>
                 <p className="text-muted-foreground">
-                  Choose a contact from the list to start a secure, post-quantum encrypted conversation on StarkNet.
+                  Choose a contact from the list to start a secure, post-quantum encrypted conversation.
                 </p>
               </div>
             </div>

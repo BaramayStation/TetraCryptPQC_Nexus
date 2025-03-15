@@ -10,16 +10,6 @@ export default defineConfig(({ mode }) => {
     mode === "development" ? componentTagger() : null, // Only used in development
   ].filter(Boolean);
 
-  // Conditionally include vite-plugin-inspect if installed
-  try {
-    const viteInspect = require.resolve("vite-plugin-inspect");
-    if (viteInspect) {
-      plugins.push(require("vite-plugin-inspect").default());
-    }
-  } catch {
-    console.warn("vite-plugin-inspect not installed, skipping...");
-  }
-
   return {
     server: {
       host: "0.0.0.0", // Allows external access (securely)
@@ -48,7 +38,7 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ["ethers", "starknet"], // Splits Web3 dependencies
+            vendor: ["react", "react-dom"],
           },
         },
       },

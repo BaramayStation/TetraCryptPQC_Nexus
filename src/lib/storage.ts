@@ -8,6 +8,8 @@
 export interface UserProfile {
   id: string;
   name: string;
+  starknetAddress?: string;
+  sessionKey?: string;
   keyPairs: {
     pqkem: {
       algorithm: string;
@@ -23,6 +25,14 @@ export interface UserProfile {
       strength: string;
       standard: string;
     };
+    kyber?: {
+      publicKey: string;
+      privateKey: string;
+    };
+    falcon?: {
+      publicKey: string;
+      privateKey: string;
+    };
   };
   didDocument?: any;
   qkdInfo?: any;
@@ -35,6 +45,11 @@ export interface Contact {
   id: string;
   name: string;
   publicKey: string;
+  publicKeys?: {
+    kyber?: string;
+    falcon?: string;
+  };
+  unreadCount?: number;
   didDocument?: any;
   lastMessage?: string;
   lastMessageTime?: string;
@@ -46,12 +61,15 @@ export interface Message {
   senderId: string;
   receiverId: string;
   content: string;
+  encryptedContent?: string;
   encrypted: boolean;
   signature?: string;
+  status?: 'sent' | 'delivered' | 'read';
   timestamp: string;
+  sessionKey?: string;
 }
 
-// In-memory storage (would be replaced with IndexedDB or other persistent storage in production)
+// In-memory storage
 const storage = {
   currentUser: null as UserProfile | null,
   contacts: [] as Contact[],
@@ -141,9 +159,35 @@ export function getMessages(userId1: string, userId2: string): Message[] {
 }
 
 /**
- * Clear all storage (for testing/development)
+ * Get messages for a contact
  */
-export function clearStorage(): void {
+export function getMessagesForContact(contactId: string): Message[] {
+  const user = getUserProfile();
+  if (!user) return [];
+  
+  return getMessages(user.id, contactId);
+}
+
+/**
+ * Mark messages as read
+ */
+export function markMessagesAsRead(contactId: string): void {
+  const user = getUserProfile();
+  if (!user) return;
+  
+  storage.messages.forEach(message => {
+    if (message.senderId === contactId && message.receiverId === user.id) {
+      message.status = 'read';
+    }
+  });
+  
+  localStorage.setItem('messages', JSON.stringify(storage.messages));
+}
+
+/**
+ * Clear all storage data
+ */
+export function clearAllData(): void {
   storage.currentUser = null;
   storage.contacts = [];
   storage.messages = [];
@@ -151,4 +195,11 @@ export function clearStorage(): void {
   localStorage.removeItem('contacts');
   localStorage.removeItem('messages');
   console.log("Storage cleared");
+}
+
+/**
+ * Clear all storage (for testing/development)
+ */
+export function clearStorage(): void {
+  clearAllData();
 }

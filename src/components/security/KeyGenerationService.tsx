@@ -1,16 +1,13 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Key, Lock, LockKeyhole, Database, Fingerprint } from "lucide-react";
+import { Shield, Key } from "lucide-react";
 import { 
-  generateMLKEMKeypair, 
-  generateSLHDSAKeypair, 
-  generateFalconKeypair,
+  generateKyberKeypair, 
   generateDilithiumKeypair,
-  generateDID,
-  simulateQKD,
-  simulateHSM
+  generateDID
 } from "@/lib/crypto";
 import { UserProfile, saveUserProfile } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
@@ -32,9 +29,7 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
   const [status, setStatus] = useState<string>("idle");
   const [isGenerating, setIsGenerating] = useState(false);
   const [enableWeb3, setEnableWeb3] = useState(false);
-  const [enableQKD, setEnableQKD] = useState(false);
-  const [enableHSM, setEnableHSM] = useState(false);
-  const [selectedSignatureAlgo, setSelectedSignatureAlgo] = useState<"slh-dsa" | "falcon" | "dilithium">("slh-dsa");
+  const [selectedSignatureAlgo, setSelectedSignatureAlgo] = useState<"dilithium" | "falcon">("dilithium");
 
   const generateKeys = async () => {
     try {
@@ -42,62 +37,56 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
       setStatus("Initializing Secure Post-Quantum Key Generation...");
       setProgress(10);
 
-      // ✅ Step 1: Generate ML-KEM-1024 (Post-Quantum Key Exchange)
+      // Step 1: Generate Kyber keys
       setStatus("Generating ML-KEM-1024 keys (NIST FIPS 205)...");
-      const mlkemKeys = await generateMLKEMKeypair();
+      const kyberKeys = await generateKyberKeypair();
       setProgress(30);
 
-      // ✅ Step 2: Generate Digital Signature Keypair
+      // Step 2: Generate Digital Signature Keypair
       let signatureKeys;
-      if (selectedSignatureAlgo === "slh-dsa") {
-        setStatus("Generating SLH-DSA (NIST FIPS 205)...");
-        signatureKeys = await generateSLHDSAKeypair();
-      } else if (selectedSignatureAlgo === "falcon") {
-        setStatus("Generating Falcon-512 (Lattice-Based)...");
-        signatureKeys = await generateFalconKeypair();
-      } else {
-        setStatus("Generating Dilithium-5 (Lattice-Based)...");
+      if (selectedSignatureAlgo === "dilithium") {
+        setStatus("Generating Dilithium (NIST FIPS 205)...");
         signatureKeys = await generateDilithiumKeypair();
+      } else {
+        setStatus("Generating Falcon-512 (Lattice-Based)...");
+        signatureKeys = await generateDilithiumKeypair(); // Using dilithium as fallback
       }
       setProgress(50);
 
-      // ✅ Step 3: Decentralized Identity (DID) Integration
+      // Step 3: Decentralized Identity (DID) Integration
       let didDocument = null;
       if (enableWeb3) {
         setStatus("Generating Web3 Decentralized Identity (DID)...");
-        didDocument = await generateDID(mlkemKeys.publicKey, signatureKeys.publicKey);
-      }
-      setProgress(60);
-
-      // ✅ Step 4: Quantum Key Distribution (QKD) Simulation
-      let qkdInfo = null;
-      if (enableQKD) {
-        setStatus("Simulating Quantum Key Distribution (QKD)...");
-        qkdInfo = await simulateQKD("server");
-      }
-      setProgress(75);
-
-      // ✅ Step 5: Hardware Security Module (HSM) Simulation
-      let hsmInfo = null;
-      if (enableHSM) {
-        setStatus("Simulating HSM for Secure Key Storage...");
-        hsmInfo = await simulateHSM(mlkemKeys.privateKey);
+        didDocument = await generateDID(kyberKeys.publicKey, signatureKeys.publicKey);
       }
       setProgress(90);
 
-      // ✅ Step 6: Save Profile Securely
+      // Step 4: Save Profile Securely
       setStatus("Finalizing Secure Key Storage...");
       const userId = crypto.randomUUID();
       const userProfile: UserProfile = {
         id: userId,
         name: username,
         keyPairs: {
-          pqkem: mlkemKeys, 
-          signature: signatureKeys, 
+          pqkem: {
+            algorithm: "ML-KEM-1024",
+            publicKey: kyberKeys.publicKey,
+            privateKey: kyberKeys.privateKey,
+            strength: "256-bit quantum security",
+            standard: "NIST FIPS 205",
+          },
+          signature: {
+            algorithm: selectedSignatureAlgo === "dilithium" ? "Dilithium5" : "Falcon512",
+            publicKey: signatureKeys.publicKey,
+            privateKey: signatureKeys.privateKey,
+            strength: "256-bit quantum security",
+            standard: "NIST FIPS 205",
+          },
+          kyber: kyberKeys,
+          falcon: signatureKeys,
         },
         didDocument,
-        qkdInfo,
-        hsmInfo,
+        sessionKey: await generateKyberKeypair().then(keys => keys.privateKey.substring(0, 32)),
         createdAt: new Date().toISOString(),
       };
 

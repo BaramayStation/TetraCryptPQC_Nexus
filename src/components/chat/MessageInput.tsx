@@ -1,13 +1,10 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Lock, ShieldCheck, Database } from "lucide-react";
-import { encryptAES, signMessage, generateZKProof } from "@/lib/crypto";
+import { encryptAES } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
-import { signDIDTransaction } from "@/lib/did";
-
-// ✅ Decentralized WebSocket Server
-const WEBSOCKET_URL = "ws://localhost:8080";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
@@ -18,59 +15,24 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [sending, setSending] = useState(false);
   const user = getUserProfile();
-  const hasWebDID = user && (user as any).didDocument;
+  const hasWebDID = user && user.didDocument;
 
-  // ✅ Send Secure Message
+  // Handle message submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() === "" || sending) return;
     setSending(true);
 
     try {
-      console.log("🔹 Encrypting and Signing Message...");
+      console.log("🔹 Sending Message...");
       
-      // ✅ Encrypt Message (AES-256-GCM + PQC)
-      const encryptedContent = await encryptAES(message.trim(), user.sessionKey);
+      // Send message to parent component
+      onSendMessage(message.trim());
 
-      // ✅ Sign Message using SLH-DSA
-      const signature = await signMessage(encryptedContent, user.keyPairs.signature.privateKey);
-
-      // ✅ Generate zk-STARK Proof
-      const zkProof = await generateZKProof(encryptedContent);
-
-      // ✅ Sign Message with Decentralized Identity (DID)
-      let didSignature = null;
-      if (hasWebDID) {
-        didSignature = await signDIDTransaction(user.didDocument, encryptedContent);
-      }
-
-      // ✅ Construct Secure Message
-      const secureMessage = {
-        sender: user.starknetAddress,
-        receiver: "0xReceiverAddress", // Replace dynamically for actual chat partner
-        content: encryptedContent,
-        signature,
-        zkProof,
-        didSignature,
-        didVerified: hasWebDID ? "✔ Verified" : "❌ Unverified",
-        timestamp: Date.now(),
-      };
-
-      // ✅ Send Message to P2P WebSocket Network
-      console.log("🔹 Sending Message via WebSocket...");
-      const ws = new WebSocket(WEBSOCKET_URL);
-      ws.onopen = () => {
-        ws.send(JSON.stringify({ event: "MessageSent", data: secureMessage }));
-        ws.close();
-      };
-
-      // ✅ Send Secure Message to UI
-      onSendMessage(JSON.stringify(secureMessage));
-
-      // ✅ Clear Input
+      // Clear input
       setMessage("");
     } catch (error) {
-      console.error("❌ Message encryption failed:", error);
+      console.error("❌ Message send failed:", error);
     } finally {
       setSending(false);
     }

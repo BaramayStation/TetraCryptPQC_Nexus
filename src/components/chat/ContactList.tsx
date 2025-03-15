@@ -26,8 +26,7 @@ const ContactList: React.FC<ContactListProps> = ({
   const [showAddContact, setShowAddContact] = useState(false);
   const [newContactName, setNewContactName] = useState("");
   const [newContactId, setNewContactId] = useState("");
-  const [newContactKyberKey, setNewContactKyberKey] = useState("");
-  const [newContactFalconKey, setNewContactFalconKey] = useState("");
+  const [newContactKey, setNewContactKey] = useState("");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -41,10 +40,7 @@ const ContactList: React.FC<ContactListProps> = ({
     const newContact: Contact = {
       id: newContactId || crypto.randomUUID(),
       name: newContactName.trim(),
-      publicKeys: {
-        kyber: newContactKyberKey || "[Placeholder Kyber Key]",
-        falcon: newContactFalconKey || "[Placeholder Falcon Key]",
-      },
+      publicKey: newContactKey || "[Placeholder Public Key]",
       unreadCount: 0,
       lastMessage: "",
     };
@@ -55,8 +51,7 @@ const ContactList: React.FC<ContactListProps> = ({
     // Reset form
     setNewContactName("");
     setNewContactId("");
-    setNewContactKyberKey("");
-    setNewContactFalconKey("");
+    setNewContactKey("");
     setShowAddContact(false);
     setIsAdvancedOpen(false);
   };
@@ -94,20 +89,11 @@ const ContactList: React.FC<ContactListProps> = ({
             </div>
             
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Kyber Public Key (optional)</label>
+              <label className="text-xs text-muted-foreground">Public Key (optional)</label>
               <Input
-                placeholder="Kyber Public Key"
-                value={newContactKyberKey}
-                onChange={(e) => setNewContactKyberKey(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Falcon Public Key (optional)</label>
-              <Input
-                placeholder="Falcon Public Key"
-                value={newContactFalconKey}
-                onChange={(e) => setNewContactFalconKey(e.target.value)}
+                placeholder="Public Key"
+                value={newContactKey}
+                onChange={(e) => setNewContactKey(e.target.value)}
               />
             </div>
           </div>
@@ -179,7 +165,7 @@ const ContactList: React.FC<ContactListProps> = ({
               )}
             </div>
             
-            {contact.unreadCount > 0 && (
+            {contact.unreadCount && contact.unreadCount > 0 && (
               <div className="w-5 h-5 rounded-full bg-accent flex items-center justify-center">
                 <span className="text-xs text-white">{contact.unreadCount}</span>
               </div>

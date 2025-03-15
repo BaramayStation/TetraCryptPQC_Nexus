@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft, User, Key, Shield, Settings as SettingsIcon, LogOut, Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { UserProfile, clearAllData, getUserProfile, saveUserProfile } from "@/lib/storage";
+import { UserProfile, clearStorage, getUserProfile, saveUserProfile } from "@/lib/storage";
 
 const Settings = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -26,7 +26,7 @@ const Settings = () => {
   }, [navigate]);
 
   const handleLogout = () => {
-    clearAllData();
+    clearStorage();
     toast({
       title: "Logged out",
       description: "Your session has been ended and all data cleared.",
@@ -60,6 +60,12 @@ const Settings = () => {
   };
 
   if (!user) return null;
+
+  // Get public/private keys from the appropriate location in the user object
+  const publicKey = user.keyPairs.pqkem?.publicKey || "";
+  const privateKey = user.keyPairs.pqkem?.privateKey || "";
+  const sigPublicKey = user.keyPairs.signature?.publicKey || "";
+  const sigPrivateKey = user.keyPairs.signature?.privateKey || "";
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -152,7 +158,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">Public Key</label>
                       <div className="relative">
                         <Input
-                          value={user.keyPairs.kyber.publicKey}
+                          value={publicKey}
                           readOnly
                           className="font-mono text-xs pr-10"
                         />
@@ -160,7 +166,7 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.kyber.publicKey, "ML-KEM public")}
+                          onClick={() => handleCopyKey(publicKey, "ML-KEM public")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -183,7 +189,7 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.kyber.privateKey, "ML-KEM private")}
+                          onClick={() => handleCopyKey(privateKey, "ML-KEM private")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -207,7 +213,7 @@ const Settings = () => {
                       <label className="text-sm font-medium">Public Key</label>
                       <div className="relative">
                         <Input
-                          value={user.keyPairs.falcon.publicKey}
+                          value={sigPublicKey}
                           readOnly
                           className="font-mono text-xs pr-10"
                         />
@@ -215,7 +221,7 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.falcon.publicKey, "SLH-DSA public")}
+                          onClick={() => handleCopyKey(sigPublicKey, "SLH-DSA public")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
@@ -238,7 +244,7 @@ const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="absolute right-1 top-1/2 transform -translate-y-1/2"
-                          onClick={() => handleCopyKey(user.keyPairs.falcon.privateKey, "SLH-DSA private")}
+                          onClick={() => handleCopyKey(sigPrivateKey, "SLH-DSA private")}
                         >
                           <Copy className="h-4 w-4" />
                         </Button>
