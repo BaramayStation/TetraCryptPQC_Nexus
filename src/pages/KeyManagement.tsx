@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/layout/MainLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +13,7 @@ import { getUserProfile } from "@/lib/storage";
 import { recordAuditEvent } from "@/lib/enterprise/auditLog";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { PQCKey } from "@/lib/crypto";
 
 const KeyManagement = () => {
   const [profile, setProfile] = useState(() => getUserProfile());

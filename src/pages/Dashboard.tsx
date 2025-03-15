@@ -7,9 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Shield, Lock, Key, Database, Server, ExternalLink, AlertTriangle } from "lucide-react";
 import { getUserProfile } from "@/lib/storage";
-import { generateComplianceReport, scanForThreats } from "@/lib/pqcrypto";
+import { generateComplianceReport, scanForThreats } from "@/lib/crypto";
 import { useToast } from "@/components/ui/use-toast";
-import MainLayout from "@/layout/MainLayout";
+import { MainLayout } from "@/layout/MainLayout";
 import SecurityDashboard from "@/components/dashboard/SecurityDashboard";
 import EnterpriseSecurityAnalysis from "@/components/enterprise/EnterpriseSecurityAnalysis";
 
@@ -44,6 +44,18 @@ interface ComplianceReport {
   findings: ComplianceFinding[];
   overallScore: number;
   validUntil: string;
+}
+
+// Define props for components
+interface SecurityDashboardProps {
+  userProfile: any;
+  complianceScore: number;
+  threatCount: number;
+  isLoading: boolean;
+}
+
+interface EnterpriseSecurityAnalysisProps {
+  threats: SecurityThreatIntelligence[];
 }
 
 const Dashboard: React.FC = () => {

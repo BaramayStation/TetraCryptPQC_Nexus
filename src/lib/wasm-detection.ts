@@ -40,7 +40,12 @@ export async function detectBulkMemorySupport(): Promise<boolean> {
 /**
  * Log WebAssembly support information
  */
-export async function logWasmSupport(): Promise<void> {
+export async function logWasmSupport(): Promise<{isSupported: boolean, isOptimal: boolean}> {
   console.log("🔹 TetraCrypt Development Mode - Using simulated cryptographic operations");
   console.log("🔹 WebAssembly support check skipped");
+  
+  return {
+    isSupported: true,
+    isOptimal: true
+  };
 }

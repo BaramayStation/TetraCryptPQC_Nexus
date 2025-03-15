@@ -35,10 +35,20 @@ export async function initPQCEnvironment() {
   };
 }
 
+// Define the key type with created property
+export interface PQCKey {
+  publicKey: string;
+  privateKey: string;
+  created: string;
+  algorithm: string;
+  strength: string;
+  standard: string;
+}
+
 /**
  * Generate Kyber keypair for post-quantum key encapsulation
  */
-export async function generateKyberKeypair() {
+export async function generateKyberKeypair(): Promise<PQCKey> {
   console.log("🔹 Generating Kyber-1024 keypair");
   
   // Simulate key generation with appropriate key sizes
@@ -58,7 +68,7 @@ export async function generateKyberKeypair() {
 /**
  * Generate Dilithium keypair for post-quantum signatures
  */
-export async function generateDilithiumKeypair() {
+export async function generateDilithiumKeypair(): Promise<PQCKey> {
   console.log("🔹 Generating Dilithium keypair");
   
   // Simulate Dilithium key generation
@@ -78,7 +88,7 @@ export async function generateDilithiumKeypair() {
 /**
  * Generate Falcon keypair for post-quantum signatures
  */
-export async function generateFalconKeypair() {
+export async function generateFalconKeypair(): Promise<PQCKey> {
   console.log("🔹 Generating Falcon keypair");
   
   // Simulate Falcon key generation
@@ -104,6 +114,26 @@ export const generateMLKEMKeypair = generateKyberKeypair;
  * Generate SLH-DSA keypair alias
  */
 export const generateSLHDSAKeypair = generateDilithiumKeypair;
+
+/**
+ * Generate BIKE keypair for alternative KEM
+ */
+export async function generateBIKEKeypair(): Promise<PQCKey> {
+  console.log("🔹 Generating BIKE keypair");
+  
+  // Simulate BIKE key generation
+  const publicKey = generateRandomHex(36);
+  const privateKey = generateRandomHex(72);
+  
+  return {
+    publicKey,
+    privateKey,
+    created: new Date().toISOString(),
+    algorithm: "BIKE-L1",
+    strength: "128-bit",
+    standard: "NIST Round 4 Alternate"
+  };
+}
 
 /**
  * Generate session key for secure messaging
