@@ -1,3 +1,4 @@
+
 import React from "react";
 import { MainLayout } from "@/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,8 @@ import {
   CircleHelp, 
   Download, 
   BookOpen, 
-  Lightbulb
+  Lightbulb,
+  Server
 } from "lucide-react";
 
 const Documentation = () => {
@@ -197,12 +199,12 @@ const Documentation = () => {
             </Card>
           </TabsContent>
           
-          {/* Other tabs would be implemented similarly */}
+          {/* Security Tab */}
           <TabsContent value="security">
             <Card>
               <CardHeader>
                 <CardTitle>Security Documentation</CardTitle>
-                <CardDescription>Security models and compliance information</CardHeader>
+                <CardDescription>Security models and compliance information</CardDescription>
               </CardHeader>
               <CardContent>
                 <p>Security documentation content would go here...</p>
@@ -210,6 +212,7 @@ const Documentation = () => {
             </Card>
           </TabsContent>
           
+          {/* API Tab */}
           <TabsContent value="api">
             <Card>
               <CardHeader>
@@ -222,6 +225,7 @@ const Documentation = () => {
             </Card>
           </TabsContent>
           
+          {/* FAQ Tab */}
           <TabsContent value="faq">
             <Card>
               <CardHeader>
