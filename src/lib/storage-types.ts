@@ -6,7 +6,7 @@
 // StarkNet ID structure
 export interface StarkNetID {
   id: string;
-  type: string;  // Required field to match UserProfile expectations
+  type: string;
   address: string;
   starkKey: string;
   created: string;
@@ -47,10 +47,48 @@ export interface PQCKeyPair {
   };
 }
 
+// HSM Information structure
+export interface HSMInfo {
+  id: string;
+  type: string;
+  provider: string;
+  securityLevel: string;
+  lastVerified: string;
+  capabilities: string[];
+}
+
+// QKD Information structure
+export interface QKDInfo {
+  id: string;
+  protocol: string;
+  keyRate: number;
+  qberRate: number;
+  distance: number;
+  lastExchange: string;
+}
+
+// Security Threat Intelligence structure
+export interface SecurityThreatIntelligence {
+  id: string;
+  threats: Array<{
+    id: string;
+    type: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    source: string;
+    details: string;
+    mitigationStatus: 'unmitigated' | 'mitigating' | 'mitigated';
+    discoveredAt: string;
+  }>;
+  lastUpdated: string;
+}
+
 // User Profile structure
 export interface UserProfile {
   id: string;
+  userId: string;
   displayName: string;
+  name?: string;
+  username?: string;
   email?: string;
   publicKey?: string;
   privateKey?: string;
@@ -61,17 +99,26 @@ export interface UserProfile {
   updated: string;
   securityLevel: "standard" | "advanced" | "quantum";
   preferences?: Record<string, any>;
+  hsmInfo?: HSMInfo;
+  qkdInfo?: QKDInfo;
+  signatureKey?: string;
 }
 
 // Contact structure
 export interface Contact {
   id: string;
   displayName: string;
+  name: string;
   publicKey: string;
   didDocument?: DIDDocument;
   starkNetId?: string;
   created: string;
   notes?: string;
+  status: 'online' | 'offline' | 'away';
+  lastMessage?: string;
+  lastMessageTime?: string;
+  unreadCount?: number;
+  signatureKey?: string;
 }
 
 // Message structure
@@ -85,6 +132,9 @@ export interface Message {
   signature?: string;
   timestamp: string;
   status: "sent" | "delivered" | "read";
+  verified?: boolean;
+  encrypted?: boolean;
+  encryptionType?: string;
 }
 
 // Conversation structure
@@ -94,4 +144,14 @@ export interface Conversation {
   lastMessage?: Message;
   updated: string;
   created: string;
+}
+
+// Hardware Security Module types
+export enum HSMType {
+  TPM = "TPM",
+  SGX = "SGX",
+  SEV = "SEV",
+  YUBIKEY = "YUBIKEY",
+  HSM = "HSM",
+  TRUSTZONE = "TRUSTZONE"
 }

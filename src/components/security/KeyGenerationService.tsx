@@ -1,32 +1,31 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { 
   generateMLKEMKeypair,
   generateSLHDSAKeypair,
   generateFalconKeypair,
   generateBIKEKeypair 
 } from "@/lib/pqcrypto";
-import { shield } from 'lucide-react';
 import { PQCKey } from '@/lib/crypto';
 import { toast } from "@/components/ui/use-toast";
+import { Shield, Key } from "lucide-react";
 
+// KeyGenerationService Component
 const KeyGenerationService: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState<'ml-kem' | 'slh-dsa' | 'falcon' | 'bike'>('ml-kem');
-  const [generatedKey, setGeneratedKey] = useState<PQCKey | null>(null);
+  const [algorithm, setAlgorithm] = useState('ml-kem');
+  const [generatedKeys, setGeneratedKeys] = useState<PQCKey | null>(null);
 
-  const handleGenerateKey = async () => {
+  const handleGenerateKeys = async () => {
     setIsGenerating(true);
-    setGeneratedKey(null);
-    
     try {
       let keyPair: PQCKey;
       
-      switch (selectedAlgorithm) {
+      switch (algorithm) {
         case 'ml-kem':
           keyPair = await generateMLKEMKeypair();
           break;
@@ -43,17 +42,17 @@ const KeyGenerationService: React.FC = () => {
           throw new Error('Invalid algorithm selected');
       }
       
-      setGeneratedKey(keyPair);
+      setGeneratedKeys(keyPair);
       
       toast({
-        title: "PQC Key Generated",
-        description: `Successfully generated ${keyPair.algorithm} keypair`,
+        title: "Keys Generated Successfully",
+        description: `Generated ${keyPair.algorithm} key pair with ${keyPair.strength} security level.`,
       });
     } catch (error) {
-      console.error('Error generating key:', error);
+      console.error("Error generating keys:", error);
       toast({
         title: "Key Generation Failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: "There was an error generating your keys. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -64,129 +63,85 @@ const KeyGenerationService: React.FC = () => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
-            <path d={shield} />
-          </svg>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-primary" />
           Post-Quantum Key Generation
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <Tabs 
-          value={selectedAlgorithm} 
-          onValueChange={(value) => setSelectedAlgorithm(value as any)}
-          className="w-full"
-        >
-          <TabsList className="grid grid-cols-4 mb-4">
-            <TabsTrigger value="ml-kem">ML-KEM</TabsTrigger>
-            <TabsTrigger value="slh-dsa">SLH-DSA</TabsTrigger>
-            <TabsTrigger value="falcon">Falcon</TabsTrigger>
-            <TabsTrigger value="bike">BIKE</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="ml-kem" className="space-y-4">
-            <div>
-              <h3 className="font-medium">ML-KEM (Kyber)</h3>
-              <p className="text-sm text-muted-foreground">
-                NIST FIPS 205 approved lattice-based key encapsulation mechanism.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge>FIPS 205</Badge>
-                <Badge>256-bit security</Badge>
-                <Badge>Lattice-based</Badge>
-              </div>
+      <CardContent className="space-y-4">
+        <div>
+          <h3 className="text-sm font-medium mb-3">Select Algorithm Type</h3>
+          <RadioGroup value={algorithm} onValueChange={setAlgorithm} className="flex flex-col space-y-2">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="ml-kem" id="ml-kem" />
+              <Label htmlFor="ml-kem" className="flex items-center gap-2">
+                <span className="font-medium">ML-KEM (Kyber)</span>
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">FIPS 205</span>
+              </Label>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="slh-dsa" className="space-y-4">
-            <div>
-              <h3 className="font-medium">SLH-DSA (Dilithium)</h3>
-              <p className="text-sm text-muted-foreground">
-                NIST FIPS 206 approved lattice-based digital signature algorithm.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge>FIPS 206</Badge>
-                <Badge>256-bit security</Badge>
-                <Badge>Lattice-based</Badge>
-              </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="slh-dsa" id="slh-dsa" />
+              <Label htmlFor="slh-dsa" className="flex items-center gap-2">
+                <span className="font-medium">SLH-DSA (Dilithium)</span>
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">FIPS 206</span>
+              </Label>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="falcon" className="space-y-4">
-            <div>
-              <h3 className="font-medium">Falcon</h3>
-              <p className="text-sm text-muted-foreground">
-                Fast-Fourier lattice-based compact signatures.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge>NIST Round 4</Badge>
-                <Badge>128-bit security</Badge>
-                <Badge>Alternate</Badge>
-              </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="falcon" id="falcon" />
+              <Label htmlFor="falcon">Falcon (Alternate)</Label>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="bike" className="space-y-4">
-            <div>
-              <h3 className="font-medium">BIKE</h3>
-              <p className="text-sm text-muted-foreground">
-                Bit Flipping Key Encapsulation based on QC-MDPC codes.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Badge>NIST Round 4</Badge>
-                <Badge>192-bit security</Badge>
-                <Badge>Code-based</Badge>
-              </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="bike" id="bike" />
+              <Label htmlFor="bike">BIKE (Alternate)</Label>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-      <CardFooter className="flex justify-between">
+          </RadioGroup>
+        </div>
+
         <Button 
-          onClick={handleGenerateKey} 
-          disabled={isGenerating}
+          onClick={handleGenerateKeys} 
+          disabled={isGenerating} 
           className="w-full"
         >
-          {isGenerating ? "Generating..." : "Generate Key Pair"}
+          {isGenerating ? (
+            <>Generating Keys...</>
+          ) : (
+            <>
+              <Key className="mr-2 h-4 w-4" />
+              Generate Post-Quantum Keys
+            </>
+          )}
         </Button>
-      </CardFooter>
-      
-      {generatedKey && (
-        <CardContent className="border-t pt-4 mt-4">
-          <div className="space-y-4">
+
+        {generatedKeys && (
+          <div className="mt-4 space-y-4 border-t pt-4">
             <div>
-              <h3 className="font-medium">Generated Key Details</h3>
-              <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                <div className="font-medium">Algorithm:</div>
-                <div>{generatedKey.algorithm}</div>
-                
-                <div className="font-medium">Security Strength:</div>
-                <div>{generatedKey.strength}</div>
-                
-                <div className="font-medium">Standard:</div>
-                <div>{generatedKey.standard}</div>
-                
-                <div className="font-medium">Created:</div>
-                <div>{new Date(generatedKey.created).toLocaleString()}</div>
+              <h3 className="text-sm font-medium">Generated Keys Info</h3>
+              <div className="grid grid-cols-2 gap-y-2 text-sm mt-2">
+                <span className="text-muted-foreground">Algorithm:</span>
+                <span>{generatedKeys.algorithm}</span>
+                <span className="text-muted-foreground">Security Level:</span>
+                <span>{generatedKeys.strength}</span>
+                <span className="text-muted-foreground">Standard:</span>
+                <span>{generatedKeys.standard}</span>
               </div>
             </div>
             
             <div>
-              <h3 className="font-medium">Public Key (first 24 chars)</h3>
-              <div className="mt-1 p-2 bg-muted rounded font-mono text-xs overflow-hidden text-ellipsis">
-                {generatedKey.publicKey.substring(0, 24)}...
+              <h3 className="text-sm font-medium">Public Key (truncated)</h3>
+              <div className="p-2 bg-muted rounded-md mt-1 font-mono text-xs">
+                {generatedKeys.publicKey.substring(0, 40)}...
               </div>
             </div>
             
             <div>
-              <h3 className="font-medium">Private Key (first 20 chars)</h3>
-              <div className="mt-1 p-2 bg-muted rounded font-mono text-xs overflow-hidden text-ellipsis">
-                {generatedKey.privateKey.substring(0, 20)}...
+              <h3 className="text-sm font-medium">Private Key (truncated)</h3>
+              <div className="p-2 bg-muted rounded-md mt-1 font-mono text-xs">
+                {generatedKeys.privateKey.substring(0, 40)}...
               </div>
             </div>
           </div>
-        </CardContent>
-      )}
+        )}
+      </CardContent>
     </Card>
   );
 };
