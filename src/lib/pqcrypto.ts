@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Cryptographic Operations
  * Core post-quantum cryptography functions for the secure messaging system
@@ -195,4 +194,34 @@ export async function encryptMessage(message: string, publicKey: Uint8Array): Pr
 
 export async function decryptMessage(ciphertext: Uint8Array, encryptedData: string, privateKey: Uint8Array): Promise<string> {
   return decryptAES(encryptedData, privateKey);
+}
+
+export async function scanForThreats(content: string | Uint8Array, options?: any): Promise<boolean> {
+  console.log("Scanning for threats with PQC algorithms", 
+    typeof content === 'string' ? `content length: ${content.length}` : `buffer length: ${content.byteLength}`);
+  // Mock implementation, always returns false in dev environment
+  return false;
+}
+
+export async function generateSessionKey(peerPublicKey: string): Promise<Uint8Array> {
+  console.log("Generating session key with peer public key:", peerPublicKey);
+  // Mock implementation, returns random bytes
+  const sessionKey = new Uint8Array(32);
+  crypto.getRandomValues(sessionKey);
+  return sessionKey;
+}
+
+// Helper function for TypeScript compatibility between different PQCKey types
+export function convertPQCKeyFormat(key: any): any {
+  // If the key has Uint8Array properties, convert them to string
+  if (key && key.publicKey instanceof Uint8Array) {
+    return {
+      ...key,
+      publicKey: Array.from(key.publicKey).map(b => b.toString(16).padStart(2, '0')).join(''),
+      privateKey: key.privateKey instanceof Uint8Array 
+        ? Array.from(key.privateKey).map(b => b.toString(16).padStart(2, '0')).join('')
+        : key.privateKey
+    };
+  }
+  return key;
 }

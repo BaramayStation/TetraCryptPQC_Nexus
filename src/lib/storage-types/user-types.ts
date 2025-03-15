@@ -17,10 +17,10 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
   lastLogin: string;
-  didDocument?: DIDDocument;
-  hsmInfo?: HSMInfo;
-  qkdInfo?: QKDInfo;
-  starkNetId?: string;
+  didDocument?: DIDDocument; // Added didDocument property
+  hsmInfo?: HSMInfo; // Added hsmInfo property
+  qkdInfo?: QKDInfo; // Added qkdInfo property
+  starkNetId?: string; // Added starkNetId property
 }
 
 export interface DIDDocument {

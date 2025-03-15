@@ -1,42 +1,49 @@
 
 /**
- * TetraCryptPQC PQC Environment Type Definitions
+ * TetraCryptPQC Specific Type Definitions
  */
+
+export interface StarkNetID {
+  id: string;
+  domain: string;
+  address: string;
+  created: string;
+  lastVerified: string;
+  status: 'active' | 'expired' | 'revoked';
+  proofOfOwnership: string;
+  linkedAccounts: string[];
+}
 
 export interface PQSCIFEnvironment {
   id: string;
   name: string;
-  status: 'active' | 'inactive' | 'compromised';
-  level: 'top-secret' | 'secret' | 'confidential' | 'restricted' | 'unclassified';
+  type: 'development' | 'testing' | 'production' | 'isolated';
+  status: 'running' | 'stopped' | 'initializing' | 'error';
   created: string;
   lastAccessed: string;
-  algorithms: {
-    kem: string;
-    signature: string;
-    symmetric: string;
-  };
-  physicalIsolation: boolean;
+  securityLevel: 'standard' | 'classified' | 'top-secret';
+  isolationLevel: number;
+  verifiedBoot: boolean;
   hardwareBackedKeys: boolean;
-  airGapped: boolean;
+  attestationStatus: 'verified' | 'unverified' | 'failed';
+  sessionExpiry: string;
+  allowedOperations: string[];
 }
 
 export interface SecureCommand {
   id: string;
   command: string;
+  parameters: string[];
   timestamp: string;
-  userId: string;
-  environment: string;
-  signature: string;
-  status: 'pending' | 'executed' | 'failed' | 'rejected';
-  result?: string;
-  error?: string;
-}
-
-export interface StarkNetID {
-  id: string;
-  address: string;
-  timestamp: string;
-  verified: boolean;
-  proofOfIdentity?: string;
-  validUntil?: string;
+  origin: string;
+  authorized: boolean;
+  executionStatus: 'pending' | 'running' | 'completed' | 'failed';
+  responseCode: number;
+  output: string;
+  securityClassification: string;
+  auditTrail: {
+    authorized_by: string;
+    execution_time: number;
+    verification_status: string;
+  };
 }

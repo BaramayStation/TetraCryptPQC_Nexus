@@ -11,9 +11,6 @@ export * from "./user-types";
 export * from "./secure-channel-types";
 export * from "./pqc-types";
 export * from "./sync-types";
-
-// Create mock modules for missing files
-// These will be replaced with actual implementations later
 export * from "./decentralized-storage";
 export * from "./threat-detection";
 export * from "./identity-verification";
@@ -33,9 +30,29 @@ export type {
   InfrastructureNodeType,
   Threat,
   AIThreatDetection,
-  AISecurityPolicy
+  AISecurityPolicy,
+  WebRTCPeerStatus
 } from "./security-types";
 export type { SecureContainerConfig, ContainerSecurityProfile } from "./security-types";
+export type { SecureServiceMesh, SecureInfraNode } from "./security-types";
 export type { SecureChannel, SecureChannelMetrics } from "./secure-channel-types";
 export type { StarkNetID, PQSCIFEnvironment, SecureCommand } from "./pqc-types";
 export type { AISyncStatus } from "./sync-types";
+export type {
+  DecentralizedStorageNode,
+  DeploymentEnvironment,
+  AirGappedBackup,
+  EMPHardenedSystem,
+  SatelliteConnection,
+  MilitaryMeshNetwork,
+  UndergroundCommunicationNode,
+  QuantumSecureLink
+} from "./decentralized-storage";
+export type {
+  ThreatDetectionResult,
+  SecurityAlert
+} from "./threat-detection";
+export type {
+  VerificationRequest,
+  IdentityCredential
+} from "./identity-verification";

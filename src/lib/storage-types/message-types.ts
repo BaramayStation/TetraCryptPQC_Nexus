@@ -9,23 +9,23 @@ export interface Message {
   id: string;
   senderId: string;
   recipientId?: string;
-  receiverId: string;
+  receiverId: string; // Added receiverId property
   content: string;
   timestamp: string;
   encrypted?: boolean;
   signature?: string;
-  verified?: boolean;
+  verified?: boolean; // Added verified property
   encryptionType?: string;
-  status?: "sent" | "delivered" | "read" | "failed";
-  kemType?: string;
-  pqSignatureType?: string;
-  selfHealingStatus?: "active" | "healing" | "healed" | "compromised";
-  zkProofVerified?: boolean;
-  didVerified?: boolean;
-  starkNetValidated?: boolean;
-  webrtcSecured?: boolean;
-  encryptedContent?: string;
-  encryptionAlgorithm?: string;
+  status?: "sent" | "delivered" | "read" | "failed"; // Added status property
+  kemType?: string; // Added kemType property
+  pqSignatureType?: string; // Added pqSignatureType property
+  selfHealingStatus?: "active" | "healing" | "healed" | "compromised"; // Added selfHealingStatus property
+  zkProofVerified?: boolean; // Added zkProofVerified property
+  didVerified?: boolean; // Added didVerified property
+  starkNetValidated?: boolean; // Added starkNetValidated property
+  webrtcSecured?: boolean; // Added webrtcSecured property
+  encryptedContent?: string; // Added encryptedContent property
+  encryptionAlgorithm?: string; // Added encryptionAlgorithm property
   integrityHash?: string;
   read?: boolean;
   senderName?: string;

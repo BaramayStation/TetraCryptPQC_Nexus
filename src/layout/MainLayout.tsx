@@ -1,18 +1,17 @@
 
-import React from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { ReactNode } from 'react';
 import { MainSidebar } from '@/components/MainSidebar';
 
 interface MainLayoutProps {
-  children?: React.ReactNode;
+  children: ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen">
       <MainSidebar />
-      <main className="flex-1 overflow-x-hidden">
-        {children ? children : <Outlet />}
+      <main className="flex-1">
+        {children}
       </main>
     </div>
   );

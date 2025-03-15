@@ -14,17 +14,18 @@ export interface SecureChannel {
   keyRotationInterval: number; // hours
   pqcEnabled: boolean;
   zeroKnowledgeProofEnabled: boolean;
-  peerEndpoint?: string;
+  peerEndpoint?: string; // Added for compatibility
 }
 
 export interface SecureChannelMetrics {
+  id: string;
   channelId: string;
-  encryptionStrength: "standard" | "enhanced" | "maximum";
-  latencyMs: number;
-  messageDeliverySuccessRate: number;
-  keyRotationInterval: number;
-  lastKeyRotation: string;
-  compromiseAttempts: number;
-  anomalyDetected: boolean;
-  quantumResistanceVerified: boolean;
+  messagesPerDay: number;
+  averageResponseTime: number; // seconds
+  activeParticipants: number;
+  averageMessageSize: number; // bytes
+  peakUsageTime: string;
+  securityEvents: number;
+  keyRotations: number;
+  endToEndLatency: number; // milliseconds
 }
