@@ -44,3 +44,6 @@ export type { UserProfile, UserSettings, KeyPairs, BiometricData } from './user-
 
 // Message types
 export type { Message, SecureMessageOptions, Conversation, MessagePreview } from './message-types';
+
+// Contact types
+export type { Contact } from './contacts';
