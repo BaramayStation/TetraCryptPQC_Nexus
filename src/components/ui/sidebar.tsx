@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import { HomeIcon, MessageSquare, Settings, ShieldAlert, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Logo } from "@/components/ui/logo";
 
 // Navigation links configuration
@@ -92,7 +92,7 @@ const MobileSidebar = () => (
 
 // Combined sidebar component
 export function Sidebar() {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   return isMobile ? <MobileSidebar /> : <DesktopSidebar />;
 }
