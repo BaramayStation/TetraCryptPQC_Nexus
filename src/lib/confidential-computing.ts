@@ -1,8 +1,9 @@
 /**
  * TetraCryptPQC Confidential Computing Module
  * 
- * Implements AMD SEV and Intel SGX support for hardened Podman runtime
- * and trusted execution environments for AI containers.
+ * This module provides utilities for secure, hardware-backed confidential computing
+ * operations using trusted execution environments like Intel SGX, AMD SEV, ARM TrustZone,
+ * and secure enclaves.
  */
 
 import { HSMType, SecureContainerConfig } from './secure-infrastructure';

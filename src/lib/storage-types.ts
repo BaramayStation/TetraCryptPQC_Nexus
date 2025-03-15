@@ -1,3 +1,4 @@
+
 /**
  * TetraCryptPQC Storage Types
  */
@@ -332,4 +333,54 @@ export interface Threat {
   timestamp: string;
   indicators: string[];
   mitigationSteps: string[];
+}
+
+// Define types for security infrastructure
+export interface SecureNodeConfig {
+  name: string;
+  type: 'physical' | 'virtual' | 'container' | 'serverless';
+  securityLevel: string;
+}
+
+export interface SecureNode {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  securityLevel: string;
+  createdAt: string;
+  lastUpdated: string;
+  metrics: {
+    uptime: number;
+    requestsProcessed: number;
+    securityIncidents: number;
+  };
+}
+
+export interface SecureContainer {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  securityProfile: string;
+  confinement: string;
+  networkPolicy: string;
+  resources: {
+    cpu: string;
+    memory: string;
+    storage: string;
+  };
+  createdAt: string;
+  expiresAt: string;
+  signatures: {
+    image: string;
+    config: string;
+  };
+  verificationStatus: string;
+}
+
+export interface SecurityOptions {
+  timeout?: number;
+  retries?: number;
+  logLevel?: 'debug' | 'info' | 'warn' | 'error';
 }
