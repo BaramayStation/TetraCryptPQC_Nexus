@@ -1,3 +1,4 @@
+
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
@@ -37,7 +38,7 @@ import Pricing from './pages/Pricing';
 import Support from './pages/Support';
 import AccountSettings from './pages/AccountSettings';
 import TetraCryptWallet from './pages/TetraCryptWallet';
-import LaunchReadinessPanel from './components/testing/LaunchReadinessPanel';
+import LaunchReadiness from './pages/LaunchReadiness';
 
 const queryClient = new QueryClient();
 const TetraCryptDemo = React.lazy(() => import('./pages/TetraCryptDemo'));
@@ -45,7 +46,7 @@ const TetraCryptDemo = React.lazy(() => import('./pages/TetraCryptDemo'));
 function App() {
   return (
     <div className="App">
-      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <HelmetProvider>
             <Toaster />
@@ -78,5 +79,22 @@ function App() {
                 } />
                 <Route path="tetracrypt-wallet" element={<TetraCryptWallet />} />
                 <Route path="tetracrypt-nexus" element={<TetraCryptNexus />} />
-                <Route path="launch-readiness" element={<LaunchReadinessPanel />} />
-                <Route path="wiki/*
+                <Route path="launch-readiness" element={<LaunchReadiness />} />
+                <Route path="wiki/*" element={<Wiki />} />
+                <Route path="about" element={<About />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="blog" element={<Blog />} />
+                <Route path="pricing" element={<Pricing />} />
+                <Route path="support" element={<Support />} />
+                <Route path="account-settings" element={<AccountSettings />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </HelmetProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </div>
+  );
+}
+
+export default App;

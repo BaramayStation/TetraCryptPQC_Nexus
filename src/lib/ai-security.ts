@@ -4,6 +4,7 @@
  * Provides AI security services like anomaly detection, threat prediction, and verification
  */
 
+// Import types for AIThreatDetection
 import { AIThreatDetection } from './storage-types';
 
 /**
@@ -75,6 +76,8 @@ export async function detectIntrusions(eventData: Record<string, any>): Promise<
       timestamp: new Date().toISOString(),
       sourceIp: '192.168.1.1',
       targetSystem: 'auth-service',
+      mitigated: false,
+      score: Math.floor(threatScore * 100),
       remediationSteps: [
         'Isolate affected system',
         'Verify user identity',
@@ -132,3 +135,17 @@ export async function analyzeNetworkTraffic(trafficData: any): Promise<{
     recommendations
   };
 }
+
+// Mock implementation of initializeAISecureEnv for Dashboard.tsx
+export async function initializeAISecureEnv(): Promise<boolean> {
+  console.log("🔹 Initializing AI secure environment");
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return true;
+}
+
+// Mock implementation for monitorThreats for main.tsx
+export const monitorThreats = () => {
+  console.log("🔹 AI Security Monitoring Started");
+  return true;
+};
+

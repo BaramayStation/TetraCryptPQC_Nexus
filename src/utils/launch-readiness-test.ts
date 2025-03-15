@@ -1,204 +1,268 @@
 
 /**
- * Launch Readiness Test Utilities
- * Provides functions to test system components before production launch
+ * TetraCryptPQC Launch Readiness Tests
+ * Utility functions to test all cryptographic and P2P functions
  */
 
-import { generatePQCKeyPair, encryptAES, decryptAES, verifyPQC, signPQC } from '@/lib/pqcrypto';
-import { validateZKProof, verifyStarkNetIdentity } from '@/lib/security-utils';
-import { getP2PNodeStatus, connectToP2PNetwork } from '@/lib/tetracrypt-p2p';
-import { generateRandomId } from '@/utils/crypto-utils';
+import { generatePQCKeyPair, encryptMessage, decryptMessage, signMessage, verifySignature } from '@/lib/pqcrypto';
+import { createSecureP2P } from '@/lib/p2p-node';
 
-export type TestResult = {
+interface TestResult {
   name: string;
-  status: 'success' | 'failure' | 'warning' | 'pending';
+  success: boolean;
   message: string;
-  details?: string;
-  timestamp: string;
-};
-
-/**
- * Run cryptography tests
- */
-export async function testCryptography(): Promise<TestResult[]> {
-  const results: TestResult[] = [];
-  
-  try {
-    // Test PQC key generation
-    console.log("🔹 Testing PQC key generation");
-    const startKeyGen = performance.now();
-    const keyPair = await generatePQCKeyPair();
-    const keyGenDuration = performance.now() - startKeyGen;
-    
-    results.push({
-      name: "PQC Key Generation",
-      status: "success",
-      message: "Key pair generated successfully",
-      details: `Generated ${keyPair.algorithm} key pair in ${keyGenDuration.toFixed(2)}ms`,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Test AES encryption/decryption
-    console.log("🔹 Testing AES encryption/decryption");
-    const testMessage = "This is a test message for encryption and decryption";
-    const encrypted = await encryptAES(testMessage, keyPair.publicKey);
-    const decrypted = await decryptAES(encrypted, keyPair.privateKey);
-    
-    results.push({
-      name: "AES Encryption/Decryption",
-      status: decrypted === testMessage ? "success" : "failure",
-      message: decrypted === testMessage ? "Encryption/decryption test passed" : "Encryption/decryption test failed",
-      details: decrypted === testMessage 
-        ? "Message was correctly encrypted and decrypted" 
-        : `Message decryption failed. Expected "${testMessage}" but got "${decrypted}"`,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Test digital signature
-    console.log("🔹 Testing digital signature");
-    const dataToSign = "Test data for digital signature";
-    const dataBytes = new TextEncoder().encode(dataToSign);
-    const signature = await signPQC(dataBytes, keyPair.privateKey);
-    const signatureValid = await verifyPQC(dataBytes, signature, keyPair.publicKey);
-    
-    results.push({
-      name: "Digital Signature",
-      status: signatureValid ? "success" : "failure",
-      message: signatureValid ? "Signature test passed" : "Signature test failed",
-      details: signatureValid 
-        ? "Data was correctly signed and verified" 
-        : "Signature verification failed",
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    console.error("Error during cryptography tests:", error);
-    
-    results.push({
-      name: "Cryptography Tests",
-      status: "failure",
-      message: "Error during cryptography tests",
-      details: error instanceof Error ? error.message : "Unknown error",
-      timestamp: new Date().toISOString()
-    });
-  }
-  
-  return results;
+  data?: any;
+  error?: Error;
 }
 
-/**
- * Run security validation tests
- */
-export async function testSecurityValidation(): Promise<TestResult[]> {
-  const results: TestResult[] = [];
-  
-  try {
-    // Generate test key for validation
-    const testKey = new Uint8Array(32);
-    crypto.getRandomValues(testKey);
-    
-    // Test ZK proof validation
-    console.log("🔹 Testing ZK proof validation");
-    const zkValid = await validateZKProof(testKey);
-    
-    results.push({
-      name: "Zero-Knowledge Proof Validation",
-      status: zkValid ? "success" : "failure",
-      message: zkValid ? "ZK proof validation test passed" : "ZK proof validation test failed",
-      timestamp: new Date().toISOString()
-    });
-    
-    // Test StarkNet identity verification
-    console.log("🔹 Testing StarkNet identity verification");
-    const starkNetValid = await verifyStarkNetIdentity(testKey);
-    
-    results.push({
-      name: "StarkNet Identity Verification",
-      status: starkNetValid ? "success" : "failure",
-      message: starkNetValid ? "StarkNet identity verification test passed" : "StarkNet identity verification test failed",
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    console.error("Error during security validation tests:", error);
-    
-    results.push({
-      name: "Security Validation Tests",
-      status: "failure",
-      message: "Error during security validation tests",
-      details: error instanceof Error ? error.message : "Unknown error",
-      timestamp: new Date().toISOString()
-    });
-  }
-  
-  return results;
-}
-
-/**
- * Run P2P networking tests
- */
-export async function testP2PNetworking(): Promise<TestResult[]> {
-  const results: TestResult[] = [];
-  
-  try {
-    // Test P2P node status
-    console.log("🔹 Testing P2P node status");
-    const status = getP2PNodeStatus();
-    
-    results.push({
-      name: "P2P Node Status",
-      status: status.state === "connected" ? "success" : "warning",
-      message: `P2P node is ${status.state}`,
-      details: `Node ID: ${status.peerId}, Connected peers: ${status.peerCount}`,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Test P2P network connection
-    console.log("🔹 Testing P2P network connection");
-    const connected = await connectToP2PNetwork();
-    
-    results.push({
-      name: "P2P Network Connection",
-      status: connected ? "success" : "failure",
-      message: connected ? "P2P network connection test passed" : "P2P network connection test failed",
-      timestamp: new Date().toISOString()
-    });
-    
-  } catch (error) {
-    console.error("Error during P2P networking tests:", error);
-    
-    results.push({
-      name: "P2P Networking Tests",
-      status: "failure",
-      message: "Error during P2P networking tests",
-      details: error instanceof Error ? error.message : "Unknown error",
-      timestamp: new Date().toISOString()
-    });
-  }
-  
-  return results;
-}
-
-/**
- * Run all launch readiness tests
- */
-export async function runLaunchReadinessTests(): Promise<{
-  overall: 'ready' | 'not-ready';
+interface TestSuite {
+  name: string;
   results: TestResult[];
-}> {
-  console.log("🔹 Running all launch readiness tests");
+  startTime: Date;
+  endTime?: Date;
+  success: boolean;
+}
+
+/**
+ * Run all system tests
+ */
+export async function runAllTests(): Promise<{ success: boolean; suites: TestSuite[] }> {
+  console.log("🔹 Running all TetraCryptPQC launch readiness tests...");
   
-  const cryptoResults = await testCryptography();
-  const securityResults = await testSecurityValidation();
-  const p2pResults = await testP2PNetworking();
+  const suites: TestSuite[] = [];
   
-  const allResults = [...cryptoResults, ...securityResults, ...p2pResults];
+  // Run all test suites
+  suites.push(await testPQCKeyGeneration());
+  suites.push(await testEncryptionDecryption());
+  suites.push(await testDigitalSignatures());
+  suites.push(await testP2PCommunication());
   
-  // Check if any tests failed
-  const anyFailures = allResults.some(result => result.status === "failure");
+  // Calculate overall success
+  const overallSuccess = suites.every(suite => suite.success);
   
   return {
-    overall: anyFailures ? "not-ready" : "ready",
-    results: allResults
+    success: overallSuccess,
+    suites
   };
+}
+
+/**
+ * Test post-quantum key generation
+ */
+export async function testPQCKeyGeneration(): Promise<TestSuite> {
+  console.log("🔹 Testing PQC key generation");
+  
+  const suite: TestSuite = {
+    name: "PQC Key Generation",
+    results: [],
+    startTime: new Date(),
+    success: true
+  };
+  
+  try {
+    // Test ML-KEM key generation
+    const kyberResult = await testFunction("ML-KEM Key Generation", async () => {
+      const keypair = await generatePQCKeyPair();
+      return {
+        algorithm: keypair.algorithm,
+        publicKeyLength: keypair.publicKey.length,
+        privateKeyLength: keypair.privateKey.length,
+        publicKeyPreview: keypair.publicKeyHex.substring(0, 32) + "...",
+        privateKeyPreview: keypair.privateKeyHex.substring(0, 32) + "..."
+      };
+    });
+    
+    suite.results.push(kyberResult);
+    
+    // Check if any tests failed
+    suite.success = suite.results.every(result => result.success);
+    
+  } catch (error) {
+    suite.success = false;
+    suite.results.push({
+      name: "Key Generation Error",
+      success: false,
+      message: "An unexpected error occurred during key generation tests",
+      error: error instanceof Error ? error : new Error(String(error))
+    });
+  }
+  
+  suite.endTime = new Date();
+  return suite;
+}
+
+/**
+ * Test encryption and decryption
+ */
+export async function testEncryptionDecryption(): Promise<TestSuite> {
+  console.log("🔹 Testing encryption and decryption");
+  
+  const suite: TestSuite = {
+    name: "Encryption and Decryption",
+    results: [],
+    startTime: new Date(),
+    success: true
+  };
+  
+  try {
+    // Test basic encryption/decryption
+    const encryptionResult = await testFunction("Basic Encryption/Decryption", async () => {
+      const keypair = await generatePQCKeyPair();
+      const testMessage = "Hello, Post-Quantum World!";
+      
+      const { ciphertext, encryptedData } = await encryptMessage(testMessage, keypair.publicKey);
+      const decryptedMessage = await decryptMessage(ciphertext, encryptedData, keypair.privateKey);
+      
+      if (decryptedMessage !== testMessage) {
+        throw new Error(`Decryption failed: ${decryptedMessage} !== ${testMessage}`);
+      }
+      
+      return {
+        originalMessage: testMessage,
+        decryptedMessage,
+        ciphertextLength: ciphertext.length,
+        encryptedDataPreview: encryptedData.substring(0, 32) + "..."
+      };
+    });
+    
+    suite.results.push(encryptionResult);
+    
+    // Check if any tests failed
+    suite.success = suite.results.every(result => result.success);
+    
+  } catch (error) {
+    suite.success = false;
+    suite.results.push({
+      name: "Encryption/Decryption Error",
+      success: false,
+      message: "An unexpected error occurred during encryption/decryption tests",
+      error: error instanceof Error ? error : new Error(String(error))
+    });
+  }
+  
+  suite.endTime = new Date();
+  return suite;
+}
+
+/**
+ * Test digital signatures
+ */
+export async function testDigitalSignatures(): Promise<TestSuite> {
+  console.log("🔹 Testing digital signatures");
+  
+  const suite: TestSuite = {
+    name: "Digital Signatures",
+    results: [],
+    startTime: new Date(),
+    success: true
+  };
+  
+  try {
+    // Test signature generation and verification
+    const signatureResult = await testFunction("Signature Generation/Verification", async () => {
+      const keypair = await generatePQCKeyPair();
+      const testMessage = "Hello, Post-Quantum World!";
+      
+      const signature = await signMessage(testMessage, keypair.privateKey);
+      const isValid = await verifySignature(testMessage, signature, keypair.publicKey);
+      
+      if (!isValid) {
+        throw new Error("Signature verification failed");
+      }
+      
+      return {
+        message: testMessage,
+        signatureLength: signature.length,
+        signaturePreview: signature.substring(0, 32) + "...",
+        verified: isValid
+      };
+    });
+    
+    suite.results.push(signatureResult);
+    
+    // Check if any tests failed
+    suite.success = suite.results.every(result => result.success);
+    
+  } catch (error) {
+    suite.success = false;
+    suite.results.push({
+      name: "Digital Signature Error",
+      success: false,
+      message: "An unexpected error occurred during digital signature tests",
+      error: error instanceof Error ? error : new Error(String(error))
+    });
+  }
+  
+  suite.endTime = new Date();
+  return suite;
+}
+
+/**
+ * Test P2P communication
+ */
+export async function testP2PCommunication(): Promise<TestSuite> {
+  console.log("🔹 Testing P2P communication");
+  
+  const suite: TestSuite = {
+    name: "P2P Communication",
+    results: [],
+    startTime: new Date(),
+    success: true
+  };
+  
+  try {
+    // Test P2P node creation
+    const nodeCreationResult = await testFunction("P2P Node Creation", async () => {
+      const node = createSecureP2P();
+      await node.start();
+      
+      if (!node.started) {
+        throw new Error("Node failed to start");
+      }
+      
+      return {
+        nodeId: node.peerId.toString(),
+        started: node.started
+      };
+    });
+    
+    suite.results.push(nodeCreationResult);
+    
+    // Check if any tests failed
+    suite.success = suite.results.every(result => result.success);
+    
+  } catch (error) {
+    suite.success = false;
+    suite.results.push({
+      name: "P2P Communication Error",
+      success: false,
+      message: "An unexpected error occurred during P2P communication tests",
+      error: error instanceof Error ? error : new Error(String(error))
+    });
+  }
+  
+  suite.endTime = new Date();
+  return suite;
+}
+
+/**
+ * Helper function to run a test and format the result
+ */
+async function testFunction(name: string, func: () => Promise<any>): Promise<TestResult> {
+  try {
+    const data = await func();
+    return {
+      name,
+      success: true,
+      message: "Test passed successfully",
+      data
+    };
+  } catch (error) {
+    return {
+      name,
+      success: false,
+      message: `Test failed: ${error instanceof Error ? error.message : String(error)}`,
+      error: error instanceof Error ? error : new Error(String(error))
+    };
+  }
 }

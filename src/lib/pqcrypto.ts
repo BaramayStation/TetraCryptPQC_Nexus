@@ -6,6 +6,18 @@
 
 import { randomBytes, bytesToHex } from '@/utils/crypto-utils';
 
+// Define PQCKey interface to match what's expected across the app
+export interface PQCKey {
+  publicKey: Uint8Array;
+  privateKey: Uint8Array;
+  algorithm: string;
+  publicKeyHex: string;
+  privateKeyHex: string;
+  created: string;
+  strength: string;
+  standard: string;
+}
+
 /**
  * Encrypts a message using AES-GCM
  * This is a mock implementation for demonstration purposes only
@@ -59,7 +71,7 @@ export async function decryptAES(encryptedData: string, key: Uint8Array | Crypto
  * 
  * @returns A promise resolving to the generated key pair
  */
-export async function generatePQCKeyPair() {
+export async function generatePQCKeyPair(): Promise<PQCKey> {
   console.log('🔑 Generating mock PQC key pair');
   
   // Generate random keys
@@ -71,7 +83,10 @@ export async function generatePQCKeyPair() {
     privateKey,
     algorithm: 'ML-KEM-768',
     publicKeyHex: bytesToHex(publicKey),
-    privateKeyHex: bytesToHex(privateKey)
+    privateKeyHex: bytesToHex(privateKey),
+    created: new Date().toISOString(),
+    strength: 'level-5',
+    standard: 'NIST-PQC-Round-3'
   };
 }
 
@@ -112,19 +127,19 @@ export async function verifyPQC(
 }
 
 // Additional exported functions to maintain compatibility with existing code
-export async function generateMLKEMKeypair() {
+export async function generateMLKEMKeypair(): Promise<PQCKey> {
   return generatePQCKeyPair();
 }
 
-export async function generateFalconKeypair() {
+export async function generateFalconKeypair(): Promise<PQCKey> {
   return generatePQCKeyPair();
 }
 
-export async function generateSLHDSAKeypair() {
+export async function generateSLHDSAKeypair(): Promise<PQCKey> {
   return generatePQCKeyPair();
 }
 
-export async function generateBIKEKeypair() {
+export async function generateBIKEKeypair(): Promise<PQCKey> {
   return generatePQCKeyPair();
 }
 
@@ -149,4 +164,35 @@ export async function verifySignature(data: string, signature: string, publicKey
     signatureBytes[i / 2] = parseInt(signature.substring(i, i + 2), 16);
   }
   return verifyPQC(data, signatureBytes, publicKeyBytes);
+}
+
+// Add a mock implementation for generateDID for Register.tsx
+export async function generateDID(publicKey: string | Uint8Array): Promise<string> {
+  console.log('🔑 Generating mock DID');
+  const id = crypto.randomUUID();
+  return `did:tetracrypt:${id}`;
+}
+
+// Add a mock implementation for generateComplianceReport
+export async function generateComplianceReport(): Promise<any> {
+  return {
+    success: true,
+    date: new Date().toISOString(),
+    standardsCompliance: {
+      nist: true,
+      fips: true,
+      iso27001: true
+    }
+  };
+}
+
+// Export encryptMessage and decryptMessage for tetracrypt-p2p.ts usage
+export async function encryptMessage(message: string, publicKey: Uint8Array): Promise<{ ciphertext: Uint8Array; encryptedData: string }> {
+  const ciphertext = randomBytes(32);
+  const encryptedData = await encryptAES(message, publicKey);
+  return { ciphertext, encryptedData };
+}
+
+export async function decryptMessage(ciphertext: Uint8Array, encryptedData: string, privateKey: Uint8Array): Promise<string> {
+  return decryptAES(encryptedData, privateKey);
 }
