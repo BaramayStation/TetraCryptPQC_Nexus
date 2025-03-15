@@ -6,6 +6,9 @@ export interface HardwareSecurityCapabilities {
   encryptedMemory: boolean;
   hardwareKeys: boolean;
   tpmAvailable?: boolean;
+  tpmVersion?: string;
+  sgxAvailable?: boolean;
+  sgxVersion?: string;
 }
 
 export interface HSMDevice {
@@ -13,7 +16,7 @@ export interface HSMDevice {
   type: string;
   keyProtectionLevel: string;
   lastVerified: string;
-  id?: string; // Added optional id field
+  id?: string;
 }
 
 export interface SecureContainerConfig {
@@ -34,6 +37,7 @@ export interface SecureContainerConfig {
     medium: number;
     low: number;
   };
+  type?: string; // Added to resolve type conflicts
 }
 
 export interface SecureServiceMesh {
@@ -50,19 +54,22 @@ export interface SecureServiceMesh {
   containers: number;
   mTLS: boolean;
   policyEnforcement: boolean;
+  endpoints?: string[]; // Added to resolve type conflicts
 }
 
 export interface SecureInfraNode {
   id: string;
   name: string;
   description: string;
-  type: "storage" | "general" | "compute" | "network" | "ai" | "application" | "security";
+  type: "storage" | "compute" | "network" | "security" | "ai" | "general" | "application" | "kubernetes" | "docker";
   status: "online" | "offline" | "degraded";
   createdAt: string;
   updatedAt: string;
   securityScore: number;
   pqcEnabled: boolean;
   trustLevel: number;
+  nodeId?: string; // Added to resolve type conflicts
+  lastVerified?: string; // Added to resolve type conflicts
 }
 
 // Import ContainerSecurityProfile from security-types to prevent circular references

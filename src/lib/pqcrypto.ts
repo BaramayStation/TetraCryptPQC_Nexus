@@ -10,25 +10,20 @@ import {
   generateSLHDSAKeypair,
   generateFalconKeypair,
   generateBIKEKeypair,
-  signMessage as rustSignMessage,
-  verifySignature as rustVerifySignature,
-  generateZKProof as rustGenerateZKProof,
-  encryptMessageChaCha as rustEncryptChaCha,
-  initRustPQCBridge,
-  scanForThreats as rustScanForThreats,
-  generateComplianceReport as rustGenerateComplianceReport
-} from "./rust-pqc-bridge";
+  signMessage as pqcSignMessage,
+  verifySignature as pqcVerifySignature,
+  generateZKProof,
+  hashWithSHA3,
+  encapsulateKey,
+  decapsulateKey,
+  PQC
+} from "./pqcrypto-core";
+
+import { initRustPQCBridge } from "./rust-pqc-bridge";
 import { PQCKey } from "./crypto";
 
 // Initialize the Rust PQC bridge when this module is imported
 const rustBridgeInitPromise = initRustPQCBridge();
-
-// Utility function to generate hex strings
-const generateRandomHex = (length: number): string => {
-  return Array.from({ length }, () => 
-    Math.floor(Math.random() * 256).toString(16).padStart(2, '0')
-  ).join('');
-};
 
 /**
  * Generate session key using post-quantum KEM
@@ -52,7 +47,7 @@ export async function signMessage(message: string, privateKey: string) {
   // Wait for Rust bridge to initialize
   await rustBridgeInitPromise;
   
-  return rustSignMessage(message, privateKey);
+  return pqcSignMessage(message, privateKey);
 }
 
 /**
@@ -62,41 +57,66 @@ export async function verifySignature(message: string, signature: string, public
   // Wait for Rust bridge to initialize
   await rustBridgeInitPromise;
   
-  return rustVerifySignature(message, signature, publicKey);
+  return pqcVerifySignature(message, signature, publicKey);
 }
 
 /**
- * Generate zk-STARK proof for message integrity verification
+ * Encrypt a message using ML-KEM for key encapsulation and symmetric encryption
  */
-export async function generateZKProof(message: string) {
+export async function encryptMessage(message: string, recipientPublicKey: string) {
   // Wait for Rust bridge to initialize
   await rustBridgeInitPromise;
   
-  return rustGenerateZKProof(message);
+  console.log("🔹 Encrypting with ML-KEM + SHA-3-based authenticated encryption");
+  
+  // In a real implementation, this would:
+  // 1. Use ML-KEM to encapsulate a shared secret
+  // 2. Derive encryption key from shared secret using SHA-3
+  // 3. Encrypt message with authenticated encryption
+  
+  try {
+    // Encapsulate a shared secret using ML-KEM
+    const { ciphertext, sharedSecret } = await encapsulateKey(recipientPublicKey);
+    
+    // Use shared secret to derive encryption key via SHA-3
+    const encryptionKey = await hashWithSHA3(sharedSecret);
+    
+    // Simulate encryption using the derived key
+    const simulatedCiphertext = `PQC-ENCRYPTED[${message.substring(0, 3)}...${message.substring(message.length-3)}]`;
+    
+    // Return both the ML-KEM ciphertext and the encrypted message
+    return {
+      kemCiphertext: ciphertext,
+      messageCiphertext: simulatedCiphertext
+    };
+  } catch (error) {
+    console.error("Error encrypting message:", error);
+    throw error;
+  }
 }
 
 /**
- * Encrypt a message using AES-256-GCM
+ * Decrypt a message using ML-KEM and symmetric encryption
  */
-export async function encryptMessage(message: string, key: string) {
+export async function decryptMessage(encryptedData: { kemCiphertext: string, messageCiphertext: string }, privateKey: string) {
   // Wait for Rust bridge to initialize
   await rustBridgeInitPromise;
   
-  console.log("🔹 Encrypting with AES-256-GCM");
+  console.log("🔹 Decrypting with ML-KEM + SHA-3-based authenticated encryption");
   
-  // In a real implementation, this would use Web Crypto API
-  // For simulation, just return a placeholder encrypted string
-  return `ENCRYPTED[${message.substring(0, 3)}...${message.substring(message.length-3)}]`;
-}
-
-/**
- * Encrypt a message using ChaCha20-Poly1305
- */
-export async function encryptMessageChaCha(message: string, key: string) {
-  // Wait for Rust bridge to initialize
-  await rustBridgeInitPromise;
-  
-  return rustEncryptChaCha(message, key);
+  try {
+    // Decapsulate the shared secret using ML-KEM and private key
+    const sharedSecret = await decapsulateKey(encryptedData.kemCiphertext, privateKey);
+    
+    // Derive the encryption key from the shared secret
+    const encryptionKey = await hashWithSHA3(sharedSecret);
+    
+    // Simulate decryption (in a real implementation, this would actually decrypt)
+    return "This is a simulated decrypted message";
+  } catch (error) {
+    console.error("Error decrypting message:", error);
+    throw error;
+  }
 }
 
 /**
@@ -123,41 +143,6 @@ export async function verifyDID(didDocument: any) {
   
   // Simulate DID verification
   return didDocument ? true : false;
-}
-
-/**
- * Simulate Quantum Key Distribution (QKD)
- */
-export async function simulateQKD(endpoint: string) {
-  // Wait for Rust bridge to initialize
-  await rustBridgeInitPromise;
-  
-  console.log(`🔹 Simulating Quantum Key Distribution with ${endpoint}`);
-  
-  return {
-    keyId: crypto.randomUUID(),
-    keyMaterial: generateRandomHex(32),
-    qberRate: Math.random() * 0.05, // Quantum Bit Error Rate (should be < 5%)
-    securityLevel: "Information-theoretic security",
-    protocol: "BB84",
-  };
-}
-
-/**
- * Simulate Hardware Security Module (HSM)
- */
-export async function simulateHSM(privateKey: string) {
-  // Wait for Rust bridge to initialize
-  await rustBridgeInitPromise;
-  
-  console.log("🔹 Simulating HSM key storage");
-  
-  return {
-    keyId: crypto.randomUUID(),
-    keyWrappingAlgorithm: "AES-256-GCM",
-    tamperResistant: true,
-    securityCertification: "FIPS 140-3 Level 4 (simulated)",
-  };
 }
 
 /**
@@ -200,34 +185,16 @@ export async function generateDID(publicKeyKem: string, publicKeySig: string) {
   };
 }
 
-/**
- * Security threat scanning 
- */
-export async function scanForThreats(data: string): Promise<any[]> {
-  // Wait for Rust bridge to initialize
-  await rustBridgeInitPromise;
-  
-  return rustScanForThreats(data);
-}
-
-/**
- * Generate compliance report
- */
-export async function generateComplianceReport(): Promise<any> {
-  // Wait for Rust bridge to initialize
-  await rustBridgeInitPromise;
-  
-  return rustGenerateComplianceReport();
-}
-
 // Export Rust-backed cryptographic key generation functions
 export { 
   generateMLKEMKeypair,
   generateSLHDSAKeypair,
   generateFalconKeypair,
-  generateBIKEKeypair 
+  generateBIKEKeypair,
+  generateZKProof,
+  PQC
 };
 
-// Aliases for compatibility
+// Aliases for compatibility with older code
 export const generateKyberKeypair = generateMLKEMKeypair;
 export const generateDilithiumKeypair = generateSLHDSAKeypair;

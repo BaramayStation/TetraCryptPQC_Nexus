@@ -2,8 +2,8 @@
 export interface Message {
   id: string;
   senderId: string;
-  recipientId: string; 
-  receiverId: string; // Required field for compatibility
+  recipientId: string;
+  receiverId?: string; // Adding this field to fix build errors
   content: string;
   timestamp: string;
   encrypted: boolean;
@@ -13,16 +13,26 @@ export interface Message {
   status: "sent" | "delivered" | "read" | "failed";
 }
 
-export type P2PNodeStatus = "active" | "healing" | "healed" | "verified"; // Added "verified" status
+export interface SecureMessageOptions {
+  encryptionType: "ML-KEM-1024" | "ChaCha20-Poly1305" | "Hybrid";
+  signMessage: boolean;
+  persistLocally: boolean;
+  expiresIn?: number; // seconds
+}
 
-export interface WebRTCPeerStatus {
-  peerId: string;
-  connected: boolean;
-  lastSeen: string;
-  latency: number;
-  signalStrength: number;
-  status: P2PNodeStatus;
-  signatureVerified: boolean;
+export interface Conversation {
+  id: string;
+  participants: string[];
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+  pqcEnabled: boolean;
   encryptionType: string;
-  signatureType?: string; // Added optional field 
+}
+
+export interface MessagePreview {
+  id: string;
+  content: string;
+  timestamp: string;
+  status: "sent" | "delivered" | "read" | "failed";
 }

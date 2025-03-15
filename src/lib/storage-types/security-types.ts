@@ -38,7 +38,7 @@ export interface AICloudConnectionStatus {
 export interface PodmanContainerStatus {
   id: string;
   name: string;
-  status: "running" | "stopped" | "error" | "provisioning"; // Added provisioning status
+  status: "running" | "stopped" | "error" | "provisioning"; 
   securityStatus: SecurityThreshold;
   image: string;
   created: string;
@@ -72,7 +72,9 @@ export enum InfrastructureNodeType {
   SECURITY = "security",
   AI = "ai",
   GENERAL = "general",
-  APPLICATION = "application"
+  APPLICATION = "application",
+  KUBERNETES = "kubernetes",
+  DOCKER = "docker"
 }
 
 // AI Threat Detection type
@@ -86,4 +88,14 @@ export interface AIThreatDetection {
   mitigation?: string;
   score: number;
   detailedAnalysis?: string;
+}
+
+// Add WebRTC status types
+export interface WebRTCPeerStatus {
+  id: string;
+  status: "active" | "healing" | "healed" | "verified";
+  lastActive: string;
+  peerConnectionStatus: string;
+  signatureVerified: boolean;
+  signatureType?: string;
 }
