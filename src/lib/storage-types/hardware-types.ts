@@ -16,7 +16,6 @@ export interface HSMDevice {
   id?: string; // Added optional id field
 }
 
-// Add missing SecureContainerConfig
 export interface SecureContainerConfig {
   id: string;
   name: string;
@@ -27,17 +26,16 @@ export interface SecureContainerConfig {
   securityProfile: ContainerSecurityProfile;
   encryptionEnabled: boolean;
   pqcEnabled: boolean;
-  securityScore: number; // Added missing field
-  image: string; // Added missing field
-  immutableRootfs: boolean; // Added missing field
+  securityScore: number;
+  image: string;
+  immutableRootfs: boolean;
   vulnerabilities: {
     high: number;
     medium: number;
     low: number;
-  }; // Added missing field
+  };
 }
 
-// Add missing SecureServiceMesh
 export interface SecureServiceMesh {
   id: string;
   name: string;
@@ -48,22 +46,24 @@ export interface SecureServiceMesh {
   nodeCount: number;
   encryptionEnabled: boolean;
   pqcEnabled: boolean;
-  securityScore: number; // Added missing field
-  containers: number; // Added missing field
-  mTLS: boolean; // Added missing field
-  policyEnforcement: boolean; // Added missing field
+  securityScore: number;
+  containers: number;
+  mTLS: boolean;
+  policyEnforcement: boolean;
 }
 
-// Add missing SecureInfraNode
 export interface SecureInfraNode {
-  id: string; // Added missing field
+  id: string;
   name: string;
   description: string;
-  type: "storage" | "general" | "compute" | "network" | "ai" | "application";
+  type: "storage" | "general" | "compute" | "network" | "ai" | "application" | "security";
   status: "online" | "offline" | "degraded";
   createdAt: string;
   updatedAt: string;
-  securityScore: number; // Added missing field
-  pqcEnabled: boolean; // Added missing field
-  trustLevel: number; // Added missing field
+  securityScore: number;
+  pqcEnabled: boolean;
+  trustLevel: number;
 }
+
+// Import ContainerSecurityProfile from security-types to prevent circular references
+import { ContainerSecurityProfile } from './security-types';

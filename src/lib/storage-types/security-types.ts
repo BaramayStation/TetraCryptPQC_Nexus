@@ -46,7 +46,7 @@ export interface PodmanContainerStatus {
   securityLevel?: string; // Added optional field
 }
 
-// Adding missing container types
+// Adding container security types
 export interface ContainerSecurityProfile {
   immutableRootfs: boolean;
   seccomp: boolean;
@@ -73,4 +73,17 @@ export enum InfrastructureNodeType {
   AI = "ai",
   GENERAL = "general",
   APPLICATION = "application"
+}
+
+// AI Threat Detection type
+export interface AIThreatDetection {
+  id: string;
+  severity: "high" | "medium" | "low";
+  description: string;
+  timestamp: string;
+  mitigated: boolean;
+  affectedComponents: string[];
+  mitigation?: string;
+  score: number;
+  detailedAnalysis?: string;
 }
