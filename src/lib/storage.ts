@@ -25,11 +25,7 @@ export function saveUserProfile(profile: UserProfileType): void {
     profile.userId = profile.id;
   }
   
-  // Ensure name and createdAt exist
-  if (!profile.createdAt) {
-    profile.createdAt = new Date().toISOString();
-  }
-  
+  // Ensure name exists
   if (profile.username && !profile.name) {
     profile.name = profile.username;
   }
@@ -157,8 +153,8 @@ export function getMessages(userId1: string, userId2: string): MessageType[] {
   }
   
   return storage.messages.filter(message => 
-    (message.sender === userId1 && message.receiver === userId2) ||
-    (message.sender === userId2 && message.receiver === userId1)
+    (message.senderId === userId1 && message.recipientId === userId2) ||
+    (message.senderId === userId2 && message.recipientId === userId1)
   );
 }
 
@@ -180,7 +176,7 @@ export function markMessagesAsRead(contactId: string): void {
   if (!user) return;
   
   storage.messages.forEach(message => {
-    if (message.sender === contactId && message.receiver === user.userId) {
+    if (message.senderId === contactId && message.recipientId === user.userId) {
       message.status = 'read';
     }
   });

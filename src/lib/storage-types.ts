@@ -82,6 +82,18 @@ export interface SecurityThreatIntelligence {
   lastUpdated: string;
 }
 
+// HSM Type Enum
+export enum HSMType {
+  TPM = "TPM",
+  SGX = "SGX",
+  SEV = "SEV",
+  YUBIKEY = "YUBIKEY",
+  HSM = "HSM",
+  TRUSTZONE = "TRUSTZONE",
+  NONE = "NONE",
+  SECUREENCLAVE = "SECUREENCLAVE"
+}
+
 // User Profile structure
 export interface UserProfile {
   id: string;
@@ -144,14 +156,4 @@ export interface Conversation {
   lastMessage?: Message;
   updated: string;
   created: string;
-}
-
-// Hardware Security Module types
-export enum HSMType {
-  TPM = "TPM",
-  SGX = "SGX",
-  SEV = "SEV",
-  YUBIKEY = "YUBIKEY",
-  HSM = "HSM",
-  TRUSTZONE = "TRUSTZONE"
 }

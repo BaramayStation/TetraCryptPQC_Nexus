@@ -45,36 +45,39 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
     const simulatedMessages: Message[] = [
       {
         id: "1",
-        sender: contact.id,
-        receiver: userProfile?.userId || "",
+        senderId: contact.id,
+        recipientId: userProfile?.userId || "",
         content: "Hey, how are you? Let's test this post-quantum encryption!",
         timestamp: new Date(Date.now() - 3600000).toISOString(),
         encrypted: true,
         signature: "valid-signature-hash",
         verified: true,
-        encryptionType: "ML-KEM-1024"
+        encryptionType: "ML-KEM-1024",
+        status: "read"
       },
       {
         id: "2",
-        sender: userProfile?.userId || "",
-        receiver: contact.id,
+        senderId: userProfile?.userId || "",
+        recipientId: contact.id,
         content: "I'm good! The ML-KEM-1024 encryption is working great. Let's see if we can also integrate StarkNet for identity.",
         timestamp: new Date(Date.now() - 1800000).toISOString(),
         encrypted: true,
         signature: "valid-signature-hash",
         verified: true,
-        encryptionType: "ML-KEM-1024"
+        encryptionType: "ML-KEM-1024",
+        status: "delivered"
       },
       {
         id: "3",
-        sender: contact.id,
-        receiver: userProfile?.userId || "",
+        senderId: contact.id,
+        recipientId: userProfile?.userId || "",
         content: "Perfect! We should also test the hardware security module integration when you get a chance.",
         timestamp: new Date(Date.now() - 900000).toISOString(),
         encrypted: true,
         signature: "valid-signature-hash",
         verified: true,
-        encryptionType: "ML-KEM-1024"
+        encryptionType: "ML-KEM-1024",
+        status: "read"
       }
     ];
     
@@ -108,14 +111,15 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
       // Create the new message
       const newMessage: Message = {
         id: messageId,
-        sender: userProfile.userId,
-        receiver: contact.id,
+        senderId: userProfile.userId,
+        recipientId: contact.id,
         content: inputValue, // In a real app, this would be the encrypted content
         timestamp,
         encrypted: true,
         signature,
         verified: true, // Self-messages are always verified
-        encryptionType
+        encryptionType,
+        status: "sent"
       };
       
       // Add to messages
