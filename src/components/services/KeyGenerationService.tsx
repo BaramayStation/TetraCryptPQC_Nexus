@@ -9,7 +9,6 @@ import {
   generateSecureSLHDSAKeypair,
   checkHardwareSecurity
 } from "@/lib/tetracrypt-ffi";
-import { PQCKey } from "@/lib/crypto";
 
 export interface KeyGenerationServiceProps {
   username: string;
@@ -55,6 +54,8 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
         
         const profile: UserProfile = {
           userId,
+          id: userId, // Add id to match UserProfile type
+          name: username, // Add name to match UserProfile type
           username,
           encryptionKey: kemKey.publicKey.substring(0, 32), // Simplified for demo
           authType,
@@ -69,7 +70,8 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
             fipsCompliance: true,
             hybridEncryption: authType === "advanced",
             federatedMode: false
-          }
+          },
+          createdAt: new Date().toISOString() // Add createdAt to match UserProfile type
         };
         
         // Step 5: Generate secure storage

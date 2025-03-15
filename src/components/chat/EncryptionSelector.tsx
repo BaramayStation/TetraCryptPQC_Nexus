@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { Info } from "lucide-react"; // Using lucide-react instead of radix icons
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Shield } from "lucide-react";
 
@@ -34,7 +34,7 @@ const EncryptionSelector: React.FC<EncryptionSelectorProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="ml-2">
-                    <InfoCircledIcon className="h-4 w-4" />
+                    <Info className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
@@ -52,7 +52,7 @@ const EncryptionSelector: React.FC<EncryptionSelectorProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="ml-2">
-                    <InfoCircledIcon className="h-4 w-4" />
+                    <Info className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">
@@ -70,7 +70,7 @@ const EncryptionSelector: React.FC<EncryptionSelectorProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger className="ml-2">
-                    <InfoCircledIcon className="h-4 w-4" />
+                    <Info className="h-4 w-4" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs">

@@ -11,12 +11,14 @@ interface MessageListProps {
   messages: Message[];
   currentUserId: string;
   contactName: string;
+  contactId?: string; // Added to fix type error
 }
 
 const MessageList: React.FC<MessageListProps> = ({ 
   messages, 
   currentUserId,
-  contactName
+  contactName,
+  contactId
 }) => {
   // Format date for display
   const formatMessageTime = (timestamp: string) => {

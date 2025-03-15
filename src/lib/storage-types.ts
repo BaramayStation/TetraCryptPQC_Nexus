@@ -1,4 +1,3 @@
-
 export type UserProfile = {
   userId: string;
   id: string; // Added for compatibility
@@ -120,9 +119,9 @@ export type HSMType = "YubiKey" | "TPM" | "SecureEnclave" | "CloudHSM" | "None";
 export type StarkNetID = {
   id: string;
   type: string;
-  address: string;
-  starkKey: string;
-  created: string;
+  address?: string;
+  starkKey?: string;
+  created?: string;
 };
 
 // Define the DID Document type

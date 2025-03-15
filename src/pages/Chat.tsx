@@ -1,235 +1,300 @@
 
-import React, { useEffect, useState } from "react";
-import { Contact, UserProfile, getContacts, getUserProfile } from "@/lib/storage";
-import UserSetup from "@/components/user/UserSetup";
-import ContactList from "@/components/chat/ContactList";
-import Conversation from "@/components/chat/Conversation";
-import MessageList from "@/components/chat/MessageList";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { GlassContainer } from "@/components/ui/glass-container";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Settings, Shield, HelpCircle, AlertTriangle } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import ChatInfoModal from "@/components/chat/ChatInfoModal";
 import { Badge } from "@/components/ui/badge";
+import { Plus, Users, Shield, MessageCircle, Settings, Search, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import ContactList from "@/components/chat/ContactList"; 
+import Conversation from "@/components/chat/Conversation";
+import { Contact, Message } from "@/lib/storage-types"; 
+import { getContacts, addContact, getUserProfile } from "@/lib/storage";
+import { useToast } from "@/components/ui/use-toast";
+import P2PMessagingPanel from "@/components/chat/P2PMessagingPanel";
+import P2PInfoPanel from "@/components/chat/P2PInfoPanel";
+import { useP2PMessaging } from "@/hooks/use-p2p-messaging";
 
-const Chat = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+const Chat: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [contactsTab, setContactsTab] = useState<"active" | "all">("active");
+  const [selectedContactId, setSelectedContactId] = useState<string>("");
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [newContactId, setNewContactId] = useState("");
+  const [isAddingContact, setIsAddingContact] = useState(false);
+  const [isContactsLoading, setIsContactsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<"direct" | "p2p">("direct");
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
-
+  const { toast } = useToast();
+  const user = getUserProfile();
+  
+  const {
+    connectionState,
+    peerCount,
+    messages: p2pMessages,
+    sendMessage: sendP2PMessage,
+    isLoading: isP2PLoading,
+    reconnect: reconnectP2P
+  } = useP2PMessaging();
+  
   useEffect(() => {
-    // Load user profile
-    const loadedUser = getUserProfile();
-    if (loadedUser) {
-      setUser(loadedUser);
-      loadContacts();
+    if (!user) {
+      navigate("/");
+      return;
     }
-    setLoading(false);
-  }, []);
-
-  const loadContacts = () => {
-    const loadedContacts = getContacts();
-    setContacts(loadedContacts);
+    
+    loadContacts();
+  }, [navigate]);
+  
+  const loadContacts = async () => {
+    setIsContactsLoading(true);
+    try {
+      const loadedContacts = getContacts();
+      setContacts(loadedContacts);
+      
+      // Select first contact if none selected and contacts exist
+      if (!selectedContactId && loadedContacts.length > 0) {
+        setSelectedContactId(loadedContacts[0].id);
+      }
+    } catch (error) {
+      console.error("Failed to load contacts:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load contacts",
+        variant: "destructive",
+      });
+    } finally {
+      setIsContactsLoading(false);
+    }
   };
-
-  const handleUserSetupComplete = (profile: UserProfile) => {
-    setUser(profile);
+  
+  const handleAddContact = async () => {
+    if (!newContactId.trim()) return;
+    
+    setIsAddingContact(true);
+    try {
+      // In a real implementation, this would lookup the contact by ID
+      // and retrieve their public key from a directory or direct exchange
+      const newContact: Contact = {
+        id: newContactId.trim(),
+        name: `Contact ${contacts.length + 1}`,
+        publicKey: "simulated-public-key", // In a real app, this would be a real key
+        signatureKey: "simulated-signature-key", // Required field
+        lastMessage: "New contact added",
+        lastMessageTime: new Date().toISOString(),
+        status: "offline"
+      };
+      
+      addContact(newContact);
+      
+      setContacts(prev => [...prev, newContact]);
+      setSelectedContactId(newContact.id);
+      setIsContactModalOpen(false);
+      setNewContactId("");
+      
+      toast({
+        title: "Contact Added",
+        description: `Added new contact ${newContact.name}`,
+      });
+    } catch (error) {
+      console.error("Failed to add contact:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add contact",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingContact(false);
+    }
   };
-
-  const handleContactSelect = (contactId: string) => {
-    setSelectedContactId(contactId);
+  
+  const handleRefreshContacts = () => {
+    loadContacts();
   };
-
-  const handleBack = () => {
-    setSelectedContactId(null);
-  };
-
-  const goToSettings = () => {
-    navigate("/settings");
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse-subtle">Loading secure messaging...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <UserSetup onSetupComplete={handleUserSetupComplete} />;
-  }
-
-  const selectedContact = contacts.find((c) => c.id === selectedContactId);
-  const activeContacts = contacts.filter(c => c.lastMessageTime);
-  const displayedContacts = contactsTab === "active" ? activeContacts : contacts;
-
-  if (isMobile) {
-    return (
-      <div className="h-screen w-full flex flex-col">
-        {selectedContactId && selectedContact ? (
-          <Conversation contact={selectedContact} onBack={handleBack} />
-        ) : (
-          <>
-            <div className="border-b p-4 flex items-center justify-between">
-              <h1 className="text-xl font-semibold flex items-center gap-1">
-                <Shield className="h-5 w-5 text-accent" />
-                Messages
-              </h1>
-              <div className="flex items-center gap-1">
-                <ChatInfoModal>
-                  <Button variant="ghost" size="icon">
-                    <HelpCircle className="h-5 w-5" />
-                  </Button>
-                </ChatInfoModal>
-                <Button variant="ghost" size="icon" onClick={goToSettings}>
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="p-3">
-              <Alert variant="default" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Secure Communications</AlertTitle>
-                <AlertDescription className="text-xs">
-                  All messages are protected with post-quantum encryption. No one, including us, can read your messages.
-                </AlertDescription>
-              </Alert>
-            </div>
-            
-            <div className="px-3 mb-1">
-              <Tabs value={contactsTab} onValueChange={(v: string) => setContactsTab(v as any)}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="active" className="text-xs">
-                    Active Conversations
-                    {activeContacts.length > 0 && (
-                      <Badge className="ml-2 text-[10px]">{activeContacts.length}</Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="all" className="text-xs">
-                    All Contacts
-                    <Badge className="ml-2 text-[10px]">{contacts.length}</Badge>
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            
-            <div className="flex-1 overflow-hidden">
-              <ContactList
-                contacts={displayedContacts}
-                selectedContactId={selectedContactId}
-                onSelectContact={handleContactSelect}
-                onRefreshContacts={loadContacts}
-              />
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
-
+  
+  const filteredContacts = contacts.filter(contact => 
+    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
   return (
-    <div className="h-screen w-full overflow-hidden flex flex-col">
-      <div className="border-b p-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold flex items-center gap-1">
-          <Shield className="h-5 w-5 text-accent" />
-          Quantum Secure Messaging
-        </h1>
-        <div className="flex items-center gap-1">
-          <ChatInfoModal>
-            <Button variant="ghost" size="icon">
-              <HelpCircle className="h-5 w-5" />
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-full sm:w-80 h-full border-r bg-muted/10 flex flex-col">
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">TetraCryptPQC</h2>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
+              <Settings className="h-5 w-5" />
             </Button>
-          </ChatInfoModal>
-          <Button variant="ghost" size="icon" onClick={goToSettings}>
-            <Settings className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-80 border-r overflow-hidden flex flex-col">
-          <div className="p-3">
-            <Card className="bg-accent/5 border-accent/20">
-              <CardHeader className="py-2 px-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-1">
-                  <Shield className="h-4 w-4 text-accent" />
-                  Secure Communication
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="py-1 px-3 text-xs text-muted-foreground">
-                <p>
-                  Your messages are protected with NIST FIPS 205/206 post-quantum cryptography.
-                </p>
-              </CardContent>
-            </Card>
           </div>
           
-          <div className="px-3 mb-1">
-            <Tabs value={contactsTab} onValueChange={(v: string) => setContactsTab(v as any)}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="active" className="text-xs">
-                  Active
-                  {activeContacts.length > 0 && (
-                    <Badge className="ml-2 text-[10px]">{activeContacts.length}</Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="all" className="text-xs">
-                  All Contacts
-                  <Badge className="ml-2 text-[10px]">{contacts.length}</Badge>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search contacts..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          
-          <ContactList
-            contacts={displayedContacts}
-            selectedContactId={selectedContactId}
-            onSelectContact={handleContactSelect}
-            onRefreshContacts={loadContacts}
-          />
         </div>
-
-        <div className="flex-1 overflow-hidden grid grid-rows-[1fr,auto]">
-          {selectedContact ? (
-            <>
-              <Conversation contact={selectedContact} />
-              <div className="p-4 border-t">
-                <MessageList contactId={selectedContact.id} />
+        
+        <Tabs 
+          defaultValue="direct" 
+          className="flex-1 flex flex-col"
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as "direct" | "p2p")}
+        >
+          <TabsList className="grid grid-cols-2 mx-4 mt-4">
+            <TabsTrigger value="direct" className="flex items-center gap-1">
+              <MessageCircle className="h-4 w-4" />
+              <span>Direct</span>
+            </TabsTrigger>
+            <TabsTrigger value="p2p" className="flex items-center gap-1">
+              <Users className="h-4 w-4" />
+              <span>P2P</span>
+              {peerCount > 0 && (
+                <Badge variant="outline" className="ml-1 h-5 min-w-5 px-1 flex items-center justify-center">
+                  {peerCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="direct" className="flex-1 flex flex-col mt-0 p-0 pt-4">
+            {isContactsLoading ? (
+              <div className="flex items-center justify-center h-24">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            </>
-          ) : (
-            <div className="h-full flex items-center justify-center text-center p-4 bg-gradient-to-b from-transparent to-accent/5">
-              <div className="max-w-md space-y-4">
-                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto">
-                  <Shield className="h-8 w-8 text-accent" />
-                </div>
-                <h2 className="text-2xl font-semibold">Select a Contact</h2>
-                <p className="text-muted-foreground">
-                  Choose a contact from the list to start a secure, post-quantum encrypted conversation. 
-                  All messages are protected using NIST FIPS 205/206 compliant cryptography.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                  <Button variant="outline" asChild>
-                    <a href="/documentation">View Documentation</a>
-                  </Button>
-                  <Button variant="default">
+            ) : (
+              <>
+                <ContactList
+                  contacts={filteredContacts}
+                  selectedContactId={selectedContactId}
+                  onSelectContact={setSelectedContactId}
+                />
+                
+                <div className="p-4 mt-auto">
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    onClick={() => setIsContactModalOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
                     Add New Contact
                   </Button>
                 </div>
+              </>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="p2p" className="flex-1 flex flex-col mt-0 p-0 pt-4">
+            <P2PInfoPanel
+              connectionState={connectionState}
+              peerCount={peerCount}
+              onReconnect={reconnectP2P}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
+      
+      {/* Main content */}
+      <div className="flex-1 flex flex-col">
+        {activeTab === "direct" ? (
+          selectedContactId ? (
+            // Find the selected contact and pass it to the Conversation component
+            contacts.find(c => c.id === selectedContactId) ? (
+              <Conversation 
+                contact={contacts.find(c => c.id === selectedContactId)!}
+                onBack={() => setSelectedContactId("")}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-muted-foreground">Contact not found</p>
+              </div>
+            )
+          ) : (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center max-w-md">
+                <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h2 className="text-2xl font-bold mb-2">Secure Messaging</h2>
+                <p className="text-muted-foreground mb-4">
+                  Select a contact to start a post-quantum encrypted conversation, 
+                  or add a new contact to begin messaging.
+                </p>
+                <Button onClick={() => setIsContactModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Contact
+                </Button>
               </div>
             </div>
-          )}
-        </div>
+          )
+        ) : (
+          <P2PMessagingPanel 
+            messages={p2pMessages}
+            sendMessage={sendP2PMessage}
+            isLoading={isP2PLoading}
+          />
+        )}
       </div>
+      
+      {/* Add Contact Modal */}
+      {isContactModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Add New Contact</h3>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="contactId" className="text-sm font-medium block mb-1">
+                    Contact ID
+                  </label>
+                  <Input
+                    id="contactId"
+                    value={newContactId}
+                    onChange={(e) => setNewContactId(e.target.value)}
+                    placeholder="Enter contact ID"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Enter the unique ID of the contact you want to add.
+                  </p>
+                </div>
+                
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsContactModalOpen(false);
+                      setNewContactId("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleAddContact}
+                    disabled={!newContactId.trim() || isAddingContact}
+                  >
+                    {isAddingContact ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Contact
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
