@@ -37,7 +37,16 @@ export async function initializeSecureInfrastructure(): Promise<boolean> {
  * Create a new secure container
  */
 export async function createSecureContainer(
-  config: Partial<SecureContainerConfig>
+  name: string,
+  securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave',
+  options?: {
+    immutableRootfs?: boolean;
+    rotationPolicy?: {
+      enabled: boolean;
+      intervalDays: number;
+      triggerOnAnomaly: boolean;
+    }
+  }
 ): Promise<SecureContainer> {
   console.log("🔹 Creating secure container");
   
@@ -47,9 +56,9 @@ export async function createSecureContainer(
     
     return {
       id: containerId,
-      name: config.name || "Secure Container",
+      name: name,
       status: "created",
-      containerType: config.type || "general",
+      containerType: securityProfile,
       createdAt: new Date().toISOString()
     };
   } catch (error) {
@@ -101,28 +110,31 @@ export async function getSecureInfrastructureNodes(): Promise<SecureInfraNode[]>
 /**
  * Create a secure service mesh
  */
-export function createSecureServiceMesh(name: string): Promise<SecureServiceMesh> {
-  return Promise.resolve({
+export async function createSecureServiceMesh(
+  name: string, 
+  containerIds: string[] = []
+): Promise<SecureServiceMesh> {
+  return {
     id: crypto.randomUUID(),
     name,
-    endpoints: [],
+    endpoints: containerIds,
     status: "created",
     createdAt: new Date().toISOString()
-  });
+  };
 }
 
 /**
  * Deploy a secure container
  */
-export function deploySecureContainer(containerId: string): Promise<boolean> {
-  return Promise.resolve(true);
+export async function deploySecureContainer(containerId: string): Promise<boolean> {
+  return true;
 }
 
 /**
  * Monitor secure infrastructure
  */
-export function monitorSecureInfrastructure(): Promise<any> {
-  return Promise.resolve({});
+export async function monitorSecureInfrastructure(): Promise<any> {
+  return {};
 }
 
 /**
@@ -279,33 +291,52 @@ export async function checkHardwareSecurityCapabilities(): Promise<{
 /**
  * Verify container integrity
  */
-export async function verifyContainerIntegrity(containerId: string): Promise<boolean> {
+export async function verifyContainerIntegrity(containerId: string): Promise<{
+  verified: boolean;
+  issues: string[];
+}> {
   console.log(`🔹 Verifying integrity of container: ${containerId}`);
   
   try {
     // Simulate verification
     await new Promise(resolve => setTimeout(resolve, 300));
     
-    return true;
+    return {
+      verified: true,
+      issues: []
+    };
   } catch (error) {
     console.error(`❌ Error verifying container integrity: ${containerId}`, error);
-    return false;
+    return {
+      verified: false,
+      issues: ["Verification failed"]
+    };
   }
 }
 
 /**
  * Rotate container keys
  */
-export async function rotateContainer(containerId: string): Promise<boolean> {
+export async function rotateContainer(containerId: string): Promise<SecureContainer> {
   console.log(`🔹 Rotating keys for container: ${containerId}`);
   
   try {
     // Simulate key rotation
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    return true;
+    return {
+      id: containerId,
+      name: "Rotated Container",
+      status: "running",
+      containerType: "hardened",
+      createdAt: new Date().toISOString(),
+      startedAt: new Date().toISOString()
+    };
   } catch (error) {
     console.error(`❌ Error rotating container keys: ${containerId}`, error);
-    return false;
+    throw error;
   }
 }
+
+// Function for backwards compatibility with SecureInfrastructurePanel.tsx
+export const createSecureInfraNode = createSecureNode;
