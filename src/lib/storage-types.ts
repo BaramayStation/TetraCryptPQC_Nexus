@@ -2,119 +2,38 @@
 /**
  * TetraCryptPQC Storage Types
  * 
- * This module defines core types for the storage system.
+ * This module defines the core types used across the application for storage,
+ * communication, and security operations.
  */
 
-import { HSMType, SecurityLevel } from './hsm-types';
-
-// User Profile
-export interface UserProfile {
-  userId: string;
-  id?: string; // Alias for userId to maintain compatibility
-  name: string;
-  username?: string;
-  displayName?: string;
-  email?: string;
-  avatar?: string;
-  publicKey?: string; 
-  privateKey?: string;
-  signatureKey?: string;
-  created: string;
-  updated?: string;
-  lastActive: string;
-  keyPairs?: {
-    pqkem?: {
-      algorithm: string;
-      publicKey: string;
-      privateKey: string;
-      created: string;
-      strength?: string;
-      standard?: string;
-    };
-    signature?: {
-      algorithm: string;
-      publicKey: string;
-      privateKey: string;
-      created: string;
-      strength?: string;
-      standard?: string;
-    };
-  };
-  securityLevel: SecurityLevel;
-  securitySettings?: {
-    mfa: boolean;
-    hardwareAuthentication: boolean;
-    offlineMode: boolean;
-    autoSync: boolean;
-    keyRotationPeriod: number; // In days
-  };
-  didDocument?: {
-    id: string;
-    created: string;
-    proof?: string;
-    controller?: string;
-    verificationMethod?: any[];
-  };
-  hsmInfo?: {
-    type: string;
-    status: string;
-    lastVerified?: string;
-    id?: string;
-    provider?: string;
-    securityLevel?: string;
-    capabilities?: string[];
-  };
-  qkdInfo?: {
-    enabled: boolean;
-    status: string;
-  };
-  starkNetId?: {
-    id: string;
-    address: string;
-    verified: boolean;
-    starkKey?: string;
-  };
-}
-
-// Contact
+// Core communication types
 export interface Contact {
   id: string;
   name: string;
-  displayName?: string;
-  avatar?: string;
-  publicKeys?: {
-    encryption: string;
-    signature: string;
-  };
-  publicKey?: string; // Legacy support
-  signatureKey?: string; // Legacy support
-  trusted?: boolean;
-  lastActive?: string;
-  conversationId?: string;
-  status?: 'online' | 'offline' | 'away';
+  publicKeys: string[];
+  status: string;
   lastMessage?: string;
   lastMessageTime?: string;
   unreadCount?: number;
-  created?: string;
+  displayName?: string;
+  signatureKey?: string;
+  address?: string;
 }
 
-// Message
 export interface Message {
   id: string;
   senderId: string;
   recipientId: string;
   content: string;
   timestamp: string;
-  encrypted: boolean;
+  encrypted?: boolean;
   signature?: string;
   verified?: boolean;
-  encryptionType?: 'ML-KEM-1024' | 'Hybrid' | 'ChaCha20-Poly1305';
-  status: 'sent' | 'delivered' | 'read' | 'failed';
-  
-  // Additional fields for extended functionality
+  encryptionType?: string;
+  status?: "sent" | "delivered" | "read" | "failed";
   kemType?: string;
   pqSignatureType?: string;
-  selfHealingStatus?: 'active' | 'healing' | 'compromised';
+  selfHealingStatus?: "active" | "healing" | "compromised";
   webrtcSecured?: boolean;
   zkProofVerified?: boolean;
   didVerified?: boolean;
@@ -123,92 +42,239 @@ export interface Message {
   encryptionAlgorithm?: string;
 }
 
-// Conversation
+export interface UserProfile {
+  id: string;
+  userId: string;
+  name: string;
+  displayName: string;
+  username: string;
+  publicKey: string;
+  privateKey: string;
+  keyPairs?: {
+    encryption?: {
+      publicKey: string;
+      privateKey: string;
+    };
+    signature?: {
+      publicKey: string;
+      privateKey: string;
+    };
+  };
+  didDocument?: any;
+  hsmInfo?: any;
+  qkdInfo?: any;
+  signatureKey?: string;
+  starkNetId?: string;
+  lastActive?: string;
+  created?: string;
+}
+
 export interface Conversation {
   id: string;
   participants: string[];
-  lastMessage?: {
-    content: string;
-    timestamp: string;
-    senderId: string;
-  };
-  unreadCount: number;
-  encryptionType: 'ML-KEM-1024' | 'Hybrid' | 'ChaCha20-Poly1305';
+  messages: Message[];
+  createdAt: string;
+  updatedAt: string;
+  metadata?: Record<string, any>;
 }
 
-// Biometric Authentication Methods
-export type BiometricMethod = 'face' | 'fingerprint' | 'voice' | 'iris' | 'behavior';
-
-// Security Event Types
-export type SecurityEventType = 
-  | 'authentication' 
-  | 'key-usage' 
-  | 'data-access' 
-  | 'system-change'
-  | 'network-access'
-  | 'cryptographic-operation'
-  | 'audit';
-
-// Threat Severity Levels
-export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical' | 'audit' | 'minimal';
-
-// AI Security Model Types
-export type SecurityModelType = 'anomaly-detection' | 'intrusion-prevention' | 'threat-intelligence';
-
-// Threat model type
+// Security and threat types
 export interface Threat {
   id: string;
   description: string;
-  severity: ThreatSeverity;
-  timestamp?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  status: 'active' | 'mitigated' | 'investigating';
   source?: string;
-  mitigation?: string;
-  status?: 'active' | 'mitigated' | 'investigating';
-}
-
-// AI-related security types
-export interface AISecuredCloudInstance {
-  id: string;
-  name: string;
-  status: string;
+  details?: string;
+  mitigation?: string[];
   type?: string;
-  region?: string;
-  encryptionLevel?: SecurityLevel;
-  lastHealthCheck?: string;
 }
 
 export interface SecurityHealthMetrics {
   uptime: number;
   incidents: number;
-  threatScore?: number;
-  availability?: number;
-  integrity?: number;
-  confidentiality?: number;
+  overallScore?: number;
+  threatDetectionRate?: number;
+  incidentResponseTime?: number;
+  complianceScore?: number;
+  threatDetectionLatency?: number;
+  falsePositiveRate?: number;
+  vulnerabilities?: Array<{
+    id: string;
+    severity: string;
+    description: string;
+    status: string;
+  }>;
+  recommendedActions?: string[];
+}
+
+export interface AISecuredCloudInstance {
+  id: string;
+  name: string;
+  status: string;
+  region?: string;
+  createdAt?: string;
+  securityLevel?: 'standard' | 'enhanced' | 'maximum';
+  threatStatus?: 'normal' | 'investigating' | 'compromised';
+  healthStatus?: 'healthy' | 'degraded' | 'critical';
   lastUpdated?: string;
+  metrics?: SecurityHealthMetrics;
+  homomorphicEncryptionEnabled?: boolean;
+  ipfsStorageEnabled?: boolean;
+  zeroKnowledgeAuthEnabled?: boolean;
 }
 
 export interface AISecurityPolicy {
   id: string;
+  name: string;
   rules: string[];
-  name?: string;
-  description?: string;
-  enforced?: boolean;
-  created?: string;
-  updated?: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  autoRemediationEnabled?: boolean;
 }
 
-// StarkNet Identity
+// Infrastructure types
+export interface SecureContainerConfig {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  createdAt: string;
+  immutableRootfs?: boolean;
+  rotationPolicy?: {
+    enabled: boolean;
+    intervalDays: number;
+    lastRotation?: string;
+    interval?: number;
+  };
+  network?: {
+    ingress: boolean;
+    egress: boolean;
+    allowedPorts: number[];
+  };
+}
+
+export interface SecureInfraNode {
+  nodeId: string;
+  name: string;
+  status: string;
+  type: string;
+  lastVerified?: string;
+}
+
+export interface SecureServiceMesh {
+  id: string;
+  name: string;
+  endpoints: string[];
+  status: string;
+  createdAt: string;
+}
+
+export interface SecureContainer {
+  id: string;
+  name: string;
+  status: string;
+  containerType: string;
+  createdAt: string;
+}
+
+// Decentralized identity types
 export interface StarkNetID {
   id: string;
+  type: string;
   address: string;
+  starkKey: string;
+  created: string;
   publicKey: string;
   controller: string;
-  created: string;
   updated: string;
   verified: boolean;
-  type?: string;
-  starkKey?: string;
 }
 
-// Export types from extended module
-export * from './storage-types-ext';
+// PQ-SCIF specific types
+export interface PQSCIFEnvironment {
+  id: string;
+  name: string;
+  operationalMode: 'tactical' | 'strategic' | 'enterprise';
+  securityLevel: 'default' | 'sensitive' | 'ts-sci';
+  aiCapabilities: string[];
+  hardwareSecured: boolean;
+  createdAt: string;
+}
+
+export interface SecureChannel {
+  id: string;
+  peerEndpoint: string;
+  encryptionAlgorithm: string;
+  signatureAlgorithm: string;
+  established: string;
+  lastActivity: string;
+  status: 'active' | 'inactive' | 'compromised';
+}
+
+export interface SecureCommand {
+  id: string;
+  commandPayload: string;
+  issuedAt: string;
+  status: 'pending' | 'executed' | 'failed' | 'rejected';
+  authorization: string[];
+  verification: {
+    starkNetValidated: boolean;
+    zkProofVerified: boolean;
+    signatureValid: boolean;
+  };
+}
+
+// Types from local-ai-backup.ts
+export type EncryptionType = 'ML-KEM-768' | 'ML-KEM-1024' | 'Hybrid';
+
+export enum AISyncStatus {
+  Synced = 'synced',
+  Pending = 'pending',
+  Failed = 'failed'
+}
+
+export interface PodmanContainerStatus {
+  containerId: string;
+  running: boolean;
+  image: string;
+  created: string;
+  ports: number[];
+  volumes: string[];
+  rootless?: boolean;
+}
+
+export interface AICloudConnectionStatus {
+  connected: boolean;
+  lastPing: string;
+  endpoint: string;
+  encrypted: boolean;
+  failoverActivated?: boolean;
+}
+
+export interface WebRTCPeerStatus {
+  connected: boolean;
+  lastConnected: string;
+  encrypted: boolean;
+  peerId?: string;
+}
+
+export interface LocalAIBackupConfig {
+  backupId: string;
+  name: string;
+  config: string;
+  createdAt: string;
+  lastBackup: string;
+}
+
+export interface AISecurityEvent {
+  id: string;
+  timestamp: string;
+  eventType: string;
+  severity: 'info' | 'warning' | 'critical';
+  source: string;
+  details: string;
+  resolved: boolean;
+}
