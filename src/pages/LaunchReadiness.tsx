@@ -1,17 +1,15 @@
+
 import React from "react";
-import { Helmet } from "react-helmet-async";
+import { SecureHead } from "@/utils/secure-head";
 import LaunchReadinessPanel from "@/components/testing/LaunchReadinessPanel";
 
 const LaunchReadinessPage: React.FC = () => {
   return (
     <>
-      <Helmet>
-        <title>TetraCryptPQC - Launch Readiness Tests</title>
-        <meta 
-          name="description" 
-          content="Verify that all TetraCryptPQC components are working correctly before launch" 
-        />
-      </Helmet>
+      <SecureHead
+        title="TetraCryptPQC - Launch Readiness Tests"
+        description="Verify that all TetraCryptPQC components are working correctly before launch"
+      />
       
       <div className="container py-8">
         <div className="mb-6">
