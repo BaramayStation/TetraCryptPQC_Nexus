@@ -9,6 +9,8 @@ import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
 import SecureCommunication from './pages/SecureCommunication';
 import KeyManagement from './pages/KeyManagement';
+import Enterprise from './pages/Enterprise';
+import Documentation from './pages/Documentation';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { logWasmSupport } from '@/lib/wasm-detection';
 import { toast } from '@/hooks/use-toast';
@@ -42,6 +44,8 @@ function App() {
           <Route path="/chat" element={<Chat />} />
           <Route path="/secure-communication" element={<SecureCommunication />} />
           <Route path="/key-management" element={<KeyManagement />} />
+          <Route path="/enterprise" element={<Enterprise />} />
+          <Route path="/documentation" element={<Documentation />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

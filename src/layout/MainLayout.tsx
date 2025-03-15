@@ -3,7 +3,20 @@ import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, Settings, MessageSquare, Home } from "lucide-react";
+import { 
+  Menu, 
+  X, 
+  Shield, 
+  Settings, 
+  MessageSquare, 
+  Home, 
+  Key, 
+  Server, 
+  Lock, 
+  Building2, 
+  FileText,
+  BarChart3
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MainLayoutProps {
@@ -36,7 +49,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   
   const navItems = [
     { name: "Home", path: "/", icon: <Home className="h-5 w-5" /> },
-    { name: "Messages", path: "/chat", icon: <MessageSquare className="h-5 w-5" /> },
+    { name: "Dashboard", path: "/dashboard", icon: <BarChart3 className="h-5 w-5" /> },
+    { name: "Messaging", path: "/chat", icon: <MessageSquare className="h-5 w-5" /> },
+    { name: "Key Management", path: "/key-management", icon: <Key className="h-5 w-5" /> },
+    { name: "Secure Comms", path: "/secure-communication", icon: <Lock className="h-5 w-5" /> },
+    { name: "Enterprise", path: "/enterprise", icon: <Building2 className="h-5 w-5" /> },
+    { name: "Documentation", path: "/documentation", icon: <FileText className="h-5 w-5" /> },
     { name: "Settings", path: "/settings", icon: <Settings className="h-5 w-5" /> },
   ];
   
