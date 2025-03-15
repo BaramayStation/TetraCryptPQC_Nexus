@@ -3,7 +3,7 @@ import React from "react";
 import { MainLayout } from "@/layout/MainLayout";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { Button } from "@/components/ui/button";
-import { Shield, Lock, Database, Key, MessageSquare, Fingerprint } from "lucide-react";
+import { Shield, Lock, Database, Key, MessageSquare, Fingerprint, LayoutDashboard } from "lucide-react";
 import SecurityArchitecture from "@/components/security/SecurityArchitecture";
 import PQCKeyGen from "@/components/PQCKeyGen";
 import { Link } from "react-router-dom";
@@ -29,9 +29,11 @@ const Index = () => {
                   Start Secure Messaging
                 </Link>
               </Button>
-              <Button variant="outline">
-                <Shield className="mr-2 h-4 w-4" />
-                Learn More
+              <Button asChild variant="outline">
+                <Link to="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Enterprise Dashboard
+                </Link>
               </Button>
             </div>
           </div>
