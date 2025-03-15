@@ -8,10 +8,22 @@ import Chat from "./pages/Chat";
 import DecentralizedCloud from "./pages/DecentralizedCloud";
 import SecureMessaging from "./pages/SecureMessaging";
 import UndergroundNetwork from "./pages/UndergroundNetwork";
+import { SecureAuthProvider, useSecureAuth } from "./contexts/SecureAuthContext";
 
-const App = () => {
-  // This is a placeholder - in a real implementation, you would use proper auth
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+// Protected route wrapper component
+const ProtectedRoute = ({ component: Component }: { component: React.ComponentType }) => {
+  const { user, loading } = useSecureAuth();
+  
+  if (loading) {
+    return <div>Loading authentication...</div>;
+  }
+  
+  return user?.authenticated ? <Component /> : <Navigate to="/login" />;
+};
+
+const Routes = () => {
+  const { user } = useSecureAuth();
+  const isAuthenticated = user?.authenticated || false;
 
   const router = createBrowserRouter([
     {
@@ -28,27 +40,35 @@ const App = () => {
     },
     {
       path: "/dashboard",
-      element: isAuthenticated ? <Dashboard /> : <Navigate to="/login" />,
+      element: <ProtectedRoute component={Dashboard} />,
     },
     {
       path: "/chat",
-      element: isAuthenticated ? <Chat /> : <Navigate to="/login" />,
+      element: <ProtectedRoute component={Chat} />,
     },
     {
       path: "/decentralized-cloud",
-      element: isAuthenticated ? <DecentralizedCloud /> : <Navigate to="/login" />,
+      element: <ProtectedRoute component={DecentralizedCloud} />,
     },
     {
       path: "/secure-messaging",
-      element: isAuthenticated ? <SecureMessaging /> : <Navigate to="/login" />,
+      element: <ProtectedRoute component={SecureMessaging} />,
     },
     {
       path: "/underground-network",
-      element: isAuthenticated ? <UndergroundNetwork /> : <Navigate to="/login" />,
+      element: <ProtectedRoute component={UndergroundNetwork} />,
     },
   ]);
 
   return <RouterProvider router={router} />;
+};
+
+const App = () => {
+  return (
+    <SecureAuthProvider>
+      <Routes />
+    </SecureAuthProvider>
+  );
 };
 
 export default App;
