@@ -2,47 +2,32 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { connectToStarkNet, verifyStarkNetIdentity } from "@/services/StarkNetService";
-import { toast } from "@/components/ui/use-toast";
 import { Shield, Lock, CheckCircle, XCircle } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 const StarkNetAuth: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [starkNetAddress, setStarkNetAddress] = useState<string | null>(null);
   const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'success' | 'failure'>('none');
 
-  // Check if there's an existing connection on mount
-  useEffect(() => {
-    const checkExistingConnection = async () => {
-      try {
-        // Check if window.starknet exists and is connected
-        if (typeof window !== 'undefined' && 'starknet' in window && window.starknet) {
-          if ((window as any).starknet.selectedAddress) {
-            setStarkNetAddress((window as any).starknet.selectedAddress);
-          }
-        }
-      } catch (error) {
-        console.error("Error checking StarkNet connection:", error);
-      }
-    };
-
-    checkExistingConnection();
-  }, []);
-
+  // Simulated connection function - in a real app, this would connect to StarkNet
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
-      const result = await connectToStarkNet();
-      if (result.success && result.address) {
-        setStarkNetAddress(result.address);
-        
-        toast({
-          title: "StarkNet Connected",
-          description: `Successfully connected to StarkNet with address: ${result.address.substring(0, 6)}...${result.address.substring(result.address.length - 4)}`,
-        });
-      } else {
-        throw new Error(result.error || "Failed to connect to StarkNet");
-      }
+      // Simulate connection delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate mock StarkNet address
+      const mockAddress = `0x${Array.from({ length: 40 }, () => 
+        Math.floor(Math.random() * 16).toString(16)
+      ).join('')}`;
+      
+      setStarkNetAddress(mockAddress);
+      
+      toast({
+        title: "StarkNet Connected",
+        description: `Connected to address: ${mockAddress.substring(0, 6)}...${mockAddress.substring(mockAddress.length - 4)}`,
+      });
     } catch (error) {
       console.error("StarkNet connection error:", error);
       toast({
@@ -61,15 +46,11 @@ const StarkNetAuth: React.FC = () => {
     setVerificationStatus('pending');
     
     try {
-      // Generate a random challenge message
-      const challenge = `TetraCryptPQC verification ${crypto.randomUUID()}`;
+      // Simulate verification delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Simulate signature verification for StarkNet
-      const isVerified = await verifyStarkNetIdentity(
-        starkNetAddress,
-        "simulated-signature", // In real implementation, this would be an actual signature
-        challenge
-      );
+      // Simulate success (90% success rate)
+      const isVerified = Math.random() > 0.1;
       
       if (isVerified) {
         setVerificationStatus('success');
@@ -107,7 +88,7 @@ const StarkNetAuth: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Shield className="h-5 w-5 mr-2 text-accent" />
