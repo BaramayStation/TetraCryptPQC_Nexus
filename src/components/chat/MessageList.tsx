@@ -2,9 +2,11 @@
 import React from "react";
 import { Message } from "@/lib/storage-types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CheckCheck, Check, Lock, AlertTriangle } from "lucide-react";
+import { CheckCheck, Check, Lock, AlertTriangle, Shield, Database, FileCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
 interface MessageListProps {
   messages: Message[];
@@ -35,6 +37,74 @@ const MessageList: React.FC<MessageListProps> = ({
     }
   };
 
+  const getEncryptionTypeColor = (type?: string) => {
+    switch (type) {
+      case "ML-KEM-1024":
+        return "bg-green-500/20 text-green-600";
+      case "Hybrid":
+        return "bg-purple-500/20 text-purple-600";
+      case "Falcon-1024":
+        return "bg-blue-500/20 text-blue-600";
+      default:
+        return "bg-accent/20";
+    }
+  };
+
+  const getSecurityBadge = (message: Message) => {
+    if (!message.encrypted) return null;
+    
+    return (
+      <Badge 
+        variant="outline" 
+        className={cn(
+          "flex items-center gap-1 mt-1.5 text-xs py-0.5 h-5",
+          getEncryptionTypeColor(message.encryptionType)
+        )}
+      >
+        <Lock className="h-3 w-3" />
+        <span>{message.encryptionType || "Encrypted"}</span>
+      </Badge>
+    );
+  };
+
+  const getVerificationIcon = (message: Message) => {
+    if (message.verified === false) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="inline-flex bg-amber-500/20 text-amber-600 p-1 rounded-full">
+                <AlertTriangle className="h-3 w-3" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p className="text-xs">Signature verification failed</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    
+    if (message.verified === true) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="inline-flex bg-green-500/20 text-green-600 p-1 rounded-full">
+                <FileCheck className="h-3 w-3" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p className="text-xs">Message verified with PQC signature</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <div className="space-y-4">
       {messages.map((message) => {
@@ -63,12 +133,23 @@ const MessageList: React.FC<MessageListProps> = ({
               )}>
                 <p className="text-sm">{message.content}</p>
                 
-                {message.encrypted && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <Lock className="h-3 w-3 text-current opacity-70" />
-                    <span className="text-xs opacity-70">{message.encryptionType || "Encrypted"}</span>
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {getSecurityBadge(message)}
+                  
+                  {message.zkProofVerified && (
+                    <Badge variant="outline" className="flex items-center gap-1 h-5 py-0.5 bg-indigo-500/20 text-indigo-600">
+                      <Shield className="h-3 w-3" />
+                      <span>zk-STARK Verified</span>
+                    </Badge>
+                  )}
+                  
+                  {message.didVerified && (
+                    <Badge variant="outline" className="flex items-center gap-1 h-5 py-0.5 bg-blue-500/20 text-blue-600">
+                      <Database className="h-3 w-3" />
+                      <span>DID Verified</span>
+                    </Badge>
+                  )}
+                </div>
               </div>
               
               <div className={cn(
@@ -78,6 +159,8 @@ const MessageList: React.FC<MessageListProps> = ({
                 <span className="text-muted-foreground">
                   {formatTimestamp(message.timestamp)}
                 </span>
+                
+                {getVerificationIcon(message)}
                 
                 {isCurrentUser && (
                   <>
@@ -89,10 +172,6 @@ const MessageList: React.FC<MessageListProps> = ({
                       <Check className="h-3 w-3 text-muted-foreground" />
                     )}
                   </>
-                )}
-                
-                {message.verified === false && (
-                  <AlertTriangle className="h-3 w-3 text-amber-500" />
                 )}
               </div>
             </div>
