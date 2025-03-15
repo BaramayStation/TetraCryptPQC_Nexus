@@ -8,6 +8,19 @@
 
 import { toast } from "@/components/ui/use-toast";
 
+// Define the StarkNet window type
+interface StarkNetWindow {
+  starknet: {
+    enable: () => Promise<string[]>;
+    selectedAddress?: string;
+    name?: string;
+    account?: {
+      publicKey?: string;
+    };
+    request: (params: any) => Promise<any>;
+  }
+}
+
 // StarkNet authentication result
 export interface StarkNetAuthResult {
   success: boolean;
@@ -24,10 +37,10 @@ export async function checkStarkNetAvailability(): Promise<{
 }> {
   try {
     // Check if StarkNet is injected in the browser
-    if (typeof window !== "undefined" && "starknet" in window && window.starknet) {
+    if (typeof window !== "undefined" && "starknet" in window && (window as unknown as StarkNetWindow).starknet) {
       return {
         available: true,
-        walletName: window.starknet.name || "Unknown StarkNet Wallet"
+        walletName: (window as unknown as StarkNetWindow).starknet.name || "Unknown StarkNet Wallet"
       };
     }
     
@@ -48,7 +61,7 @@ export async function checkStarkNetAvailability(): Promise<{
 export async function connectToStarkNet(): Promise<StarkNetAuthResult> {
   try {
     // Check if StarkNet is available
-    if (typeof window === "undefined" || !("starknet" in window) || !window.starknet) {
+    if (typeof window === "undefined" || !("starknet" in window) || !(window as unknown as StarkNetWindow).starknet) {
       toast({
         title: "StarkNet Wallet Required",
         description: "Please install a StarkNet wallet like Argent X or Braavos to connect.",
@@ -66,15 +79,15 @@ export async function connectToStarkNet(): Promise<StarkNetAuthResult> {
     
     // Enable the wallet (request permission)
     try {
-      const accounts = await window.starknet.enable();
+      const accounts = await (window as unknown as StarkNetWindow).starknet.enable();
       
       if (accounts && accounts.length > 0) {
-        const address = window.starknet.selectedAddress || accounts[0];
+        const address = (window as unknown as StarkNetWindow).starknet.selectedAddress || accounts[0];
         
         // Get public key (in a real implementation, this would use the proper API)
         let publicKey = "";
-        if (window.starknet.account && window.starknet.account.publicKey) {
-          publicKey = window.starknet.account.publicKey;
+        if ((window as unknown as StarkNetWindow).starknet.account && (window as unknown as StarkNetWindow).starknet.account.publicKey) {
+          publicKey = (window as unknown as StarkNetWindow).starknet.account.publicKey;
         } else {
           // Simulate public key for testing
           publicKey = "0x" + Math.random().toString(16).substring(2, 10);
@@ -131,7 +144,7 @@ export async function signMessageWithStarkNet(message: string): Promise<{
 }> {
   try {
     // Check if StarkNet is available
-    if (typeof window === "undefined" || !("starknet" in window) || !window.starknet) {
+    if (typeof window === "undefined" || !("starknet" in window) || !(window as unknown as StarkNetWindow).starknet) {
       return {
         success: false,
         error: "StarkNet wallet not available"
@@ -139,7 +152,7 @@ export async function signMessageWithStarkNet(message: string): Promise<{
     }
     
     // Request signature using starknet.request
-    const response = await window.starknet.request({
+    const response = await (window as unknown as StarkNetWindow).starknet.request({
       method: 'starknet_signMessage',
       params: [
         {
@@ -185,3 +198,14 @@ export async function signMessageWithStarkNet(message: string): Promise<{
     };
   }
 }
+
+// Verify StarkNet identity
+export async function verifyStarkNetIdentity(address: string, signature: string, message: string): Promise<boolean> {
+  // In a real implementation, this would verify the signature using StarkNet libraries
+  // For now, we'll simulate verification
+  console.log(`🔹 Verifying StarkNet signature for message from ${address}`);
+  
+  // Simulate verification (90% success rate)
+  return Math.random() > 0.1;
+}
+

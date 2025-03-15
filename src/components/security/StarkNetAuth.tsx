@@ -1,169 +1,182 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Shield, Check, AlertTriangle, Loader2 } from "lucide-react";
-import { connectStarkNet, verifyStarkNetIdentity } from "@/services/StarkNetService";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { connectToStarkNet, verifyStarkNetIdentity } from "@/services/StarkNetService";
+import { toast } from "@/components/ui/use-toast";
+import { Shield, Lock, CheckCircle, XCircle } from "lucide-react";
 
-export interface StarkNetAuthProps {
-  onSuccess?: (starkNetId: string) => void;
-  onError?: (error: string) => void;
-}
-
-const StarkNetAuth: React.FC<StarkNetAuthProps> = ({ onSuccess, onError }) => {
+const StarkNetAuth: React.FC = () => {
   const [isConnecting, setIsConnecting] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("");
-  const [starkNetId, setStarkNetId] = useState("");
-  const [error, setError] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
-  
-  const connectToStarkNet = async () => {
+  const [starkNetAddress, setStarkNetAddress] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<'none' | 'pending' | 'success' | 'failure'>('none');
+
+  // Check if there's an existing connection on mount
+  useEffect(() => {
+    const checkExistingConnection = async () => {
+      try {
+        // Check if window.starknet exists and is connected
+        if (typeof window !== 'undefined' && 'starknet' in window && window.starknet) {
+          if ((window as any).starknet.selectedAddress) {
+            setStarkNetAddress((window as any).starknet.selectedAddress);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking StarkNet connection:", error);
+      }
+    };
+
+    checkExistingConnection();
+  }, []);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
     try {
-      setIsConnecting(true);
-      setError("");
-      setProgress(10);
-      setStatus("Initializing StarkNet connection...");
-      
-      // Connect to StarkNet
-      setProgress(30);
-      setStatus("Connecting to StarkNet network...");
-      const connectionResult = await connectStarkNet();
-      
-      if (!connectionResult.success) {
-        throw new Error(connectionResult.error || "Failed to connect to StarkNet");
+      const result = await connectToStarkNet();
+      if (result.success && result.address) {
+        setStarkNetAddress(result.address);
+        
+        toast({
+          title: "StarkNet Connected",
+          description: `Successfully connected to StarkNet with address: ${result.address.substring(0, 6)}...${result.address.substring(result.address.length - 4)}`,
+        });
+      } else {
+        throw new Error(result.error || "Failed to connect to StarkNet");
       }
-      
-      // Verify identity
-      setProgress(60);
-      setStatus("Verifying StarkNet identity...");
-      const verificationResult = await verifyStarkNetIdentity();
-      
-      if (!verificationResult.success) {
-        throw new Error(verificationResult.error || "Failed to verify StarkNet identity");
-      }
-      
-      // Set verified state
-      setProgress(100);
-      setStatus("StarkNet identity verified");
-      setStarkNetId(verificationResult.starkNetId);
-      setIsVerified(true);
-      
-      if (onSuccess) {
-        onSuccess(verificationResult.starkNetId);
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error occurred";
-      setError(errorMessage);
-      setProgress(0);
-      setStatus("Connection failed");
-      
-      if (onError) {
-        onError(errorMessage);
-      }
+    } catch (error) {
+      console.error("StarkNet connection error:", error);
+      toast({
+        title: "Connection Failed",
+        description: error instanceof Error ? error.message : "Failed to connect to StarkNet",
+        variant: "destructive",
+      });
     } finally {
       setIsConnecting(false);
     }
   };
   
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-accent" />
-          StarkNet Zero-Knowledge Authentication
-        </CardTitle>
-        <CardDescription>
-          Verify your identity using StarkNet's zero-knowledge proof system for enhanced security
-        </CardDescription>
-      </CardHeader>
+  const handleVerify = async () => {
+    if (!starkNetAddress) return;
+    
+    setVerificationStatus('pending');
+    
+    try {
+      // Generate a random challenge message
+      const challenge = `TetraCryptPQC verification ${crypto.randomUUID()}`;
       
+      // Simulate signature verification for StarkNet
+      const isVerified = await verifyStarkNetIdentity(
+        starkNetAddress,
+        "simulated-signature", // In real implementation, this would be an actual signature
+        challenge
+      );
+      
+      if (isVerified) {
+        setVerificationStatus('success');
+        toast({
+          title: "StarkNet Verification Successful",
+          description: "Your StarkNet identity has been verified.",
+        });
+      } else {
+        setVerificationStatus('failure');
+        toast({
+          title: "Verification Failed",
+          description: "Failed to verify StarkNet identity.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setVerificationStatus('failure');
+      console.error("StarkNet verification error:", error);
+      toast({
+        title: "Verification Error",
+        description: error instanceof Error ? error.message : "An error occurred during verification",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleDisconnect = () => {
+    setStarkNetAddress(null);
+    setVerificationStatus('none');
+    
+    toast({
+      title: "StarkNet Disconnected",
+      description: "Successfully disconnected from StarkNet.",
+    });
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center">
+          <Shield className="h-5 w-5 mr-2 text-accent" />
+          StarkNet Authentication
+        </CardTitle>
+      </CardHeader>
       <CardContent className="space-y-4">
-        {error && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Authentication Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        {isVerified ? (
-          <Alert variant="default" className="bg-accent/10 border-accent">
-            <Check className="h-4 w-4 text-accent" />
-            <AlertTitle>StarkNet Identity Verified</AlertTitle>
-            <AlertDescription>
-              Your identity has been verified using StarkNet's zero-knowledge proof system.
-              <div className="mt-2 font-mono text-xs">
-                StarkNet ID: {starkNetId.substring(0, 8)}...{starkNetId.substring(starkNetId.length - 8)}
-              </div>
-            </AlertDescription>
-          </Alert>
+        {!starkNetAddress ? (
+          <div className="text-center py-4">
+            <Lock className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+            <p className="mb-4 text-muted-foreground">
+              Connect to StarkNet to enhance your security with blockchain-based authentication
+            </p>
+            <Button 
+              onClick={handleConnect} 
+              disabled={isConnecting}
+              className="w-full"
+            >
+              {isConnecting ? "Connecting..." : "Connect to StarkNet"}
+            </Button>
+          </div>
         ) : (
-          <>
-            {isConnecting && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">{status}</span>
-                  <span className="text-sm">{progress}%</span>
-                </div>
-                <Progress value={progress} className="h-2" />
+          <div className="space-y-4">
+            <div className="p-3 bg-muted rounded-md">
+              <div className="text-sm font-medium">Connected Account</div>
+              <div className="mt-1 text-sm text-muted-foreground break-all">
+                {starkNetAddress}
+              </div>
+            </div>
+            
+            {verificationStatus === 'none' && (
+              <Button onClick={handleVerify} className="w-full">
+                Verify StarkNet Identity
+              </Button>
+            )}
+            
+            {verificationStatus === 'pending' && (
+              <Button disabled className="w-full">
+                Verifying...
+              </Button>
+            )}
+            
+            {verificationStatus === 'success' && (
+              <div className="flex items-center text-green-500 p-3 border border-green-200 bg-green-50 rounded-md">
+                <CheckCircle className="h-5 w-5 mr-2" />
+                <span>StarkNet identity verified successfully</span>
               </div>
             )}
             
-            <div className="space-y-2">
-              <label htmlFor="starkKeyInput" className="text-sm font-medium">
-                StarkNet Account (Optional)
-              </label>
-              <Input
-                id="starkKeyInput"
-                placeholder="0x..."
-                disabled={isConnecting}
-              />
-              <p className="text-xs text-muted-foreground">
-                Leave empty to create a new StarkNet account or enter your existing account address
-              </p>
-            </div>
-          </>
+            {verificationStatus === 'failure' && (
+              <div className="flex items-center text-red-500 p-3 border border-red-200 bg-red-50 rounded-md">
+                <XCircle className="h-5 w-5 mr-2" />
+                <span>Failed to verify StarkNet identity</span>
+              </div>
+            )}
+          </div>
         )}
       </CardContent>
-      
-      <CardFooter>
-        {!isVerified ? (
-          <Button
+      {starkNetAddress && (
+        <CardFooter>
+          <Button 
+            variant="outline" 
+            onClick={handleDisconnect} 
             className="w-full"
-            onClick={connectToStarkNet}
-            disabled={isConnecting}
           >
-            {isConnecting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connecting to StarkNet...
-              </>
-            ) : (
-              <>
-                <Shield className="mr-2 h-4 w-4" />
-                Connect with StarkNet
-              </>
-            )}
+            Disconnect from StarkNet
           </Button>
-        ) : (
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => {
-              setIsVerified(false);
-              setStarkNetId("");
-              setProgress(0);
-              setStatus("");
-            }}
-          >
-            Disconnect StarkNet
-          </Button>
-        )}
-      </CardFooter>
+        </CardFooter>
+      )}
     </Card>
   );
 };

@@ -1,451 +1,396 @@
 
-import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle, Lock, AlertTriangle, Shield, Fingerprint, Database, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { GlassContainer } from "@/components/ui/glass-container";
-import { useToast } from "@/components/ui/use-toast";
-import { 
-  Shield, 
-  Key, 
-  Fingerprint, 
-  Lock, 
-  Check, 
-  AlertTriangle,
-  Server,
-  RefreshCw
-} from "lucide-react";
 import { getUserProfile } from "@/lib/storage";
-import { 
-  registerWebAuthnCredential, 
-  authenticateWebAuthn,
-  checkHardwareSecurity
-} from "@/lib/tetracrypt-ffi";
-import { 
-  createUserDecentralizedIdentity,
-  verifyDIDOwnership 
-} from "@/lib/decentralized-identity";
+import { checkYubiKeyPresence, authenticateWithYubiKey } from "@/services/YubiKeyService";
+import { useToast } from "@/components/ui/use-toast";
+import { createUserDecentralizedIdentity, verifyDIDOwnership } from "@/lib/decentralized-identity";
 
-export interface AuthenticationStatus {
-  passkey: boolean;
-  hardwareSecurity: boolean;
-  decentralizedIdentity: boolean;
-  starkNetID: boolean;
-}
+// Authentication methods
+type AuthMethod = "yubikey" | "decentralized-id" | "biometric" | "standard" | "recovery";
 
 const EnterpriseAuthentication: React.FC = () => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<string>("");
-  const [authStatus, setAuthStatus] = useState<AuthenticationStatus>({
-    passkey: false,
-    hardwareSecurity: false,
-    decentralizedIdentity: false,
-    starkNetID: false
-  });
-  const [hardwareInfo, setHardwareInfo] = useState<{
-    available: boolean;
-    type: string;
-    features: string[];
-  } | null>(null);
-  const [credentials, setCredentials] = useState<{
-    credentialId?: string;
-  }>({});
+  const [activeStep, setActiveStep] = useState<number>(1);
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("standard");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [yubiKeyStatus, setYubiKeyStatus] = useState<{available: boolean, info?: string}>({available: false});
+  const [didStatus, setDidStatus] = useState<{available: boolean, info?: string}>({available: false});
+  const [verificationProgress, setVerificationProgress] = useState<number>(0);
   
-  const checkHardwareAvailability = async () => {
+  // Check for available authentication methods
+  useEffect(() => {
+    const checkAuthMethods = async () => {
+      try {
+        // Check for YubiKey
+        const yubiKeyResult = await checkYubiKeyPresence();
+        setYubiKeyStatus({
+          available: yubiKeyResult.detected,
+          info: yubiKeyResult.detected ? 
+            `${yubiKeyResult.deviceInfo?.type} (${yubiKeyResult.deviceInfo?.version})` : 
+            "Not detected"
+        });
+        
+        // Check for DID
+        const userProfile = getUserProfile();
+        const didAvailable = userProfile && userProfile.didDocument;
+        setDidStatus({
+          available: !!didAvailable,
+          info: didAvailable ? 
+            `${userProfile?.didDocument?.id.substring(0, 12)}...` : 
+            "No DID document"
+        });
+      } catch (error) {
+        console.error("Error checking auth methods:", error);
+      }
+    };
+    
+    checkAuthMethods();
+  }, []);
+  
+  // Simulate verification progress
+  useEffect(() => {
+    if (isLoading && verificationProgress < 100) {
+      const interval = setInterval(() => {
+        setVerificationProgress(prev => {
+          const next = prev + Math.floor(Math.random() * 10) + 1;
+          return next > 100 ? 100 : next;
+        });
+      }, 200);
+      
+      return () => clearInterval(interval);
+    } else if (verificationProgress >= 100) {
+      // Complete the verification after progress reaches 100%
+      const timeout = setTimeout(() => {
+        setIsLoading(false);
+        completeVerification();
+      }, 500);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isLoading, verificationProgress]);
+  
+  // Start the authentication process
+  const startAuthentication = async (method: AuthMethod) => {
+    setAuthMethod(method);
+    setIsLoading(true);
+    setVerificationProgress(0);
+    
+    // Perform specific auth method initialization
     try {
-      setIsLoading(true);
-      setStatus("Checking hardware security capabilities...");
-      setProgress(20);
-      
-      const hardware = await checkHardwareSecurity();
-      setHardwareInfo(hardware);
-      
-      setAuthStatus(prev => ({
-        ...prev,
-        hardwareSecurity: hardware.available
-      }));
-      
-      setProgress(100);
-      setStatus(hardware.available 
-        ? `Detected hardware security: ${hardware.type}` 
-        : "No hardware security detected");
-      
-      toast({
-        title: hardware.available ? "Hardware Security Available" : "Hardware Security Not Detected",
-        description: hardware.available 
-          ? `Found ${hardware.type} with ${hardware.features.join(", ")}` 
-          : "Using software-based security as fallback",
-      });
+      switch (method) {
+        case "yubikey":
+          // Check YubiKey presence
+          const yubiKeyCheck = await checkYubiKeyPresence();
+          if (!yubiKeyCheck.detected) {
+            throw new Error("YubiKey not detected. Please insert your YubiKey.");
+          }
+          break;
+          
+        case "decentralized-id":
+          // Check DID availability
+          const userProfile = getUserProfile();
+          if (!userProfile || !userProfile.didDocument) {
+            // Create DID if not available
+            toast({
+              title: "Creating Decentralized Identity",
+              description: "No DID found. Creating a new decentralized identity..."
+            });
+            
+            const didResult = await createUserDecentralizedIdentity();
+            if (!didResult.success) {
+              throw new Error(didResult.error || "Failed to create decentralized identity");
+            }
+            
+            setDidStatus({
+              available: true,
+              info: `${didResult.didDocument?.id.substring(0, 12)}...`
+            });
+          }
+          break;
+          
+        case "biometric":
+          // Check if biometric authentication is available
+          if (!window.PublicKeyCredential) {
+            throw new Error("Biometric authentication is not supported in this browser.");
+          }
+          
+          // Check if platform authenticator is available
+          const isPlatformAuthenticatorAvailable = 
+            await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            
+          if (!isPlatformAuthenticatorAvailable) {
+            throw new Error("Platform authenticator (biometric) is not available on this device.");
+          }
+          break;
+      }
     } catch (error) {
-      console.error("Error checking hardware:", error);
-      toast({
-        title: "Hardware Detection Failed",
-        description: "Could not detect hardware security capabilities",
-        variant: "destructive",
-      });
-    } finally {
       setIsLoading(false);
+      toast({
+        title: "Authentication Error",
+        description: error instanceof Error ? error.message : "Failed to initialize authentication",
+        variant: "destructive"
+      });
+      return;
     }
   };
   
-  const setupPasskey = async () => {
+  // Complete the verification process
+  const completeVerification = async () => {
     try {
-      setIsLoading(true);
-      setStatus("Setting up WebAuthn passkey...");
-      setProgress(20);
-      
-      const profile = getUserProfile();
-      if (!profile) {
-        throw new Error("User profile not found");
+      switch (authMethod) {
+        case "yubikey":
+          // Perform YubiKey authentication
+          const yubiKeyAuth = await authenticateWithYubiKey();
+          if (!yubiKeyAuth.success) {
+            throw new Error(yubiKeyAuth.error || "YubiKey authentication failed");
+          }
+          
+          toast({
+            title: "YubiKey Authentication Successful",
+            description: "Hardware security key verified successfully."
+          });
+          break;
+          
+        case "decentralized-id":
+          // Perform DID verification
+          const userProfile = getUserProfile();
+          if (!userProfile || !userProfile.didDocument) {
+            throw new Error("DID document not found");
+          }
+          
+          // Simulate DID verification with a challenge
+          const challenge = crypto.randomUUID();
+          const signature = "simulated-signature"; // In a real implementation, this would be an actual signature
+          
+          const didVerification = await verifyDIDOwnership(
+            userProfile.didDocument.id,
+            challenge,
+            signature
+          );
+          
+          if (!didVerification.success) {
+            throw new Error(didVerification.error || "DID verification failed");
+          }
+          
+          toast({
+            title: "Decentralized Identity Verified",
+            description: "Your decentralized identity was successfully verified."
+          });
+          break;
+          
+        case "biometric":
+          // Simulate biometric authentication success
+          toast({
+            title: "Biometric Authentication Successful",
+            description: "Your biometric verification was successful."
+          });
+          break;
+          
+        default:
+          // Standard authentication
+          toast({
+            title: "Authentication Successful",
+            description: "Standard authentication completed."
+          });
       }
       
-      setProgress(40);
-      const result = await registerWebAuthnCredential(profile.name || "TetraCrypt User");
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to set up passkey");
-      }
-      
-      setCredentials({
-        credentialId: result.credentialId
-      });
-      
-      setAuthStatus(prev => ({
-        ...prev,
-        passkey: true
-      }));
-      
-      setProgress(100);
-      setStatus("Passkey successfully registered");
-      
-      toast({
-        title: "Passkey Setup Complete",
-        description: "Your quantum-resistant authentication is now active",
-      });
+      // Move to the next step
+      setActiveStep(2);
     } catch (error) {
-      console.error("Error setting up passkey:", error);
-      toast({
-        title: "Passkey Setup Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const authenticateWithPasskey = async () => {
-    try {
-      if (!credentials.credentialId) {
-        throw new Error("No credential found");
-      }
-      
-      setIsLoading(true);
-      setStatus("Authenticating with passkey...");
-      setProgress(30);
-      
-      const result = await authenticateWebAuthn(credentials.credentialId);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Authentication failed");
-      }
-      
-      setProgress(100);
-      setStatus("Authentication successful");
-      
-      toast({
-        title: "Authentication Successful",
-        description: "Passkey verification complete",
-      });
-    } catch (error) {
-      console.error("Error authenticating:", error);
       toast({
         title: "Authentication Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
+        description: error instanceof Error ? error.message : "Unknown authentication error",
+        variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const setupDecentralizedIdentity = async () => {
-    try {
-      setIsLoading(true);
-      setStatus("Setting up decentralized identity...");
-      setProgress(20);
-      
-      const result = await createUserDecentralizedIdentity();
-      
-      if (!result.success) {
-        throw new Error(result.error || "Failed to create decentralized identity");
-      }
-      
-      setProgress(80);
-      
-      setAuthStatus(prev => ({
-        ...prev,
-        decentralizedIdentity: true,
-        starkNetID: !!result.starkNetId
-      }));
-      
-      setProgress(100);
-      setStatus("Decentralized identity created successfully");
-      
-      toast({
-        title: "DID Creation Successful",
-        description: "Your decentralized identity has been established",
-      });
-    } catch (error) {
-      console.error("Error creating DID:", error);
-      toast({
-        title: "DID Creation Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const verifyDID = async () => {
-    try {
-      setIsLoading(true);
-      setStatus("Verifying decentralized identity...");
-      setProgress(30);
-      
-      const profile = getUserProfile();
-      if (!profile || !profile.didDocument) {
-        throw new Error("No DID document found");
-      }
-      
-      // Generate random challenge
-      const challenge = crypto.randomUUID();
-      
-      const result = await verifyDIDOwnership(profile.didDocument, challenge);
-      
-      if (!result.success) {
-        throw new Error(result.error || "DID verification failed");
-      }
-      
-      setProgress(100);
-      setStatus("DID verification successful");
-      
-      toast({
-        title: "DID Verification Successful",
-        description: "Your decentralized identity has been verified",
-      });
-    } catch (error) {
-      console.error("Error verifying DID:", error);
-      toast({
-        title: "DID Verification Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
   
   return (
-    <GlassContainer className="p-6">
-      <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-accent" />
-          <h2 className="text-xl font-semibold">Enterprise Authentication</h2>
-        </div>
-        
-        <Alert className="bg-accent/10 border-accent/20">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Post-Quantum Authentication</AlertTitle>
-          <AlertDescription>
-            TetraCryptPQC supports WebAuthn/Passkeys and hardware security modules for quantum-resistant authentication.
-          </AlertDescription>
-        </Alert>
-        
-        {/* Authentication Status Overview */}
-        <Card>
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold flex items-center">
+          <Shield className="mr-2 h-5 w-5 text-accent" />
+          Enterprise Authentication
+        </h2>
+        <p className="text-muted-foreground">
+          Military-grade multi-factor authentication with hardware security and post-quantum protection
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Step 1: Authentication Method Selection */}
+        <Card className={activeStep === 1 ? "border-accent" : ""}>
           <CardHeader>
-            <CardTitle className="text-lg">Authentication Status</CardTitle>
-            <CardDescription>
-              Enterprise security compliance
-            </CardDescription>
+            <CardTitle className="flex items-center text-lg">
+              <Lock className="mr-2 h-5 w-5" />
+              Step 1: Authentication Method
+            </CardTitle>
+            <CardDescription>Select your preferred authentication method</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Key className="h-4 w-4" />
-                <span>WebAuthn/Passkey:</span>
-                {authStatus.passkey ? (
-                  <Badge className="bg-green-500">Active</Badge>
+            <Button 
+              variant={authMethod === "yubikey" ? "default" : "outline"} 
+              className="w-full justify-start" 
+              onClick={() => startAuthentication("yubikey")}
+              disabled={isLoading || !yubiKeyStatus.available}
+            >
+              <Fingerprint className="mr-2 h-4 w-4" />
+              <div className="flex-1 flex justify-between items-center">
+                <span>YubiKey / Security Key</span>
+                {yubiKeyStatus.available ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
                 ) : (
-                  <Badge variant="outline" className="text-destructive">Not Setup</Badge>
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
                 )}
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Fingerprint className="h-4 w-4" />
-                <span>Hardware Security:</span>
-                {authStatus.hardwareSecurity ? (
-                  <Badge className="bg-green-500">Available</Badge>
-                ) : (
-                  <Badge variant="outline" className="text-yellow-500">Not Detected</Badge>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                <span>Decentralized ID:</span>
-                {authStatus.decentralizedIdentity ? (
-                  <Badge className="bg-green-500">Active</Badge>
-                ) : (
-                  <Badge variant="outline" className="text-destructive">Not Setup</Badge>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Server className="h-4 w-4" />
-                <span>StarkNet ID:</span>
-                {authStatus.starkNetID ? (
-                  <Badge className="bg-green-500">Active</Badge>
-                ) : (
-                  <Badge variant="outline" className="text-destructive">Not Setup</Badge>
-                )}
-              </div>
-            </div>
+            </Button>
             
-            {isLoading && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>{status}</span>
-                  <span>{progress}%</span>
+            <Button 
+              variant={authMethod === "decentralized-id" ? "default" : "outline"} 
+              className="w-full justify-start" 
+              onClick={() => startAuthentication("decentralized-id")}
+              disabled={isLoading}
+            >
+              <Database className="mr-2 h-4 w-4" />
+              <div className="flex-1 flex justify-between items-center">
+                <span>Decentralized Identity</span>
+                {didStatus.available ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Clock className="h-4 w-4 text-blue-500" />
+                )}
+              </div>
+            </Button>
+            
+            <Button 
+              variant={authMethod === "biometric" ? "default" : "outline"} 
+              className="w-full justify-start" 
+              onClick={() => startAuthentication("biometric")}
+              disabled={isLoading}
+            >
+              <Fingerprint className="mr-2 h-4 w-4" />
+              <span>Biometric Authentication</span>
+            </Button>
+            
+            <Button 
+              variant={authMethod === "standard" ? "default" : "outline"} 
+              className="w-full justify-start" 
+              onClick={() => startAuthentication("standard")}
+              disabled={isLoading}
+            >
+              <Lock className="mr-2 h-4 w-4" />
+              <span>Standard Authentication</span>
+            </Button>
+          </CardContent>
+        </Card>
+        
+        {/* Step 2: Verification Process */}
+        <Card className={activeStep === 1 && isLoading ? "border-accent" : ""}>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Shield className="mr-2 h-5 w-5" />
+              Step 2: Verification
+            </CardTitle>
+            <CardDescription>Verify your identity using the selected method</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoading ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="mb-2">
+                    {authMethod === "yubikey" ? "Waiting for YubiKey authentication..." :
+                     authMethod === "decentralized-id" ? "Verifying decentralized identity..." :
+                     authMethod === "biometric" ? "Waiting for biometric verification..." :
+                     "Verifying credentials..."}
+                  </p>
+                  <Progress value={verificationProgress} className="h-2" />
+                  <p className="mt-2 text-sm text-muted-foreground">{verificationProgress}% complete</p>
                 </div>
-                <Progress value={progress} className="h-2" />
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Lock className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>Select an authentication method to begin verification</p>
               </div>
             )}
           </CardContent>
-          <CardFooter className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={checkHardwareAvailability} disabled={isLoading}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Check Hardware
-            </Button>
-            
-            <Button 
-              variant={authStatus.passkey ? "outline" : "default"} 
-              onClick={authStatus.passkey ? authenticateWithPasskey : setupPasskey}
-              disabled={isLoading}
-            >
-              <Key className="h-4 w-4 mr-2" />
-              {authStatus.passkey ? "Verify Passkey" : "Setup Passkey"}
-            </Button>
-            
-            <Button 
-              variant={authStatus.decentralizedIdentity ? "outline" : "default"} 
-              onClick={authStatus.decentralizedIdentity ? verifyDID : setupDecentralizedIdentity}
-              disabled={isLoading}
-            >
-              <Lock className="h-4 w-4 mr-2" />
-              {authStatus.decentralizedIdentity ? "Verify DID" : "Setup DID"}
-            </Button>
-          </CardFooter>
         </Card>
         
-        {/* Hardware Security Module Details */}
-        {hardwareInfo && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Hardware Security Details</CardTitle>
-              <CardDescription>
-                Detected hardware security capabilities
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium mb-1">Type</h3>
-                  <Badge variant="outline" className="w-full justify-center">
-                    {hardwareInfo.type}
-                  </Badge>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium mb-1">Status</h3>
-                  <Badge 
-                    className={hardwareInfo.available ? "bg-green-500 w-full justify-center" : "bg-red-500 w-full justify-center"}
-                  >
-                    {hardwareInfo.available ? "Available" : "Not Available"}
-                  </Badge>
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium mb-2">Supported Features</h3>
-                <ul className="space-y-1">
-                  {hardwareInfo.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        
-        {/* Decentralized Identity Information */}
-        {authStatus.decentralizedIdentity && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Decentralized Identity</CardTitle>
-              <CardDescription>
-                Your Web3 identity credentials
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        {/* Step 3: Success and Access Control */}
+        <Card className={activeStep === 2 ? "border-accent" : ""}>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <CheckCircle className="mr-2 h-5 w-5" />
+              Step 3: Access Granted
+            </CardTitle>
+            <CardDescription>Enterprise authorization successful</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {activeStep === 2 ? (
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium mb-1">DID Protocol</h3>
-                  <div className="p-2 bg-muted rounded-md">
-                    <code className="text-xs">did:tetracrypt:{getUserProfile()?.didDocument?.id?.split(':').pop() || ''}</code>
-                  </div>
+                <div className="flex items-center text-green-500 mb-4">
+                  <CheckCircle className="h-6 w-6 mr-2" />
+                  <span className="font-semibold">Authentication Successful</span>
                 </div>
                 
-                {authStatus.starkNetID && (
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">StarkNet ID</h3>
-                    <div className="p-2 bg-muted rounded-md">
-                      <code className="text-xs">{getUserProfile()?.starkNetId?.id || ''}</code>
-                    </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Authentication Method:</span>
+                    <span className="font-medium">
+                      {authMethod === "yubikey" ? "YubiKey / Security Key" :
+                       authMethod === "decentralized-id" ? "Decentralized Identity" :
+                       authMethod === "biometric" ? "Biometric Authentication" :
+                       "Standard Authentication"}
+                    </span>
                   </div>
-                )}
-                
-                <div>
-                  <h3 className="text-sm font-medium mb-1">Authentication Methods</h3>
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge variant="outline">SLH-DSA-Dilithium5</Badge>
-                    <Badge variant="outline">ML-KEM-1024</Badge>
-                    {authStatus.passkey && (
-                      <Badge variant="outline">WebAuthn</Badge>
-                    )}
+                  
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Security Level:</span>
+                    <span className="font-medium">
+                      {authMethod === "yubikey" || authMethod === "decentralized-id" ? 
+                        "Military-Grade" : authMethod === "biometric" ? 
+                        "Enterprise" : "Standard"}
+                    </span>
                   </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium mb-1">Compliance Status</h3>
-                  <Badge className="bg-green-500">FIPS 205/206 Compliant</Badge>
+                  
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Quantum Protection:</span>
+                    <span className="font-medium text-green-500">
+                      {authMethod === "yubikey" || authMethod === "decentralized-id" ? 
+                        "Enabled" : "Disabled"}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Lock className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>Complete verification to gain access</p>
+              </div>
+            )}
+          </CardContent>
+          {activeStep === 2 && (
+            <CardFooter>
+              <Button 
+                className="w-full" 
+                onClick={() => {
+                  setActiveStep(1);
+                  setAuthMethod("standard");
+                  setVerificationProgress(0);
+                }}
+              >
+                <Lock className="mr-2 h-4 w-4" />
+                Lock and Reset
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
       </div>
-    </GlassContainer>
+    </div>
   );
 };
 

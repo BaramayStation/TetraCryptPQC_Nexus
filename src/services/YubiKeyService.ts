@@ -117,5 +117,6 @@ export async function authenticateWithYubiKey(): Promise<YubiKeyAuthResult> {
   }
 }
 
-// Export StarkNetID from decentralized-identity
-export { StarkNetID } from '@/lib/storage-types';
+// Export StarkNetID type correctly for TypeScript's isolatedModules
+export type { StarkNetID } from '@/lib/storage-types';
+

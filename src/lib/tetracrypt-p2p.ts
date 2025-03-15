@@ -1,6 +1,10 @@
+
 /**
  * TetraCryptPQC P2P Messaging Module
  */
+
+import { initTetraCryptFFI, getTetraCryptMessaging, ConnectionState } from "./tetracrypt-ffi";
+import { getUserProfile } from "./storage";
 
 // Message structure for TetraCrypt P2P network
 export interface TetraCryptMessage {
@@ -19,6 +23,13 @@ export interface TetraCryptMessage {
   metadata?: {
     [key: string]: any;
   };
+}
+
+// P2P message from FFI layer
+export interface P2PMessage {
+  id: string;
+  senderId: string;
+  content: string;
 }
 
 // Network node status

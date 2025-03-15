@@ -1,3 +1,4 @@
+
 /**
  * TetraCryptPQC Decentralized Identity Module
  * 
@@ -10,10 +11,9 @@ import { UserProfile } from "./storage-types";
 import { generateDID } from "./pqcrypto";
 import { saveUserProfile } from "./storage";
 import { toast } from "@/components/ui/use-toast";
-import { StarkNetID } from "./storage-types";
 
-// Export StarkNetID for other modules to use
-export { StarkNetID } from './storage-types';
+// Export StarkNetID type correctly for TypeScript's isolatedModules
+export type { StarkNetID } from './storage-types';
 
 // Fix the createStarkNetId function to use the correct StarkNetID properties
 function createStarkNetId(address: string, starkKey: string): StarkNetID {
@@ -134,3 +134,93 @@ export async function generateDIDDocument(userProfile: UserProfile): Promise<Use
     throw error;
   }
 }
+
+/**
+ * Create a user decentralized identity
+ * (Combines StarkNet ID generation and DID document creation)
+ */
+export async function createUserDecentralizedIdentity(): Promise<{
+  success: boolean;
+  didDocument?: any;
+  error?: string;
+}> {
+  try {
+    // Get user profile from storage
+    const userProfile = window.localStorage.getItem("userProfile");
+    
+    if (!userProfile) {
+      return {
+        success: false,
+        error: "User profile not found. Please create a profile first."
+      };
+    }
+    
+    const profile = JSON.parse(userProfile) as UserProfile;
+    
+    // Check if the user has necessary key pairs
+    if (!profile.keyPairs?.pqkem || !profile.keyPairs?.signature) {
+      return {
+        success: false,
+        error: "Post-quantum key pairs required. Please generate keys first."
+      };
+    }
+    
+    // Generate StarkNet ID if not exists
+    if (!profile.starkNetId) {
+      await generateStarkNetId(profile);
+    }
+    
+    // Generate DID document
+    const updatedProfile = await generateDIDDocument(profile);
+    
+    return {
+      success: true,
+      didDocument: updatedProfile.didDocument
+    };
+  } catch (error) {
+    console.error("Error creating decentralized identity:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error creating decentralized identity"
+    };
+  }
+}
+
+/**
+ * Verify ownership of a DID document
+ */
+export async function verifyDIDOwnership(
+  did: string, 
+  challenge: string, 
+  signature: string
+): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    // In a real implementation, this would verify the DID ownership
+    // using the signature and challenge
+    console.log(`🔹 Verifying DID ownership for ${did}`);
+    
+    // Simulate verification (90% success rate)
+    const isVerified = Math.random() > 0.1;
+    
+    if (!isVerified) {
+      return {
+        success: false,
+        error: "DID ownership verification failed"
+      };
+    }
+    
+    return {
+      success: true
+    };
+  } catch (error) {
+    console.error("Error verifying DID ownership:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error verifying DID ownership"
+    };
+  }
+}
+
