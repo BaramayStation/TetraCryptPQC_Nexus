@@ -37,4 +37,7 @@ export type {
 } from './hardware-types';
 
 // User profile and identity types
-export type { UserProfile, UserSettings, UserKeyPairs, UserBiometrics } from './user-types';
+export type { UserProfile, UserSettings, KeyPairs, BiometricData } from './user-types';
+
+// Message types
+export type { Message, SecureMessageOptions, Conversation, MessagePreview } from './message-types';

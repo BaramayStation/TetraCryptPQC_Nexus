@@ -32,7 +32,6 @@ export interface SecureContainerConfig {
   };
   type: "application" | "storage" | "compute" | "network" | "security" | "general" | "ai" | "kubernetes" | "docker";
   created?: string;
-  securityProfile?: string;
 }
 
 export interface SecureInfraNode {
