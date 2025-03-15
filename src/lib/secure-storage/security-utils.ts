@@ -1,92 +1,138 @@
+
 /**
  * TetraCryptPQC Security Utilities
  * 
- * Implements security utilities for secure storage
+ * Security logging, monitoring, and utility functions for maintaining
+ * a secure and auditable cryptographic environment.
  */
 
-import { SecurityEvent } from './storage-types';
+export interface SecurityEvent {
+  eventType: 'storage' | 'crypto' | 'key-management' | 'identity' | 'authentication' | 'network' | 'application';
+  operation: string;
+  status: 'success' | 'failure' | 'warning';
+  timestamp: string;
+  metadata?: Record<string, any>;
+}
 
-// Keep a log of security events in memory
+// In-memory security event log for development/testing
+// In production, this would be securely persisted and encrypted
 const securityEventLog: SecurityEvent[] = [];
-const MAX_EVENT_LOG = 1000;
 
 /**
  * Log a security event
  */
 export function logSecurityEvent(event: SecurityEvent): void {
-  // Add timestamp if not provided
-  if (!event.timestamp) {
-    event.timestamp = new Date().toISOString();
-  }
-  
-  // Add to in-memory log
+  // Add event to in-memory log
   securityEventLog.push(event);
   
-  // Trim log if too large
-  if (securityEventLog.length > MAX_EVENT_LOG) {
-    securityEventLog.shift();
+  // In development, also log to console for debugging
+  if (process.env.NODE_ENV === 'development') {
+    const statusColor = 
+      event.status === 'success' ? '#4CAF50' : 
+      event.status === 'warning' ? '#FFC107' : 
+      '#F44336';
+    
+    console.log(
+      `%c[${event.timestamp}] ${event.eventType.toUpperCase()} ${event.operation} - ${event.status.toUpperCase()}`,
+      `color: ${statusColor}; font-weight: bold;`
+    );
+    
+    if (event.metadata) {
+      console.log('%cMetadata:', 'color: #2196F3;', event.metadata);
+    }
   }
   
-  // Log to console for development
-  console.log(`🔒 Security Event: ${event.eventType} / ${event.operation} - ${event.status}`);
+  // In a real implementation, we would:
+  // 1. Encrypt the event data
+  // 2. Securely store in tamper-evident storage
+  // 3. Potentially forward to a secure logging service
+  // 4. Implement WORM (Write Once Read Many) storage for compliance
 }
 
 /**
- * Get security events log
+ * Get all security events for a given time period
  */
 export function getSecurityEvents(
-  filter?: {
-    eventType?: string;
-    status?: 'success' | 'failure' | 'warning';
-    fromTimestamp?: string;
-    toTimestamp?: string;
+  options?: {
+    startTime?: string;
+    endTime?: string;
+    eventType?: SecurityEvent['eventType'];
+    status?: SecurityEvent['status'];
   }
 ): SecurityEvent[] {
-  if (!filter) return [...securityEventLog];
+  let filteredEvents = [...securityEventLog];
   
-  return securityEventLog.filter(event => {
-    if (filter.eventType && event.eventType !== filter.eventType) return false;
-    if (filter.status && event.status !== filter.status) return false;
-    if (filter.fromTimestamp && event.timestamp < filter.fromTimestamp) return false;
-    if (filter.toTimestamp && event.timestamp > filter.toTimestamp) return false;
-    return true;
-  });
+  if (options?.startTime) {
+    const startDate = new Date(options.startTime);
+    filteredEvents = filteredEvents.filter(event => new Date(event.timestamp) >= startDate);
+  }
+  
+  if (options?.endTime) {
+    const endDate = new Date(options.endTime);
+    filteredEvents = filteredEvents.filter(event => new Date(event.timestamp) <= endDate);
+  }
+  
+  if (options?.eventType) {
+    filteredEvents = filteredEvents.filter(event => event.eventType === options.eventType);
+  }
+  
+  if (options?.status) {
+    filteredEvents = filteredEvents.filter(event => event.status === options.status);
+  }
+  
+  return filteredEvents;
 }
 
 /**
- * Clear security events log
+ * Check if secure context is available
  */
-export function clearSecurityEvents(): void {
-  securityEventLog.length = 0;
+export function isSecureContext(): boolean {
+  return window.isSecureContext;
 }
 
 /**
- * Get security statistics
+ * Format a security timestamp nicely
  */
-export function getSecurityStats(): {
-  total: number;
-  success: number;
-  failure: number;
-  warning: number;
-  byEventType: Record<string, number>;
-} {
-  const stats = {
-    total: securityEventLog.length,
-    success: 0,
-    failure: 0,
-    warning: 0,
-    byEventType: {} as Record<string, number>
-  };
+export function formatSecurityTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleString();
+}
+
+/**
+ * Generate a random secure token
+ */
+export function generateSecureToken(length: number = 32): string {
+  const array = new Uint8Array(length);
+  window.crypto.getRandomValues(array);
   
-  securityEventLog.forEach(event => {
-    if (event.status === 'success') stats.success++;
-    if (event.status === 'failure') stats.failure++;
-    if (event.status === 'warning') stats.warning++;
-    
-    if (event.eventType) {
-      stats.byEventType[event.eventType] = (stats.byEventType[event.eventType] || 0) + 1;
+  return Array.from(array)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
+ * Sanitize potentially sensitive data for logging
+ */
+export function sanitizeSensitiveData(data: Record<string, any>): Record<string, any> {
+  const sanitized = { ...data };
+  
+  // List of keys that might contain sensitive information
+  const sensitiveKeys = [
+    'password', 'privateKey', 'secret', 'token', 'key', 'passphrase',
+    'seed', 'mnemonic', 'auth', 'credentials', 'pin', 'biometric'
+  ];
+  
+  // Recursively sanitize objects
+  Object.keys(sanitized).forEach(key => {
+    // Check if this is a sensitive key
+    if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk.toLowerCase()))) {
+      sanitized[key] = '[REDACTED]';
+    } 
+    // Recursively sanitize nested objects
+    else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+      sanitized[key] = sanitizeSensitiveData(sanitized[key]);
     }
   });
   
-  return stats;
+  return sanitized;
 }
