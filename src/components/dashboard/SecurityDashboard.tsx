@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,7 +25,6 @@ import {
   Bar
 } from "recharts";
 
-// Mock data for enterprise security dashboard
 const securityEvents = [
   { date: "2023-10-01", quantum: 5, classical: 12 },
   { date: "2023-10-02", quantum: 3, classical: 8 },
@@ -45,7 +43,6 @@ const keyStrengths = [
   { name: "SLH-DSA", value: 256, standard: "Post-Quantum" },
 ];
 
-// Security metrics configuration
 const securityMetricsConfig = {
   quantum: {
     label: "Quantum",
@@ -63,6 +60,10 @@ const securityMetricsConfig = {
   },
 };
 
+const getBarFill = (entry: any) => {
+  return entry.standard === "Post-Quantum" ? "#0ea5e9" : "#94a3b8";
+};
+
 const SecurityDashboard: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [activeKeys, setActiveKeys] = useState<number>(0);
@@ -73,33 +74,24 @@ const SecurityDashboard: React.FC = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        // Load user profile
         const profile = getUserProfile();
         setUserProfile(profile);
         
-        // Simulate checking IPFS status
         const ipfsActive = await checkIPFSStatus();
         setIpfsStatus(ipfsActive ? "Active" : "Offline");
         
-        // Calculate active keys
         const keyPairs = profile?.keyPairs;
         setActiveKeys(keyPairs ? Object.keys(keyPairs).length : 0);
         
-        // Calculate security score
-        // Based on profile having quantum-resistant keys, DID document, etc.
         let score = 0;
         if (profile) {
-          // Base score for having a profile
           score += 20;
           
-          // Points for having post-quantum keys
           if (profile.keyPairs?.pqkem) score += 25;
           if (profile.keyPairs?.signature) score += 25;
           
-          // Points for having a DID
           if (profile.didDocument) score += 15;
           
-          // Points for HSM or QKD
           if (profile.hsmInfo) score += 10;
           if (profile.qkdInfo) score += 5;
         }
@@ -139,7 +131,6 @@ const SecurityDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Security Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -206,7 +197,6 @@ const SecurityDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Main Dashboard Content */}
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -215,10 +205,8 @@ const SecurityDashboard: React.FC = () => {
           <TabsTrigger value="compliance">Compliance</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Security Events Chart */}
             <GlassContainer className="p-4">
               <h3 className="text-lg font-semibold mb-4">Security Events (Classical vs Quantum)</h3>
               <div className="h-80">
@@ -252,7 +240,6 @@ const SecurityDashboard: React.FC = () => {
               </div>
             </GlassContainer>
 
-            {/* Key Strength Comparison */}
             <GlassContainer className="p-4">
               <h3 className="text-lg font-semibold mb-4">Cryptographic Strength Comparison</h3>
               <div className="h-80">
@@ -265,14 +252,13 @@ const SecurityDashboard: React.FC = () => {
                     <XAxis dataKey="name" />
                     <YAxis label={{ value: 'Security Bits', angle: -90, position: 'insideLeft' }} />
                     <Tooltip />
-                    <Bar dataKey="value" fill={theme => theme.standard === "Post-Quantum" ? "#0ea5e9" : "#94a3b8"} />
+                    <Bar dataKey="value" fill={getBarFill} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </GlassContainer>
           </div>
 
-          {/* Enterprise Security Status */}
           <GlassContainer className="p-4 space-y-4">
             <h3 className="text-lg font-semibold">Enterprise Security Status</h3>
             
@@ -353,12 +339,10 @@ const SecurityDashboard: React.FC = () => {
           </GlassContainer>
         </TabsContent>
 
-        {/* Keys Tab */}
         <TabsContent value="keys" className="space-y-4">
           <GlassContainer className="p-4">
             <h3 className="text-lg font-semibold mb-4">Cryptographic Key Management</h3>
             <div className="space-y-6">
-              {/* Key Encapsulation Mechanism Keys */}
               <div>
                 <h4 className="text-md font-medium flex items-center">
                   <Key className="h-4 w-4 mr-2 text-accent" />
@@ -411,7 +395,6 @@ const SecurityDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Digital Signature Algorithm Keys */}
               <div>
                 <h4 className="text-md font-medium flex items-center">
                   <Lock className="h-4 w-4 mr-2 text-accent" />
@@ -467,7 +450,6 @@ const SecurityDashboard: React.FC = () => {
           </GlassContainer>
         </TabsContent>
 
-        {/* Threat Analysis Tab */}
         <TabsContent value="threats" className="space-y-4">
           <GlassContainer className="p-4">
             <h3 className="text-lg font-semibold mb-4">Quantum Threat Analysis</h3>
@@ -541,7 +523,6 @@ const SecurityDashboard: React.FC = () => {
           </GlassContainer>
         </TabsContent>
 
-        {/* Compliance Tab */}
         <TabsContent value="compliance" className="space-y-4">
           <GlassContainer className="p-4">
             <h3 className="text-lg font-semibold mb-4">Regulatory Compliance Status</h3>
