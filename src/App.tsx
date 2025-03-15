@@ -1,5 +1,6 @@
 import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async'; // ✅ Add this import
 import { ThemeProvider } from '@/components/theme-provider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
@@ -52,54 +53,56 @@ function App() {
     <div className="App">
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
         <QueryClientProvider client={queryClient}>
-          <Toaster />
-          <Routes>
-            <Route path="/" element={<MainLayout />}>
-              <Route index element={<Home />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="login" element={<Login />} />
-              <Route path="register" element={<Register />} />
-              <Route path="security" element={<Security />} />
-              <Route path="secure-messaging" element={<SecureMessaging />} />
-              <Route path="secure-execution" element={<SecureExecution />} />
-              <Route path="chat" element={<Chat />} />
-              <Route path="p2p-ai-messaging" element={<P2PAIMessaging />} />
-              <Route path="ai-security" element={<AISecurity />} />
-              <Route path="security-monitoring" element={<SecurityMonitoring />} />
-              <Route path="post-quantum-security" element={<PostQuantumSecurityImpl />} />
-              <Route path="decentralized-cloud" element={<DecentralizedCloud />} />
-              <Route path="decentralized-id" element={<DecentralizedID />} />
-              <Route path="failsafe-network" element={<FailsafeNetwork />} />
-              <Route path="failsafe-continuity" element={<FailsafeContinuity />} />
-              <Route path="enterprise" element={<Enterprise />} />
-              <Route path="key-management" element={<KeyManagement />} />
-              <Route path="underground-network" element={<UndergroundNetwork />} />
-              <Route path="secure-communication" element={<SecureCommunication />} />
-              <Route path="tetracrypt-demo" element={
-                <Suspense fallback={<div>Loading...</div>}>
-                  <TetraCryptDemo />
-                </Suspense>
-              } />
-              <Route path="tetracrypt-wallet" element={<TetraCryptWallet />} />
-              <Route path="tetracrypt-nexus" element={<TetraCryptNexus />} />
-              
-              {/* Wiki Routes */}
-              <Route path="wiki/*" element={<Wiki />} />
-              
-              {/* Other routes */}
-              <Route path="about" element={<About />} />
-              <Route path="contact" element={<Contact />} />
-              <Route path="blog" element={<Blog />} />
-              <Route path="documentation" element={<Documentation />} />
-              <Route path="pricing" element={<Pricing />} />
-              <Route path="support" element={<Support />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="account-settings" element={<AccountSettings />} />
-              
-              {/* 404 Page */}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
+          <HelmetProvider> {/* ✅ Wrap the app content with HelmetProvider */}
+            <Toaster />
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Home />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="login" element={<Login />} />
+                <Route path="register" element={<Register />} />
+                <Route path="security" element={<Security />} />
+                <Route path="secure-messaging" element={<SecureMessaging />} />
+                <Route path="secure-execution" element={<SecureExecution />} />
+                <Route path="chat" element={<Chat />} />
+                <Route path="p2p-ai-messaging" element={<P2PAIMessaging />} />
+                <Route path="ai-security" element={<AISecurity />} />
+                <Route path="security-monitoring" element={<SecurityMonitoring />} />
+                <Route path="post-quantum-security" element={<PostQuantumSecurityImpl />} />
+                <Route path="decentralized-cloud" element={<DecentralizedCloud />} />
+                <Route path="decentralized-id" element={<DecentralizedID />} />
+                <Route path="failsafe-network" element={<FailsafeNetwork />} />
+                <Route path="failsafe-continuity" element={<FailsafeContinuity />} />
+                <Route path="enterprise" element={<Enterprise />} />
+                <Route path="key-management" element={<KeyManagement />} />
+                <Route path="underground-network" element={<UndergroundNetwork />} />
+                <Route path="secure-communication" element={<SecureCommunication />} />
+                <Route path="tetracrypt-demo" element={
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <TetraCryptDemo />
+                  </Suspense>
+                } />
+                <Route path="tetracrypt-wallet" element={<TetraCryptWallet />} />
+                <Route path="tetracrypt-nexus" element={<TetraCryptNexus />} />
+                
+                {/* Wiki Routes */}
+                <Route path="wiki/*" element={<Wiki />} />
+                
+                {/* Other routes */}
+                <Route path="about" element={<About />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="blog" element={<Blog />} />
+                <Route path="documentation" element={<Documentation />} />
+                <Route path="pricing" element={<Pricing />} />
+                <Route path="support" element={<Support />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="account-settings" element={<AccountSettings />} />
+                
+                {/* 404 Page */}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </HelmetProvider> {/* ✅ End HelmetProvider */}
         </QueryClientProvider>
       </ThemeProvider>
     </div>
