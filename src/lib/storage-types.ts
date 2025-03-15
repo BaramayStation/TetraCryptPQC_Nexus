@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Storage Types
  */
@@ -245,4 +244,79 @@ export interface Conversation {
   lastMessage?: Message;
   updated: string;
   created: string;
+}
+
+// NEW: Secure Container Configuration structure
+export interface SecureContainerConfig {
+  id: string;
+  name: string;
+  type: 'podman' | 'crun' | 'kata' | 'gvisor';
+  securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave';
+  immutableRootfs: boolean;
+  confinement: 'selinux' | 'apparmor' | 'seccomp' | 'none';
+  networkPolicy: 'isolated' | 'service-mesh' | 'e2e-encrypted' | 'none';
+  rotationPolicy?: {
+    enabled: boolean;
+    interval: number; // in minutes
+    triggerOnAnomaly: boolean;
+  };
+  resources: {
+    cpuLimit: string;
+    memoryLimit: string;
+    storageLimit: string;
+  };
+  verifiedBoot: boolean;
+  integrityMonitoring: boolean;
+  created: string;
+  lastUpdated: string;
+  status: 'running' | 'stopped' | 'failed' | 'compromised';
+}
+
+// NEW: Secure Infrastructure Node structure
+export interface SecureInfraNode {
+  id: string;
+  name: string;
+  type: 'physical' | 'virtual' | 'container' | 'serverless';
+  hardwareCapabilities: {
+    tpm: boolean;
+    sgx: boolean;
+    sev: boolean;
+    nvdimm: boolean;
+    secureBoot: boolean;
+  };
+  networkSecurity: {
+    encryptionInTransit: boolean;
+    firewallEnabled: boolean;
+    intrusionDetection: boolean;
+    ddosProtection: boolean;
+  };
+  complianceStatus: {
+    fisma: boolean;
+    fedramp: boolean;
+    hipaa: boolean;
+    pci: boolean;
+    gdpr: boolean;
+  };
+  confidentialComputing: boolean;
+  attestationSupport: boolean;
+  patchStatus: 'up-to-date' | 'pending' | 'outdated' | 'vulnerable';
+  lastScan: string;
+  threatLevel: 'minimal' | 'low' | 'medium' | 'high' | 'critical';
+}
+
+// NEW: Secure Service Mesh structure
+export interface SecureServiceMesh {
+  id: string;
+  name: string;
+  services: string[]; // ids of contained services
+  encryptionType: 'ml-kem' | 'hybrid-pqc' | 'tls-1-3' | 'none';
+  mutualAuthentication: boolean;
+  certificateRotation: boolean;
+  trafficAnalysis: boolean;
+  anomalyDetection: boolean;
+  mtls: boolean;
+  zkProofVerification: boolean;
+  serviceDiscovery: boolean;
+  created: string;
+  lastUpdated: string;
 }

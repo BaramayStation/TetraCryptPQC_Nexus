@@ -1,3 +1,4 @@
+
 # ✅ Netlify Build Configuration for TetraCryptPQC_Nexus
 
 [build]
@@ -38,7 +39,19 @@
     X-XSS-Protection = "1; mode=block"
 
     # 🌐 Secure Content Security Policy (CSP)
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.starknet.io; frame-ancestors 'none'; worker-src 'self' blob:; img-src 'self' data: blob:"
+
+    # 🔒 Feature Policy to restrict dangerous features
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    
+    # ✅ NEW: Cross-Origin Resource Policy
+    Cross-Origin-Resource-Policy = "same-site"
+    
+    # ✅ NEW: Cross-Origin Opener Policy
+    Cross-Origin-Opener-Policy = "same-origin"
+    
+    # ✅ NEW: Cross-Origin Embedder Policy
+    Cross-Origin-Embedder-Policy = "require-corp"
 
 # ✅ Optimize Caching & Performance
 [[headers]]
@@ -61,3 +74,16 @@
   from = "/api/*"
   to = "/api/index.js"
   status = 200
+
+# ✅ NEW: Enhanced Security Headers for TPM/SGX Confidential Computing
+[[headers]]
+  for = "/enterprise/*"
+  [headers.values]
+    Cross-Origin-Resource-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Sec-Fetch-Dest = "document"
+    Sec-Fetch-Mode = "navigate"
+    Sec-Fetch-Site = "same-origin"
+    Sec-Fetch-User = "?1"
+

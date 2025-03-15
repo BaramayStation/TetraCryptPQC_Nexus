@@ -7,12 +7,14 @@ import {
   Shield, 
   Server, 
   Lock, 
-  Fingerprint 
+  Fingerprint, 
+  Database
 } from "lucide-react";
 import EnterpriseSecurityAnalysis from "@/components/enterprise/EnterpriseSecurityAnalysis";
 import EnterpriseAuthentication from "@/components/security/EnterpriseAuthentication";
 import AISecurityMonitoring from "@/components/enterprise/AISecurityMonitoring";
 import SecureExecutionPanel from "@/components/enterprise/SecureExecutionPanel";
+import SecureInfrastructurePanel from "@/components/enterprise/SecureInfrastructurePanel";
 import SecurityArchitecture from "@/components/security/SecurityArchitecture";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -41,6 +43,10 @@ const Enterprise = () => {
               <Fingerprint className="h-4 w-4" />
               <span>Authentication</span>
             </TabsTrigger>
+            <TabsTrigger value="infrastructure" className="flex items-center gap-2">
+              <Database className="h-4 w-4" />
+              <span>Secure Infrastructure</span>
+            </TabsTrigger>
             <TabsTrigger value="ai-monitoring" className="flex items-center gap-2">
               <Server className="h-4 w-4" />
               <span>AI Monitoring</span>
@@ -61,6 +67,10 @@ const Enterprise = () => {
           
           <TabsContent value="authentication">
             <EnterpriseAuthentication />
+          </TabsContent>
+          
+          <TabsContent value="infrastructure">
+            <SecureInfrastructurePanel />
           </TabsContent>
           
           <TabsContent value="ai-monitoring">
