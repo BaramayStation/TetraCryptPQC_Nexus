@@ -104,3 +104,14 @@ export async function checkHardwareSecurity(): Promise<{
     sgxVersion: "1.2"
   };
 }
+
+/**
+ * Legacy compatibility function for AES encryption
+ * This is maintained only for backward compatibility and will be removed.
+ * Use encryptWithPQC() instead.
+ */
+export async function encryptAES(data: string, key: string): Promise<string> {
+  console.log("⚠️ Warning: Using legacy encryptAES function. Consider migrating to encryptWithPQC");
+  // For simulation, return a simple encoded string
+  return `encrypted_${data}_with_${key.substring(0, 3)}`;
+}

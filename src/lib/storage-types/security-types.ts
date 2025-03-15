@@ -1,7 +1,7 @@
 
 export type SecurityThreshold = "secure" | "suspicious" | "compromised" | "normal" | "elevated";
 export type HealthStatus = "healthy" | "degraded" | "unhealthy" | "warning";
-export type AISyncStatus = "syncing" | "complete" | "failed" | "pending" | "idle";
+export type AISyncStatus = "syncing" | "complete" | "failed" | "pending" | "idle" | "verified";
 
 export interface SecurityHealthMetrics {
   threatDetectionsLast24h: number;
@@ -14,6 +14,17 @@ export interface SecurityHealthMetrics {
   };
   securityScore: number;
   activeUsers?: number; // Added optional field
+  complianceScore?: number;
+  threatDetectionRate?: number;
+  threatDetectionLatency?: number;
+  incidentResponseTime?: number;
+  falsePositiveRate?: number;
+  lastUpdated?: string;
+  recommendedActions?: string[];
+  cpuUsage?: number;
+  memoryUsage?: number;
+  storageUsage?: number;
+  networkUsage?: number;
 }
 
 export interface AISecurityPolicy {
@@ -24,6 +35,23 @@ export interface AISecurityPolicy {
   mlModelVersion: string;
   lastUpdated: string;
   homomorphicEncryptionEnabled?: boolean; // Added optional field
+  autoRemediationEnabled?: boolean;
+  threatDetectionLevel?: "standard" | "enhanced" | "maximum";
+  id?: string;
+  name?: string;
+  policyType?: "detection" | "prevention" | "monitoring";
+  rules?: SecurityRule[];
+  created?: string;
+  updated?: string;
+}
+
+export interface SecurityRule {
+  id: string;
+  name: string;
+  priority: number;
+  condition: string;
+  action: "alert" | "block" | "quarantine";
+  enabled: boolean;
 }
 
 export interface AICloudConnectionStatus {
@@ -32,7 +60,10 @@ export interface AICloudConnectionStatus {
   lastConnection: string;
   status: "online" | "offline" | "degraded";
   securityStatus: SecurityThreshold;
-  lastConnectionAttempt?: string; // Added optional field
+  lastConnectionAttempt?: string;
+  id?: string;
+  provider?: string;
+  encryptionStatus?: "encrypted" | "unencrypted";
 }
 
 export interface PodmanContainerStatus {
@@ -43,7 +74,15 @@ export interface PodmanContainerStatus {
   image: string;
   created: string;
   ports: string[];
-  securityLevel?: string; // Added optional field
+  securityLevel?: string;
+  running?: boolean;
+  healthStatus?: HealthStatus;
+  uptime?: number;
+  memoryUsageMB?: number;
+  cpuUsagePercent?: number;
+  restartCount?: number;
+  lastRestart?: string;
+  containerName?: string;
 }
 
 // Adding container security types
@@ -55,6 +94,7 @@ export interface ContainerSecurityProfile {
   readOnly: boolean;
   privileged: boolean;
   capabilities: string[];
+  securityScore?: number;
 }
 
 export enum ContainerType {
@@ -98,4 +138,10 @@ export interface WebRTCPeerStatus {
   peerConnectionStatus: string;
   signatureVerified: boolean;
   signatureType?: string;
+  peerId?: string;
+  connectionStatus?: "connecting" | "connected" | "disconnected" | "failed";
+  encryptionType?: string;
+  lastMessageTimestamp?: string;
+  dataTransferred?: number;
+  encryptionEnabled?: boolean;
 }

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Message } from "@/lib/storage-types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -66,7 +65,6 @@ const MessageList: React.FC<MessageListProps> = ({
   const getSecurityBadge = (message: Message) => {
     if (!message.encrypted) return null;
     
-    // Show encryption type with PQ-KEM indicator
     const encType = message.kemType || message.encryptionType || "Encrypted";
     const isPQC = encType.includes("ML-KEM") || encType.includes("Falcon");
     
@@ -160,7 +158,6 @@ const MessageList: React.FC<MessageListProps> = ({
     return null;
   };
 
-  // New function for WebRTC zk-STARK security indicator
   const getWebRTCSecurityIcon = (message: Message) => {
     if (!message.webrtcSecured) return null;
     

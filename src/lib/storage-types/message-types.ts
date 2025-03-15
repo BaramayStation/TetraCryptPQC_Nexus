@@ -3,7 +3,7 @@ export interface Message {
   id: string;
   senderId: string;
   recipientId: string;
-  receiverId?: string; // Adding this field to fix build errors
+  receiverId: string; // Making this required to match the interface
   content: string;
   timestamp: string;
   encrypted: boolean;
@@ -11,6 +11,15 @@ export interface Message {
   verified?: boolean;
   encryptionType?: string;
   status: "sent" | "delivered" | "read" | "failed";
+  kemType?: string;
+  pqSignatureType?: string;
+  selfHealingStatus?: "active" | "healing" | "healed" | "compromised";
+  zkProofVerified?: boolean;
+  didVerified?: boolean;
+  starkNetValidated?: boolean;
+  webrtcSecured?: boolean;
+  encryptedContent?: string;
+  encryptionAlgorithm?: string;
 }
 
 export interface SecureMessageOptions {
@@ -28,6 +37,9 @@ export interface Conversation {
   unreadCount: number;
   pqcEnabled: boolean;
   encryptionType: string;
+  messages?: Message[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface MessagePreview {

@@ -18,3 +18,34 @@ export type { SecureContainerConfig, SecureServiceMesh, SecureInfraNode };
 // Re-export AIThreatDetection to avoid duplicate exports
 import type { AIThreatDetection } from './security-types';
 export type { AIThreatDetection };
+
+// Re-export types from message-types with corrected properties
+import type { Message, Conversation } from './message-types';
+export type { Message, Conversation };
+
+// Export enums for node and container types
+export enum ContainerType {
+  APPLICATION = "application",
+  DATABASE = "database",
+  CACHE = "cache",
+  PROXY = "proxy",
+  SECURITY = "security"
+}
+
+export enum InfrastructureNodeType {
+  COMPUTE = "compute",
+  STORAGE = "storage",
+  NETWORK = "network",
+  SECURITY = "security",
+  AI = "ai",
+  GENERAL = "general",
+  APPLICATION = "application",
+  KUBERNETES = "kubernetes",
+  DOCKER = "docker"
+}
+
+// Re-export extended status types to ensure consistency
+export type SecurityThreshold = "secure" | "suspicious" | "compromised" | "normal" | "elevated";
+export type HealthStatus = "healthy" | "degraded" | "unhealthy" | "warning";
+export type AISyncStatus = "syncing" | "complete" | "failed" | "pending" | "idle" | "verified";
+export type PeerStatus = "active" | "healing" | "healed" | "verified";

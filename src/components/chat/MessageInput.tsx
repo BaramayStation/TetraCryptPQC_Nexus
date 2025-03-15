@@ -1,9 +1,8 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Lock, ShieldCheck, Database, Clock, AlertTriangle } from "lucide-react";
-import { encryptAES } from "@/lib/crypto";
+import { encryptWithPQC } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 import { GlassContainer } from "@/components/ui/glass-container";
@@ -30,7 +29,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [showSecurityInfo, setShowSecurityInfo] = useState(false);
   const user = getUserProfile();
 
-  // Get encryption label based on type
   const getEncryptionLabel = () => {
     switch (encryptionType) {
       case "aes": return "AES-256-GCM";
@@ -41,7 +39,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
-  // Handle message submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (value.trim() === "" || isEncrypting) return;
@@ -157,7 +154,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <Send className="h-4 w-4" />
       </Button>
 
-      {/* Security Indicators */}
       <div className="mt-2 flex justify-between text-xs text-muted-foreground">
         <div className="flex items-center space-x-2">
           <ShieldCheck className="h-3 w-3 text-accent" />

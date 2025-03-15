@@ -8,6 +8,14 @@
 import { checkHardwareSecurity } from './tetracrypt-ffi';
 import { getUserProfile } from './storage';
 import { scanForThreats, generateComplianceReport } from './pqcrypto';
+import { 
+  AISecurityPolicy, 
+  AISecuredCloudInstance, 
+  SecurityHealthMetrics, 
+  SecurityThreshold,
+  AIThreatDetection 
+} from "./storage-types";
+import { encryptWithPQC, verifySignature } from "./pqcrypto";
 
 // AI model types
 export type AIModelType = 'anomaly-detection' | 'threat-prediction' | 'identity-verification';

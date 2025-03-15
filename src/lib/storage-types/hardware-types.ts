@@ -37,7 +37,19 @@ export interface SecureContainerConfig {
     medium: number;
     low: number;
   };
-  type?: string; // Added to resolve type conflicts
+  type: "storage" | "compute" | "network" | "security" | "ai" | "general" | "application" | "kubernetes" | "docker";
+  created?: string;
+  startedAt?: string;
+  containerType?: string;
+  options?: {
+    immutableRootfs?: boolean;
+    seccompProfile?: string;
+    rotationPolicy?: {
+      enabled: boolean;
+      intervalDays: number;
+      triggerOnAnomaly: boolean;
+    };
+  };
 }
 
 export interface SecureServiceMesh {
@@ -54,7 +66,8 @@ export interface SecureServiceMesh {
   containers: number;
   mTLS: boolean;
   policyEnforcement: boolean;
-  endpoints?: string[]; // Added to resolve type conflicts
+  endpoints: string[];
+  created?: string;
 }
 
 export interface SecureInfraNode {
@@ -68,8 +81,9 @@ export interface SecureInfraNode {
   securityScore: number;
   pqcEnabled: boolean;
   trustLevel: number;
-  nodeId?: string; // Added to resolve type conflicts
-  lastVerified?: string; // Added to resolve type conflicts
+  nodeId: string;
+  lastVerified: string;
+  created?: string;
 }
 
 // Import ContainerSecurityProfile from security-types to prevent circular references

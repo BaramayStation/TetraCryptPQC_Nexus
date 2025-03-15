@@ -23,7 +23,7 @@ import { formatDistanceToNow } from "date-fns";
 import EncryptionSelector from "./EncryptionSelector";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
-import { encryptAES, signMessage } from "@/lib/crypto";
+import { encryptWithPQC, signMessage } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 
 export interface ConversationProps {
@@ -47,6 +47,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
         id: "1",
         senderId: contact.id,
         recipientId: userProfile?.userId || "",
+        receiverId: userProfile?.userId || "", // Added the receiverId field
         content: "Hey, how are you? Let's test this post-quantum encryption!",
         timestamp: new Date(Date.now() - 3600000).toISOString(),
         encrypted: true,
@@ -59,6 +60,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
         id: "2",
         senderId: userProfile?.userId || "",
         recipientId: contact.id,
+        receiverId: contact.id, // Added the receiverId field
         content: "I'm good! The ML-KEM-1024 encryption is working great. Let's see if we can also integrate StarkNet for identity.",
         timestamp: new Date(Date.now() - 1800000).toISOString(),
         encrypted: true,
@@ -71,6 +73,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
         id: "3",
         senderId: contact.id,
         recipientId: userProfile?.userId || "",
+        receiverId: userProfile?.userId || "", // Added the receiverId field
         content: "Perfect! We should also test the hardware security module integration when you get a chance.",
         timestamp: new Date(Date.now() - 900000).toISOString(),
         encrypted: true,
@@ -103,7 +106,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
       
       // Encrypt the message content (in a real app, this would use the contact's public key)
       // For demo purposes, we're just simulating the encryption
-      const encryptedContent = await encryptAES(inputValue, "demo-key");
+      const encryptedContent = await encryptWithPQC(inputValue, "demo-key");
       
       // Sign the message for authentication
       const signature = await signMessage(inputValue, userProfile.keyPairs?.signature?.privateKey || "");
@@ -113,6 +116,7 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
         id: messageId,
         senderId: userProfile.userId,
         recipientId: contact.id,
+        receiverId: contact.id, // Adding the receiverId field
         content: inputValue, // In a real app, this would be the encrypted content
         timestamp,
         encrypted: true,

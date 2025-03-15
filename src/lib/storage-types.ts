@@ -6,43 +6,48 @@
 // Core
 export interface Contact {
   id: string;
-  publicKeys: {
+  publicKeys?: {
     encryption: string;
     signature: string;
   };
   name: string;
-  displayName?: string; // Added for Chat.tsx component
+  displayName?: string;
   lastMessage?: string;
   lastMessageTime?: string;
   unreadCount?: number;
-  status?: 'online' | 'offline' | 'away';
+  status?: 'online' | 'offline' | 'away' | 'active' | 'inactive' | 'revoked';
   verified?: boolean;
   trustLevel?: 'low' | 'medium' | 'high';
-  signatureKey?: string; // For backwards compatibility
-  publicKey?: string; // For backwards compatibility
+  signatureKey?: string;
+  publicKey?: string;
+  userId?: string;
+  algorithm?: string;
+  created?: string;
+  isContact?: boolean;
+  messageCount?: number;
 }
 
 export interface Message {
   id: string;
   senderId: string;
-  receiverId: string; // Added for compatibility with components
-  recipientId?: string; // Added for backwards compatibility
+  receiverId: string;
+  recipientId?: string;
   content: string;
   timestamp: string;
-  status: 'sent' | 'delivered' | 'read';
+  status: 'sent' | 'delivered' | 'read' | 'failed';
   encryptionType: string;
   signature?: string;
   verified?: boolean;
-  encrypted?: boolean; // Added for MessageList.tsx
-  kemType?: string; // Added for MessageList.tsx
-  pqSignatureType?: string; // Added for MessageList.tsx
-  selfHealingStatus?: 'active' | 'healing' | 'healed'; // Added for MessageList.tsx
-  zkProofVerified?: boolean; // Added for MessageList.tsx
-  didVerified?: boolean; // Added for MessageList.tsx
-  starkNetValidated?: boolean; // Added for MessageList.tsx
-  webrtcSecured?: boolean; // Added for MessageList.tsx
-  encryptedContent?: string; // Added for p2p-ai-messaging.ts
-  encryptionAlgorithm?: string; // Added for p2p-ai-messaging.ts
+  encrypted?: boolean;
+  kemType?: string;
+  pqSignatureType?: string;
+  selfHealingStatus?: 'active' | 'healing' | 'healed' | 'compromised' | 'verified';
+  zkProofVerified?: boolean;
+  didVerified?: boolean;
+  starkNetValidated?: boolean;
+  webrtcSecured?: boolean;
+  encryptedContent?: string;
+  encryptionAlgorithm?: string;
 }
 
 export interface Conversation {
@@ -52,13 +57,17 @@ export interface Conversation {
   createdAt: string;
   updatedAt: string;
   encryptionType: string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  unreadCount?: number;
+  pqcEnabled?: boolean;
 }
 
 export interface UserProfile {
   id: string;
-  userId?: string; // Added for compatibility with components
+  userId?: string;
   username: string;
-  name?: string; // Added for storage.ts
+  name?: string;
   displayName?: string;
   keyPairs?: {
     pqkem: {
@@ -66,18 +75,24 @@ export interface UserProfile {
       privateKey: string;
       created: string;
       algorithm: string;
+      strength: string;
+      standard: string;
     };
     signature: {
       publicKey: string;
       privateKey: string;
       created: string;
       algorithm: string;
+      strength: string;
+      standard: string;
     };
-    encryption?: { // Added for pq-scif.ts
+    encryption?: {
       publicKey: string;
       privateKey: string;
       created: string;
       algorithm: string;
+      strength: string;
+      standard: string;
     };
   };
   starkNetId?: StarkNetID;
@@ -85,21 +100,31 @@ export interface UserProfile {
   settings?: UserSettings;
   created: string;
   lastLogin?: string;
-  securityLevel?: 'standard' | 'high' | 'maximum'; // Added for UserSetup.tsx
-  publicKey?: string; // For backwards compatibility
-  signatureKey?: string; // For backwards compatibility
+  securityLevel?: 'standard' | 'high' | 'maximum' | 'enhanced';
+  publicKey?: string;
+  signatureKey?: string;
   hsmInfo?: {
     available: boolean;
     type: string;
     keyProtectionLevel: string;
     lastVerified: string;
-  }; // Added for SecurityDashboard.tsx
+    id?: string;
+  };
   qkdInfo?: {
     available: boolean;
     lastExchange: string;
     keySize: number;
     securityLevel: string;
-  }; // Added for SecurityDashboard.tsx
+  };
+  privateKey?: string;
+  email?: string;
+  securityScore?: number;
+  devices?: string[];
+  securityQuestions?: {
+    question: string;
+    answerHash: string;
+  }[];
+  pqcCapable?: boolean;
 }
 
 export interface UserSettings {
@@ -109,6 +134,14 @@ export interface UserSettings {
   privacyLevel: 'standard' | 'high' | 'maximum';
   autoKeyRotation: boolean;
   keyRotationDays: number;
+  twoFactorAuth?: boolean;
+  securityLevel?: 'standard' | 'enhanced' | 'high' | 'maximum';
+  offlineMode?: boolean;
+  homomorphicEncryption?: boolean;
+  zeroKnowledgeProofs?: boolean;
+  quantumResistanceLevel?: 'high' | 'maximum';
+  biometricAuth?: boolean;
+  hardwareKeyProtection?: boolean;
 }
 
 // AI Security Types
@@ -127,10 +160,14 @@ export interface SecurityHealthMetrics {
     low: number;
   };
   recommendedActions?: string[];
-  cpuUsage?: number; // Added for AISecureCloudInfrastructure.tsx
-  memoryUsage?: number; // Added for AISecureCloudInfrastructure.tsx
-  storageUsage?: number; // Added for AISecureCloudInfrastructure.tsx
-  networkUsage?: number; // Added for AISecureCloudInfrastructure.tsx
+  cpuUsage?: number;
+  memoryUsage?: number;
+  storageUsage?: number;
+  networkUsage?: number;
+  threatDetectionsLast24h?: number;
+  activeThreats?: number;
+  patchLevel?: number;
+  activeUsers?: number;
 }
 
 export interface Threat {
@@ -155,7 +192,13 @@ export interface AISecurityPolicy {
   rules: SecurityRule[];
   created: string;
   updated: string;
-  threatDetectionLevel?: 'standard' | 'enhanced' | 'maximum'; // Added for ai-cloud-security.ts
+  threatDetectionLevel?: 'standard' | 'enhanced' | 'maximum';
+  automatedResponse?: boolean;
+  threatLevel?: "high" | "medium" | "low";
+  scanFrequency?: number;
+  mlModelVersion?: string;
+  lastUpdated?: string;
+  homomorphicEncryptionEnabled?: boolean;
 }
 
 export interface SecurityRule {
@@ -171,11 +214,11 @@ export interface AISecuredCloudInstance {
   id: string;
   name: string;
   instanceType: 'compute' | 'storage' | 'network';
-  status: 'running' | 'stopped' | 'error';
+  status: 'running' | 'stopped' | 'error' | 'provisioning';
   securityLevel: 'standard' | 'enhanced' | 'maximum';
   securityFeatures: string[];
-  healthStatus?: 'healthy' | 'degraded' | 'unhealthy';
-  threatStatus?: 'secure' | 'suspicious' | 'compromised';
+  healthStatus?: 'healthy' | 'degraded' | 'unhealthy' | 'warning';
+  threatStatus?: 'secure' | 'suspicious' | 'compromised' | 'normal' | 'elevated';
   metrics?: SecurityHealthMetrics;
   homomorphicEncryptionEnabled?: boolean;
   ipfsStorageEnabled?: boolean;
@@ -184,27 +227,29 @@ export interface AISecuredCloudInstance {
     encryption: {
       algorithm: string;
       created: string;
-      publicKey?: string; // Added for ai-cloud-security.ts
+      publicKey?: string;
+      privateKey?: string;
     };
     signature: {
       algorithm: string;
       created: string;
-      publicKey?: string; // Added for ai-cloud-security.ts
+      publicKey?: string;
+      privateKey?: string;
     };
   };
   created: string;
   updated: string;
   lastUpdated?: string;
-  createdAt?: string; // Added for AISecureCloudInfrastructure.tsx
-  region?: string; // Added for AISecureCloudInfrastructure.tsx
+  createdAt?: string;
+  region?: string;
 }
 
 // Infrastructure Types
 export interface SecureContainerConfig {
   id: string;
   name: string;
-  type: 'general' | 'compute' | 'storage' | 'network' | 'ai';
-  securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave';
+  type: 'general' | 'compute' | 'storage' | 'network' | 'ai' | 'application' | 'kubernetes' | 'docker';
+  securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave' | ContainerSecurityProfile;
   options?: {
     immutableRootfs?: boolean;
     seccompProfile?: string;
@@ -214,10 +259,23 @@ export interface SecureContainerConfig {
       triggerOnAnomaly: boolean;
     };
   };
-  status?: string; // Added for SecureInfrastructurePanel.tsx compatibility
-  containerType?: string; // Added for SecureInfrastructurePanel.tsx compatibility
-  startedAt?: string; // Added for SecureInfrastructurePanel.tsx compatibility
-  createdAt?: string; // Added for SecureInfrastructurePanel.tsx compatibility
+  status?: string;
+  containerType?: string;
+  startedAt?: string;
+  createdAt?: string;
+  description?: string;
+  encryptionEnabled?: boolean;
+  pqcEnabled?: boolean;
+  securityScore?: number;
+  image?: string;
+  immutableRootfs?: boolean;
+  vulnerabilities?: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+  created?: string;
+  updatedAt?: string;
 }
 
 export interface SecureContainer {
@@ -228,16 +286,24 @@ export interface SecureContainer {
   createdAt: string;
   startedAt?: string;
   stoppedAt?: string;
-  type?: 'general' | 'compute' | 'storage' | 'network' | 'ai'; // Added for SecureInfrastructurePanel.tsx
-  securityProfile?: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave'; // Added for SecureInfrastructurePanel.tsx
+  type?: 'general' | 'compute' | 'storage' | 'network' | 'ai';
+  securityProfile?: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave';
 }
 
 export interface SecureInfraNode {
   nodeId: string;
   name: string;
   status: 'online' | 'offline' | 'degraded';
-  type: 'compute' | 'storage' | 'network' | 'kubernetes' | 'docker';
+  type: 'compute' | 'storage' | 'network' | 'kubernetes' | 'docker' | 'security' | 'ai' | 'general' | 'application';
   lastVerified: string;
+  id?: string;
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  securityScore?: number;
+  pqcEnabled?: boolean;
+  trustLevel?: number;
+  created?: string;
 }
 
 export interface SecureNodeConfig {
@@ -258,7 +324,7 @@ export interface SecurityOptions {
 export interface SecureNode {
   nodeId: string;
   name: string;
-  status: 'online' | 'offline' | 'degraded'; // Changed from string to match SecureInfraNode
+  status: 'online' | 'offline' | 'degraded';
   type: string;
   lastVerified: string;
 }
@@ -267,8 +333,18 @@ export interface SecureServiceMesh {
   id: string;
   name: string;
   endpoints: string[];
-  status: 'created' | 'active' | 'degraded' | 'offline';
+  status: 'created' | 'active' | 'degraded' | 'offline' | 'online';
   createdAt: string;
+  description?: string;
+  updatedAt?: string;
+  nodeCount?: number;
+  encryptionEnabled?: boolean;
+  pqcEnabled?: boolean;
+  securityScore?: number;
+  containers?: number;
+  mTLS?: boolean;
+  policyEnforcement?: boolean;
+  created?: string;
 }
 
 // StarkNet & Decentralized Types
@@ -286,7 +362,7 @@ export interface StarkNetID {
 
 export interface AISyncStatus {
   id: string;
-  status: 'synced' | 'syncing' | 'error' | 'offline';
+  status: 'synced' | 'syncing' | 'error' | 'offline' | 'complete' | 'failed' | 'pending' | 'idle' | 'verified';
   lastSync: string;
   errorCount: number;
   nextScheduledSync: string;
@@ -297,17 +373,20 @@ export interface AISyncStatus {
   zkProofsVerified?: boolean;
   selfHealingAttempts?: number;
   lastSelfHealingAction?: string;
-  lastLocalSync?: string; // Added for local-ai-backup.ts
-  syncErrors?: any[]; // Added for local-ai-backup.ts
+  lastLocalSync?: string;
+  syncErrors?: any[];
 }
 
 export interface AICloudConnectionStatus {
   id?: string;
-  status: 'connected' | 'disconnected' | 'error';
+  status: 'connected' | 'disconnected' | 'error' | 'online' | 'offline' | 'degraded';
   lastConnection: string;
   provider: string;
   encryptionStatus: 'encrypted' | 'unencrypted';
-  connected?: boolean; // Added for local-ai-backup.ts
+  connected?: boolean;
+  latency?: number;
+  securityStatus?: SecurityThreshold;
+  lastConnectionAttempt?: string;
 }
 
 export interface WebRTCPeerStatus {
@@ -317,21 +396,31 @@ export interface WebRTCPeerStatus {
   encryptionType: string;
   lastMessageTimestamp?: string;
   dataTransferred?: number;
-  encryptionEnabled?: boolean; // Added for p2p-ai-messaging.ts
+  encryptionEnabled?: boolean;
+  status?: 'active' | 'healing' | 'healed' | 'verified';
+  lastActive?: string;
+  peerConnectionStatus?: string;
+  signatureVerified?: boolean;
+  signatureType?: string;
 }
 
 export interface PodmanContainerStatus {
   id: string;
   name: string;
-  status: 'running' | 'stopped' | 'error';
+  status: 'running' | 'stopped' | 'error' | 'provisioning';
   running?: boolean;
-  healthStatus?: 'healthy' | 'unhealthy';
+  healthStatus?: 'healthy' | 'unhealthy' | 'warning';
   uptime?: number;
   memoryUsageMB?: number;
   cpuUsagePercent?: number;
   restartCount?: number;
   lastRestart?: string;
-  containerName?: string; // Added for local-ai-backup.ts
+  containerName?: string;
+  securityStatus?: SecurityThreshold;
+  image?: string;
+  created?: string;
+  ports?: string[];
+  securityLevel?: string;
 }
 
 export interface LocalAIBackupConfig {
@@ -347,13 +436,13 @@ export interface LocalAIBackupConfig {
     syncOnWifi: boolean;
     maxSyncSize: number;
   };
-  tpmProtection?: boolean; // Added for local-ai-backup.ts
-  backupSchedule?: string; // Added for local-ai-backup.ts
-  starkNetVerification?: boolean; // Added for backward compatibility
-  lastBackup?: string; // Added for local-ai-backup.ts
-  lastRestore?: string; // Added for local-ai-backup.ts
-  backups?: any[]; // Added for local-ai-backup.ts
-  syncStatus?: AISyncStatus; // Added for local-ai-backup.ts
+  tpmProtection?: boolean;
+  backupSchedule?: string;
+  starkNetVerification?: boolean;
+  lastBackup?: string;
+  lastRestore?: string;
+  backups?: any[];
+  syncStatus?: AISyncStatus;
 }
 
 // Additional types for PQ-SCIF implementation
@@ -398,3 +487,32 @@ export type SecurityEventType =
   | 'system-change'
   | 'network-access'
   | 'cryptographic-operation';
+
+// Enhanced security status types
+export type SecurityThreshold = "secure" | "suspicious" | "compromised" | "normal" | "elevated";
+export type HealthStatus = "healthy" | "degraded" | "unhealthy" | "warning";
+
+// Container security types
+export interface ContainerSecurityProfile {
+  immutableRootfs: boolean;
+  seccomp: boolean;
+  apparmor: boolean;
+  rootless: boolean;
+  readOnly: boolean;
+  privileged: boolean;
+  capabilities: string[];
+  securityScore?: number;
+}
+
+// Threat Detection type
+export interface AIThreatDetection {
+  id: string;
+  severity: "high" | "medium" | "low";
+  description: string;
+  timestamp: string;
+  mitigated: boolean;
+  affectedComponents: string[];
+  mitigation?: string;
+  score: number;
+  detailedAnalysis?: string;
+}
