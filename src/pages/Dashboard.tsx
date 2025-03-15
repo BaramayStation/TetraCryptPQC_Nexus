@@ -1,48 +1,94 @@
-
-import React, { useEffect } from 'react';
-import { MainLayout } from "@/layout/MainLayout";
-import MilitarySecurityDashboard from "@/components/dashboard/MilitarySecurityDashboard";
-import { initializeSecureStorage } from "@/lib/secure-storage";
-import { initializeSecureInfrastructure } from "@/lib/secure-infrastructure";
-import { initializeConfidentialComputing } from "@/lib/confidential-computing";
-import { toast } from "@/components/ui/use-toast";
+import React, { useState, useEffect } from 'react';
+import { MainLayout } from '@/layout/MainLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import SecurityDashboard from '@/components/dashboard/SecurityDashboard';
+import MilitarySecurityDashboard from '@/components/dashboard/MilitarySecurityDashboard';
+import { initializeSecureInfrastructure } from '@/lib/secure-infrastructure';
+import { initializeAISecureEnv } from '@/lib/ai-security';
 
 const Dashboard: React.FC = () => {
-  // Initialize security systems
+  const [activeTab, setActiveTab] = useState('overview');
+  
   useEffect(() => {
-    const initializeSecurity = async () => {
-      try {
-        // Initialize secure storage
-        await initializeSecureStorage();
-        
-        // Initialize secure infrastructure
-        await initializeSecureInfrastructure();
-        
-        // Initialize confidential computing
-        await initializeConfidentialComputing();
-        
-        toast({
-          title: "Security Systems Initialized",
-          description: "Post-quantum cryptography and confidential computing systems are online.",
-        });
-      } catch (error) {
-        console.error("Failed to initialize security systems:", error);
-        toast({
-          title: "Security Initialization Error",
-          description: "Failed to initialize some security systems. Check console for details.",
-          variant: "destructive",
-        });
-      }
-    };
+    const infraConfig = initializeSecureInfrastructure();
+    const aiSecureEnv = initializeAISecureEnv();
     
-    initializeSecurity();
+    console.log('Secure Infrastructure initialized:', infraConfig);
+    console.log('AI Secure Environment initialized:', aiSecureEnv);
   }, []);
   
   return (
     <MainLayout>
-      <MilitarySecurityDashboard />
+      <div className="container py-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">TetraCryptPQC Dashboard</h1>
+              <p className="text-muted-foreground">
+                Enterprise-grade quantum security at your fingertips
+              </p>
+            </div>
+            <Button>Generate Report</Button>
+          </div>
+
+          <Tabs defaultValue={activeTab} className="space-y-4" onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="security">Security</TabsTrigger>
+              <TabsTrigger value="military">Military</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>System Status</CardTitle>
+                    <CardDescription>Overall system health and performance</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-green-500">Healthy</p>
+                    <p className="text-sm text-muted-foreground">All systems operational</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Active Connections</CardTitle>
+                    <CardDescription>Real-time network activity</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold">1,245</p>
+                    <p className="text-sm text-muted-foreground">Encrypted connections</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Threat Detections</CardTitle>
+                    <CardDescription>AI-driven security alerts</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-2xl font-bold text-yellow-500">3 Active</p>
+                    <p className="text-sm text-muted-foreground">Potential security breaches</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="security">
+              <SecurityDashboard />
+            </TabsContent>
+
+            <TabsContent value="military">
+              <MilitarySecurityDashboard />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </MainLayout>
   );
-};
+}
 
 export default Dashboard;

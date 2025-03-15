@@ -1,286 +1,268 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { 
-  Shield, 
-  AlertTriangle, 
-  Lock, 
-  CheckCircle, 
-  Database, 
-  RefreshCw,
-  Key,
-  Network,
-  FileEncrypted
-} from "lucide-react";
-import { AIThreatDetection } from '@/lib/storage-types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-interface ScoreCardProps {
-  title: string;
-  score: number;
-  description: string;
-  icon: React.ReactNode;
-}
-
-const ScoreCard: React.FC<ScoreCardProps> = ({ title, score, description, icon }) => (
-  <Card className="shadow-sm">
-    <CardHeader className="pb-2">
-      <CardTitle className="text-base flex items-center gap-2">
-        {icon}
-        {title}
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="flex items-center justify-center my-3">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-          <span className="text-2xl font-bold">{score}%</span>
-        </div>
-      </div>
-      <Progress value={score} className="h-2" />
-      <p className="text-sm text-muted-foreground mt-3">{description}</p>
-    </CardContent>
-  </Card>
-);
-
-const threatData: AIThreatDetection[] = [
-  {
-    id: crypto.randomUUID(),
-    severity: "medium",
-    description: "Unusual authentication pattern detected",
-    affectedComponents: ["Authentication Service"],
-    remediationSteps: ["Review access logs", "Check for compromised credentials"],
-    status: "active",
-    timestamp: new Date().toISOString()
-  },
-  {
-    id: crypto.randomUUID(),
-    severity: "low",
-    description: "Database query anomaly detected",
-    affectedComponents: ["Database", "API Service"],
-    remediationSteps: ["Review query patterns", "Update ORM layer"],
-    status: "mitigated",
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-  }
-];
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Shield, Lock, Cpu, AlertCircle, CheckCircle, Clock, 
+  FileText, Terminal, BarChart, Network, Server, KeySquare
+} from 'lucide-react';
+import { AIThreatDetection } from '@/lib/storage-types';
 
 const AISecurityDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  
+  const [activeThreats, setActiveThreats] = useState<AIThreatDetection[]>([
+    {
+      id: "threat-1",
+      severity: "high",
+      description: "Suspected quantum algorithm attack on ML-KEM exchange",
+      affectedComponents: ["Key Exchange Module", "Authentication Service"],
+      remediationSteps: ["Upgrade to ML-KEM-1024", "Verify key entropy", "Rotate affected keys"],
+      status: "active",
+      timestamp: new Date(Date.now() - 15 * 60000).toISOString()
+    },
+    {
+      id: "threat-2",
+      severity: "medium",
+      description: "Anomalous AI model query pattern detected",
+      affectedComponents: ["AI Inference Engine", "Query Processor"],
+      remediationSteps: ["Apply rate limiting", "Update anomaly detection model", "Analyze query patterns"],
+      status: "active",
+      timestamp: new Date(Date.now() - 45 * 60000).toISOString()
+    }
+  ]);
+
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-primary" />
-          AI Security Dashboard
-        </CardTitle>
-        <CardDescription>
-          Post-quantum secure AI monitoring and threat detection
-        </CardDescription>
-      </CardHeader>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mx-6">
-          <TabsTrigger value="overview">
-            <Shield className="h-4 w-4 mr-2" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="threats">
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            Threat Detection
-          </TabsTrigger>
-          <TabsTrigger value="homomorphic">
-            <FileEncrypted className="h-4 w-4 mr-2" />
-            Homomorphic AI
-          </TabsTrigger>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">AI Security Center</h2>
+          <p className="text-muted-foreground">
+            Quantum-resistant AI security monitoring and threat detection
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+            <AlertCircle className="mr-1 h-3 w-3" /> 2 Active Threats
+          </Badge>
+          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+            <CheckCircle className="mr-1 h-3 w-3" /> ML-KEM-1024 Active
+          </Badge>
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="threats">Threat Detection</TabsTrigger>
+          <TabsTrigger value="encryption">Homomorphic AI</TabsTrigger>
+          <TabsTrigger value="zero-knowledge">Zero-Knowledge Proofs</TabsTrigger>
+          <TabsTrigger value="resilience">Offline Resilience</TabsTrigger>
         </TabsList>
-        
-        <CardContent className="pt-6">
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ScoreCard 
-                title="Overall Security Score" 
-                score={92} 
-                description="Your AI system's quantum-resistant security posture"
-                icon={<Shield className="h-4 w-4 text-primary" />}
-              />
-              
-              <ScoreCard 
-                title="Threat Detection Accuracy" 
-                score={96} 
-                description="ML model performance in detecting quantum threats"
-                icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
-              />
-              
-              <ScoreCard 
-                title="Zero-Knowledge Proof Coverage" 
-                score={89} 
-                description="Percentage of sensitive operations using ZK-proofs"
-                icon={<Lock className="h-4 w-4 text-indigo-500" />}
-              />
-              
-              <ScoreCard 
-                title="Post-Quantum Compliance" 
-                score={98} 
-                description="Compliance with NIST FIPS 205/206 standards"
-                icon={<CheckCircle className="h-4 w-4 text-green-500" />}
-              />
-            </div>
-            
-            <Card className="bg-muted/40">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">System Status</CardTitle>
+
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Security Score</CardTitle>
+                <Shield className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2">
-                      <Database className="h-4 w-4 text-primary" />
-                      AI Model Verification
-                    </span>
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                      Verified
-                    </Badge>
+                <div className="text-2xl font-bold">93/100</div>
+                <p className="text-xs text-muted-foreground">+5 from last week</p>
+                <Progress value={93} className="mt-2" />
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">AI Models</CardTitle>
+                <Cpu className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">7 Models</div>
+                <p className="text-xs text-muted-foreground">5 quantum-resistant</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Active Threats</CardTitle>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">2 Detected</div>
+                <p className="text-xs text-muted-foreground">-3 from last week</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Last Scan</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">3 min ago</div>
+                <p className="text-xs text-muted-foreground">AI-driven continuous scan</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Status</CardTitle>
+                <CardDescription>Current system security posture</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <KeySquare className="h-4 w-4 text-primary" />
+                      <span>ML-KEM-1024 Key Exchange</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">Active</Badge>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2">
-                      <RefreshCw className="h-4 w-4 text-primary" />
-                      Quantum-Safe Key Rotation
-                    </span>
-                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600">
-                      Scheduled
-                    </Badge>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span>SLH-DSA Signatures</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">Active</Badge>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2">
-                      <Key className="h-4 w-4 text-primary" />
-                      Homomorphic Encryption
-                    </span>
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                      Active
-                    </Badge>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-primary" />
+                      <span>Homomorphic Encryption</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">Active</Badge>
                   </div>
                   
-                  <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Server className="h-4 w-4 text-primary" />
+                      <span>Secure Enclaves</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">Active</Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
                       <Network className="h-4 w-4 text-primary" />
-                      StarkNet Integration
-                    </span>
-                    <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                      Connected
-                    </Badge>
+                      <span>Decentralized Verification</span>
+                    </div>
+                    <Badge className="bg-yellow-100 text-yellow-800">Partial</Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-          
-          <TabsContent value="threats" className="space-y-4">
-            <div className="space-y-4">
-              {threatData.map((threat) => (
-                <Card key={threat.id} className={`
-                  ${threat.severity === 'high' ? 'border-red-200 bg-red-50/50' : ''}
-                  ${threat.severity === 'medium' ? 'border-amber-200 bg-amber-50/50' : ''}
-                  ${threat.severity === 'low' ? 'border-blue-200 bg-blue-50/50' : ''}
-                `}>
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <AlertTriangle className={`h-4 w-4 
-                          ${threat.severity === 'high' ? 'text-red-500' : ''}
-                          ${threat.severity === 'medium' ? 'text-amber-500' : ''}
-                          ${threat.severity === 'low' ? 'text-blue-500' : ''}
-                        `} />
-                        {threat.description}
-                      </CardTitle>
-                      <Badge variant={threat.status === 'active' ? 'default' : 'outline'}>
-                        {threat.status}
-                      </Badge>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Threats</CardTitle>
+                <CardDescription>AI-detected security concerns</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {activeThreats.map(threat => (
+                    <div key={threat.id} className="border rounded-md p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className={`h-4 w-4 ${
+                            threat.severity === 'high' ? 'text-red-500' : 
+                            threat.severity === 'medium' ? 'text-yellow-500' : 'text-blue-500'
+                          }`} />
+                          <span className="font-medium">{threat.description}</span>
+                        </div>
+                        <Badge className={
+                          threat.severity === 'high' ? 'bg-red-100 text-red-800' : 
+                          threat.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'
+                        }>
+                          {threat.severity} 
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Detected {new Date(threat.timestamp).toLocaleTimeString()}
+                      </p>
+                      <Button size="sm" variant="outline" className="w-full mt-1">
+                        View Details
+                      </Button>
                     </div>
-                  </CardHeader>
-                  <CardContent className="pb-4">
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="font-medium">Affected: </span>
-                        {threat.affectedComponents.join(', ')}
-                      </div>
-                      <div>
-                        <span className="font-medium">Remediation: </span>
-                        {threat.remediationSteps.join(', ')}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Detected: {new Date(threat.timestamp).toLocaleString()}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              
-              <Button className="w-full">
-                Run Deep Quantum Threat Scan
-              </Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="homomorphic" className="space-y-6">
-            <div className="space-y-4">
-              <Card className="bg-muted/40">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Homomorphic AI Processing</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm mb-4">
-                    Perform AI operations on encrypted data without ever decrypting it,
-                    ensuring quantum-safe privacy throughout the entire processing pipeline.
-                  </p>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Inference on Encrypted Data</span>
-                        <span className="text-sm font-medium">92%</span>
-                      </div>
-                      <Progress value={92} className="h-2" />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Training on Encrypted Data</span>
-                        <span className="text-sm font-medium">78%</span>
-                      </div>
-                      <Progress value={78} className="h-2" />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-sm">Model Parameter Encryption</span>
-                        <span className="text-sm font-medium">96%</span>
-                      </div>
-                      <Progress value={96} className="h-2" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Button className="w-full">
-                Enable Homomorphic Encryption for All AI Tasks
-              </Button>
-            </div>
-          </TabsContent>
-        </CardContent>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="threats" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI-Powered Threat Detection</CardTitle>
+              <CardDescription>
+                Real-time quantum and classical threat monitoring using federated ML models
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p>The AI-powered threat detection system leverages quantum-resistant neural networks to identify and mitigate security threats in real-time.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="encryption" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Homomorphic AI Processing</CardTitle>
+              <CardDescription>
+                Process encrypted data without decryption using TFHE homomorphic encryption
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p>TetraCryptPQC uses fully homomorphic encryption to allow AI models to process sensitive data without ever decrypting it, maintaining complete privacy while extracting insights.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="zero-knowledge" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Zero-Knowledge Proof System</CardTitle>
+              <CardDescription>
+                Verify computational integrity without revealing sensitive information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p>The integrated zk-STARK system allows TetraCryptPQC to verify the authenticity and integrity of data and computations without exposing the underlying information.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resilience" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Offline AI Resilience</CardTitle>
+              <CardDescription>
+                Continue security operations during network disruptions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p>TetraCryptPQC's distributed AI system can operate entirely offline, with local neural network models that sync and validate when connectivity is restored.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-      
-      <CardFooter className="flex justify-between">
-        <p className="text-xs text-muted-foreground">
-          Last updated: {new Date().toLocaleString()}
-        </p>
-        <Badge variant="outline">NIST FIPS 205/206 Compliant</Badge>
-      </CardFooter>
-    </Card>
+    </div>
   );
 };
 

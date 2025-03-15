@@ -13,7 +13,7 @@ export interface SecurityHealthMetrics {
     low: number;
   };
   securityScore: number;
-  activeUsers?: number;
+  activeUsers?: number; // Added optional field
 }
 
 export interface AISecurityPolicy {
@@ -23,7 +23,7 @@ export interface AISecurityPolicy {
   scanFrequency: number;
   mlModelVersion: string;
   lastUpdated: string;
-  homomorphicEncryptionEnabled?: boolean;
+  homomorphicEncryptionEnabled?: boolean; // Added optional field
 }
 
 export interface AICloudConnectionStatus {
@@ -32,16 +32,45 @@ export interface AICloudConnectionStatus {
   lastConnection: string;
   status: "online" | "offline" | "degraded";
   securityStatus: SecurityThreshold;
-  lastConnectionAttempt?: string;
+  lastConnectionAttempt?: string; // Added optional field
 }
 
 export interface PodmanContainerStatus {
   id: string;
   name: string;
-  status: "running" | "stopped" | "error" | "provisioning";
+  status: "running" | "stopped" | "error" | "provisioning"; // Added provisioning status
   securityStatus: SecurityThreshold;
   image: string;
   created: string;
   ports: string[];
-  securityLevel?: string;
+  securityLevel?: string; // Added optional field
+}
+
+// Adding missing container types
+export interface ContainerSecurityProfile {
+  immutableRootfs: boolean;
+  seccomp: boolean;
+  apparmor: boolean;
+  rootless: boolean;
+  readOnly: boolean;
+  privileged: boolean;
+  capabilities: string[];
+}
+
+export enum ContainerType {
+  APPLICATION = "application",
+  DATABASE = "database",
+  CACHE = "cache",
+  PROXY = "proxy",
+  SECURITY = "security"
+}
+
+export enum InfrastructureNodeType {
+  COMPUTE = "compute",
+  STORAGE = "storage",
+  NETWORK = "network",
+  SECURITY = "security",
+  AI = "ai",
+  GENERAL = "general",
+  APPLICATION = "application"
 }

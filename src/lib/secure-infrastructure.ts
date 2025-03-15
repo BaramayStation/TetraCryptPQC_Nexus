@@ -1,178 +1,179 @@
 
 import { 
-  SecureContainerConfig, 
-  SecureInfraNode, 
-  SecureServiceMesh, 
+  SecurityThreshold,
+  HealthStatus 
+} from "./storage-types";
+import {
   HardwareSecurityCapabilities,
   ContainerSecurityProfile,
-  ContainerType,
-  InfrastructureNodeType
-} from './storage-types';
+  SecureContainerConfig,
+  SecureServiceMesh,
+  SecureInfraNode
+} from "./storage-types/hardware-types";
+import { InfrastructureNodeType, ContainerType } from "./storage-types/security-types";
 
-/**
- * Check hardware security capabilities
- */
-export async function checkHardwareSecurityCapabilities(): Promise<HardwareSecurityCapabilities> {
-  // In a real implementation this would check actual hardware capabilities
-  // For simulation, we'll return a fixed object
+// Function to initialize secure infrastructure
+export function initializeSecureInfrastructure() {
+  console.log("Initializing secure infrastructure...");
+  
+  const containerConfigs = generateContainerConfigs();
+  const serviceMeshes = generateServiceMeshes();
+  const infraNodes = generateInfraNodes();
   
   return {
-    available: true,
-    tpm: true,
-    secureBoot: true,
-    encryptedMemory: false,
-    hardwareKeys: true,
-    tpmAvailable: true
+    containerConfigs,
+    serviceMeshes,
+    infraNodes,
+    healthStatus: "healthy" as HealthStatus
   };
 }
 
-/**
- * Create a secure container for infrastructure
- */
-export async function createSecureContainer(
-  name: string, 
-  securityProfile: ContainerSecurityProfile,
-  options?: {
-    immutableRootfs?: boolean;
-    rotationPolicy?: {
-      enabled: boolean;
-      intervalDays: number;
-      triggerOnAnomaly: boolean;
+// Generate mock container configs
+function generateContainerConfigs(): SecureContainerConfig[] {
+  return [
+    {
+      id: "container-1",
+      name: "TetraCrypt API Gateway",
+      description: "Secure API gateway with quantum-resistant TLS",
+      status: "running",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      securityProfile: {
+        immutableRootfs: true,
+        seccomp: true,
+        apparmor: true,
+        rootless: true,
+        readOnly: true,
+        privileged: false,
+        capabilities: ["NET_BIND_SERVICE"]
+      },
+      encryptionEnabled: true,
+      pqcEnabled: true,
+      image: "tetracrypt/api-gateway:1.0.0",
+      securityScore: 95,
+      immutableRootfs: true,
+      vulnerabilities: {
+        high: 0,
+        medium: 1,
+        low: 3
+      }
+    },
+    {
+      id: "container-2",
+      name: "Quantum Key Distribution Service",
+      description: "Service for secure key distribution",
+      status: "running",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      securityProfile: {
+        immutableRootfs: true,
+        seccomp: true,
+        apparmor: true,
+        rootless: true,
+        readOnly: false,
+        privileged: false,
+        capabilities: ["NET_BIND_SERVICE"]
+      },
+      encryptionEnabled: true,
+      pqcEnabled: true,
+      image: "tetracrypt/qkd-service:1.0.0",
+      securityScore: 90,
+      immutableRootfs: true,
+      vulnerabilities: {
+        high: 0,
+        medium: 2,
+        low: 5
+      }
     }
-  }
-): Promise<SecureContainerConfig> {
-  console.log(`Creating secure container ${name} with profile ${securityProfile}`);
-  
-  // Generate a random UUID
-  const id = crypto.randomUUID();
-  
-  // Determine container type based on name (simplified logic)
-  let type: ContainerType = "application";
-  if (name.includes("db") || name.includes("database")) {
-    type = "database";
-  } else if (name.includes("storage")) {
-    type = "storage";
-  } else if (name.includes("sec") || name.includes("security")) {
-    type = "security";
-  }
-  
-  return {
-    id,
-    name,
-    type,
-    securityProfile,
-    status: "running",
-    image: `podman/tetracrypt-${securityProfile}:latest`,
-    created: new Date().toISOString(),
-    immutableRootfs: options?.immutableRootfs ?? false,
-    rotationPolicy: options?.rotationPolicy ?? {
-      enabled: true,
-      intervalDays: 30,
-      triggerOnAnomaly: true
+  ];
+}
+
+// Generate mock service meshes
+function generateServiceMeshes(): SecureServiceMesh[] {
+  return [
+    {
+      id: "mesh-1",
+      name: "Production Mesh",
+      description: "Production service mesh with quantum-resistant mTLS",
+      status: "online",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      nodeCount: 5,
+      encryptionEnabled: true,
+      pqcEnabled: true,
+      securityScore: 92,
+      containers: 7,
+      mTLS: true,
+      policyEnforcement: true
     },
-    securityScore: Math.floor(Math.random() * 30) + 70, // 70-100
-    vulnerabilities: Math.floor(Math.random() * 5),
-    trustLevel: "high"
-  };
+    {
+      id: "mesh-2",
+      name: "Development Mesh",
+      description: "Development service mesh",
+      status: "online",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      nodeCount: 3,
+      encryptionEnabled: true,
+      pqcEnabled: false,
+      securityScore: 80,
+      containers: 4,
+      mTLS: true,
+      policyEnforcement: false
+    }
+  ];
 }
 
-/**
- * Create a secure infrastructure node
- */
-export async function createSecureInfraNode(
-  name: string,
-  type: InfrastructureNodeType
-): Promise<SecureInfraNode> {
-  console.log(`Creating secure infrastructure node ${name} of type ${type}`);
-  
-  // Generate a random UUID
-  const id = crypto.randomUUID();
-  
-  return {
-    id,
-    name,
-    type,
-    status: "running",
-    created: new Date().toISOString(),
-    securityScore: Math.floor(Math.random() * 30) + 70, // 70-100
-    trustLevel: "high",
-    pqcEnabled: true
-  };
-}
-
-/**
- * Create a secure service mesh
- */
-export async function createSecureServiceMesh(
-  name: string,
-  containerIds: string[]
-): Promise<SecureServiceMesh> {
-  console.log(`Creating secure service mesh ${name} with ${containerIds.length} containers`);
-  
-  // Generate a random UUID
-  const id = crypto.randomUUID();
-  
-  return {
-    id,
-    name,
-    containers: containerIds,
-    created: new Date().toISOString(),
-    status: "active",
-    securityScore: Math.floor(Math.random() * 20) + 80, // 80-100
-    policyEnforcement: true,
-    mTLS: true
-  };
-}
-
-/**
- * Verify container integrity
- */
-export async function verifyContainerIntegrity(containerId: string): Promise<{
-  verified: boolean;
-  issues: string[];
-}> {
-  console.log(`Verifying integrity of container ${containerId}`);
-  
-  // In a real implementation, this would perform actual verification
-  // For simulation, we'll return success with high probability
-  
-  const verified = Math.random() > 0.2; // 80% chance of success
-  
-  return {
-    verified,
-    issues: verified ? [] : [
-      "Signature verification failed",
-      "Container image hash mismatch",
-      "Potential rootkit detected"
-    ]
-  };
-}
-
-/**
- * Rotate container
- */
-export async function rotateContainer(containerId: string): Promise<SecureContainerConfig> {
-  console.log(`Rotating container ${containerId}`);
-  
-  // In a real implementation, this would create a new container and migrate data
-  // For simulation, we'll return a mocked result
-  
-  return {
-    id: crypto.randomUUID(),
-    name: "rotated-container",
-    type: "application",
-    securityProfile: "hardened",
-    status: "running",
-    image: "podman/tetracrypt-hardened:latest",
-    created: new Date().toISOString(),
-    immutableRootfs: true,
-    rotationPolicy: {
-      enabled: true,
-      intervalDays: 30,
-      triggerOnAnomaly: true
+// Generate mock infrastructure nodes
+function generateInfraNodes(): SecureInfraNode[] {
+  return [
+    {
+      id: "node-1",
+      name: "Primary Compute Node",
+      description: "High-security compute node for cryptographic operations",
+      type: "compute",
+      status: "online",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      securityScore: 95,
+      pqcEnabled: true,
+      trustLevel: 9
     },
-    securityScore: 95,
-    vulnerabilities: 0,
-    trustLevel: "high"
-  };
+    {
+      id: "node-2",
+      name: "Storage Node",
+      description: "Encrypted storage node for sensitive data",
+      type: "storage",
+      status: "online",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      securityScore: 90,
+      pqcEnabled: true,
+      trustLevel: 8
+    },
+    {
+      id: "node-3",
+      name: "AI Processing Node",
+      description: "Node for AI model execution and training",
+      type: "ai",
+      status: "online",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      securityScore: 85,
+      pqcEnabled: true,
+      trustLevel: 7
+    },
+    {
+      id: "node-4",
+      name: "Application Server",
+      description: "Server hosting application containers",
+      type: "application",
+      status: "online",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      securityScore: 88,
+      pqcEnabled: true,
+      trustLevel: 8
+    }
+  ];
 }

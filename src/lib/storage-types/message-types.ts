@@ -3,7 +3,7 @@ export interface Message {
   id: string;
   senderId: string;
   recipientId: string; 
-  receiverId: string; // Redundant field needed for compatibility
+  receiverId: string; // Required field for compatibility
   content: string;
   timestamp: string;
   encrypted: boolean;
@@ -13,7 +13,7 @@ export interface Message {
   status: "sent" | "delivered" | "read" | "failed";
 }
 
-export type P2PNodeStatus = "active" | "healing" | "healed" | "verified";
+export type P2PNodeStatus = "active" | "healing" | "healed" | "verified"; // Added "verified" status
 
 export interface WebRTCPeerStatus {
   peerId: string;
@@ -24,5 +24,5 @@ export interface WebRTCPeerStatus {
   status: P2PNodeStatus;
   signatureVerified: boolean;
   encryptionType: string;
-  signatureType?: string;
+  signatureType?: string; // Added optional field 
 }
