@@ -1,146 +1,280 @@
-# TetraCryptPQC_Nexus
+
+# TetraCryptPQC_Nexus - Quantum-Secure Web3 Messaging Framework
 
 ## Overview
-**TetraCryptPQC_Nexus** is the next-generation, fully quantum-secure Web3 messaging and identity verification framework. It is designed to resist both classical and quantum computing threats while providing decentralized, secure, and privacy-preserving communication.
 
-Leveraging post-quantum cryptography (PQC), zk-STARK proofs, decentralized identity (DID), and end-to-end encryption (E2EE), **TetraCryptPQC_Nexus** enables trustless, censorship-resistant, and highly scalable communication.
+**TetraCryptPQC_Nexus** is a comprehensive post-quantum cryptographic framework designed for secure, future-proof messaging and identity verification. Built to resist both classical and quantum computing threats, it provides a decentralized, secure, and privacy-preserving communication platform for sensitive environments.
 
-## Features
-- **Post-Quantum Encryption:** Utilizes NIST-standardized PQC algorithms, including ML-KEM-1024, Kyber, and SLH-DSA digital signatures.
-- **Zero-Trust Architecture:** Eliminates centralized trust points with cryptographic integrity checks.
-- **Decentralized Identity (DID):** Integrates zk-STARK-verified identities for authentication without exposing sensitive data.
-- **Web3 Integration:** Fully interoperable with StarkNet smart contracts for message storage and verification.
-- **Perfect Forward Secrecy (PFS):** Ensures past communications remain secure even if future keys are compromised.
-- **End-to-End Encryption (E2EE):** Messages are encrypted client-side with AES-256-GCM and post-quantum secure key exchange.
-- **IPFS & Web3Storage Support:** Messages are stored in a decentralized, immutable storage layer with cryptographic verification.
-- **Homomorphic Encryption Support:** Enables computation on encrypted messages without decryption for enhanced privacy.
-- **Quantum Key Distribution (QKD) Simulation:** Supports next-gen QKD for post-quantum key agreement.
-- **Hardware Security Module (HSM) Integration:** Ensures high-assurance key storage and management.
+The system leverages cutting-edge cryptographic technologies including:
 
-## Installation
-To set up TetraCryptPQC_Nexus, follow these steps:
+- **Post-Quantum Cryptography (PQC)**: ML-KEM-1024 (Kyber), SLH-DSA (Dilithium)
+- **Zero-Knowledge Proofs**: zk-STARK based authentication and verification
+- **Decentralized Identity (DID)**: Self-sovereign identity management
+- **End-to-End Encryption (E2EE)**: Multiple layers of quantum-resistant encryption
 
-### 1. Clone the Repository
-```sh
-$ git clone https://github.com/BaramayStation/TetraCryptPQC_Nexus.git
-$ cd TetraCryptPQC_Nexus
-```
+## Key Features
 
-### 2. Install Dependencies
-Ensure you have Node.js v18+ installed. Then, install the required packages:
-```sh
-$ npm install
-```
+- **Quantum-Resistant Cryptography**: NIST FIPS 205/206 compliant algorithms
+- **Zero-Trust Architecture**: Eliminates centralized trust points
+- **StarkNet Integration**: Interoperable with StarkNet smart contracts
+- **Perfect Forward Secrecy**: Protection against future key compromises
+- **Hardware Security Module (HSM) Support**: Enhanced key protection
+- **Decentralized Storage**: IPFS/Web3Storage integration
+- **Military-Grade Security**: Developed for high-security environments
+- **Underground Network Support**: Resilient communication infrastructure
+- **EMP-Hardened Systems**: Protection against electromagnetic attacks
+- **Satellite Communication**: Secure uplink/downlink capabilities
 
-### 3. Configure Environment Variables
-Copy the `.env.example` file and rename it to `.env`, then configure your settings:
-```sh
-$ cp .env.example .env
-```
-Update your API keys and configurations accordingly.
+## System Architecture
 
-### 4. Start the Development Server
-```sh
-$ npm run dev
-```
+The system is built on several key components:
 
-### 5. Build for Production
-```sh
-$ npm run build
-$ npm start
-```
+1. **Core Cryptography Layer**
+   - Post-quantum key exchange via ML-KEM
+   - Digital signatures via SLH-DSA
+   - Symmetric encryption via AES-256-GCM
 
-## Directory Structure
+2. **Identity & Authentication**
+   - Decentralized Identity (DID) management
+   - zk-STARK proofs for verification
+   - StarkNet identity validation
+
+3. **Secure Messaging Infrastructure**
+   - End-to-end encrypted messaging
+   - Peer-to-peer communication
+   - WebRTC secure channels
+
+4. **Threat Detection**
+   - AI-powered security monitoring
+   - Anomaly detection
+   - Self-healing protocols
+
+5. **Resilient Infrastructure**
+   - Underground communication nodes
+   - Military mesh networks
+   - Quantum-secure links
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js v18 or higher
+- Modern web browser with WebAssembly support
+- (Optional) Hardware Security Module for enhanced security
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-org/TetraCryptPQC_Nexus.git
+   cd TetraCryptPQC_Nexus
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Configure the following variables in your `.env` file:
+   ```
+   # Core Configuration
+   VITE_API_URL=your_api_url
+   VITE_STARKNET_NETWORK=testnet
+   
+   # Storage Configuration
+   VITE_WEB3_STORAGE_TOKEN=your_web3_storage_token
+   VITE_IPFS_GATEWAY=https://ipfs.io/ipfs/
+   
+   # Security Settings
+   VITE_PQC_KEY_ROTATION_DAYS=30
+   VITE_ENABLE_HSM_INTEGRATION=false
+   VITE_QUANTUM_SECURE_MODE=true
+   ```
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. For production builds:
+   ```bash
+   npm run build
+   npm start
+   ```
+
+### Security Configuration
+
+To enhance security, configure the following settings in the application:
+
+1. **Post-Quantum Security Level**: Choose between standard (ML-KEM-768) and maximum (ML-KEM-1024)
+2. **Key Rotation Policy**: Set automatic key rotation periods (recommended: 30 days)
+3. **HSM Integration**: Connect to hardware security modules if available
+4. **Threat Detection Sensitivity**: Configure AI monitoring sensitivity
+
+## Development
+
+### Project Structure
+
 ```
 TetraCryptPQC_Nexus/
-│── public/           # Static assets
-│── src/
-│   ├── components/   # UI components
-│   ├── chat/         # Chat-specific components
-│   ├── security/     # Security services
-│   ├── hooks/        # React hooks
-│   ├── lib/          # Cryptographic and utility functions
-│   ├── starknet/     # StarkNet integration
-│   ├── layout/       # Application layout
-│   ├── pages/        # Page-level components
-│── backend/          # Backend services
-│── package.json      # Dependencies and scripts
-│── vite.config.ts    # Vite build configuration
-│── README.md         # Documentation
+├── src/
+│   ├── components/         # UI components
+│   │   ├── chat/          # Messaging components
+│   │   ├── security/      # Security-related components
+│   │   └── ui/            # Generic UI components
+│   ├── lib/               # Core libraries
+│   │   ├── crypto.ts      # Cryptographic functions
+│   │   ├── pqcrypto.ts    # Post-quantum specific crypto
+│   │   ├── storage-types/ # Type definitions
+│   │   └── ai-security.ts # AI security monitoring
+│   ├── layout/            # Application layouts
+│   ├── pages/             # Application pages
+│   ├── hooks/             # React hooks
+│   └── services/          # External service integrations
+├── public/                # Static assets
+├── rust/                  # Rust crypto implementations
+└── starknet/              # StarkNet smart contracts
 ```
 
-## Security Architecture
-### 1. **Post-Quantum Cryptography (PQC)**
-- **ML-KEM-1024 / Kyber:** Lattice-based KEM for key exchange.
-- **SLH-DSA / Dilithium:** Digital signature scheme for authentication.
-- **AES-256-GCM:** Symmetric encryption for message confidentiality.
-- **Homomorphic Encryption:** Privacy-preserving computations.
+### Development Workflow
 
-### 2. **zk-STARK Proofs**
-- Used for integrity verification of messages and identity authentication.
-- Ensures zero-knowledge authentication without revealing sensitive data.
+1. **Local Development**:
+   ```bash
+   npm run dev
+   ```
 
-### 3. **Decentralized Identity (DID)**
-- Self-sovereign identity verification without centralized authorities.
-- Uses zk-STARK-based cryptographic proofs for authentication.
+2. **Testing**:
+   ```bash
+   npm run test
+   ```
 
-### 4. **StarkNet Smart Contracts**
-- Used for secure message storage and retrieval.
-- Ensures censorship-resistant, immutable communication.
+3. **Type Checking**:
+   ```bash
+   npm run typecheck
+   ```
 
-### 5. **Quantum Key Distribution (QKD) & HSM Integration**
-- Simulated QKD to enhance post-quantum key exchange security.
-- Hardware Security Modules (HSM) used for secure key storage.
+4. **Building for Production**:
+   ```bash
+   npm run build
+   ```
 
-## Secure Messaging Flow
-1. **User Authentication**
-   - Generate and verify DID with zk-STARK.
-   - Authenticate using SLH-DSA post-quantum signatures.
+## Security Features
 
-2. **Message Encryption & Signing**
-   - AES-256-GCM encrypts message payload.
-   - ML-KEM / Kyber secures key exchange.
-   - SLH-DSA digital signatures ensure authenticity.
-   - zk-STARK proof generated for integrity validation.
+### Post-Quantum Cryptography
 
-3. **Decentralized Storage & Delivery**
-   - Encrypted message stored on IPFS/Web3Storage.
-   - Metadata stored on StarkNet smart contract.
+The framework implements NIST-standardized post-quantum algorithms:
 
-4. **Message Decryption & Verification**
-   - Retrieve encrypted message from IPFS/Web3Storage.
-   - Validate zk-STARK proof for integrity.
-   - Verify digital signature with SLH-DSA.
-   - Decrypt message using AES-256-GCM.
+- **ML-KEM (Kyber)**: Lattice-based Key Encapsulation Mechanism
+- **SLH-DSA (Dilithium)**: Lattice-based Digital Signature Algorithm
+- **Falcon**: Alternative signature scheme for specialized applications
 
-## Deployment
-To deploy TetraCryptPQC_Nexus on Netlify or other platforms, ensure:
-- Your `.env` file is correctly set up.
-- Dependencies such as `vite-plugin-wasm` are properly installed.
-- You have `top-level-await` enabled for WebAssembly modules.
+### Zero-Knowledge Proofs
 
-### Deploying on Netlify
-```sh
-$ netlify deploy
+Utilizes StarkNet's zk-STARK technology for:
+
+- Identity verification without revealing credentials
+- Message integrity validation
+- Secure multi-party computation
+
+### Hardware Security
+
+Support for various hardware security solutions:
+
+- YubiKey integration
+- Hardware Security Modules (HSM)
+- Trusted Platform Module (TPM) utilization
+- EMP-hardened hardware compatibility
+
+### Resilient Communication
+
+Multiple communication channels to ensure availability:
+
+- P2P WebRTC connections
+- TOR-like routing capabilities
+- Satellite uplink options
+- Underground network infrastructure
+
+## Deployment Options
+
+### Standard Deployment
+
+For regular security needs, deploy to standard cloud providers:
+
+```bash
+# Example Netlify deployment
+netlify deploy
 ```
 
-## Contributors & References
-TetraCryptPQC_Nexus is built upon the contributions of developers and researchers from:
-- **NIST Post-Quantum Cryptography Standardization Initiative**
-- **StarkWare & StarkNet Developers**
-- **Ethereum & Web3 Foundation**
-- **IPFS & Filecoin Storage Ecosystem**
-- **Open Quantum Safe Project**
-- **Various Open-Source Cryptographic Libraries**
+### High-Security Deployment
 
-We extend our gratitude to all contributors pushing the boundaries of security and decentralization.
+For military or sensitive applications:
+
+1. Air-gapped deployment
+2. EMP-hardened infrastructure
+3. Underground communication nodes
+4. Satellite uplink/downlink
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Key Generation Failures**
+   - Ensure browser supports WebAssembly
+   - Check for sufficient entropy
+
+2. **Message Delivery Issues**
+   - Verify peer connectivity
+   - Check encryption compatibility
+
+3. **Authentication Problems**
+   - Reset DID credentials
+   - Verify StarkNet connection
+
+### Logging
+
+Enable detailed logging for troubleshooting:
+
+```javascript
+// In your .env file
+VITE_DEBUG_LEVEL=verbose
+VITE_CRYPTO_LOGGING=true
+```
 
 ## License
-TetraCryptPQC_Nexus is open-source software licensed under the **MIT License**. Contributions and community-driven improvements are welcome!
 
-## Contact & Community
-For discussions, collaboration, and contributions, reach out via:
-- **GitHub Issues:** [TetraCryptPQC_Nexus Repository](https://github.com/BaramayStation/TetraCryptPQC_Nexus)
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-Join us in building a post-quantum secure and decentralized future!
+## Contributing
 
+We welcome contributions to TetraCryptPQC_Nexus:
+
+1. Fork the repository
+2. Create a feature branch
+3. Implement your changes
+4. Submit a pull request
+
+Please adhere to the security and code quality standards outlined in CONTRIBUTING.md.
+
+## Security Considerations
+
+This software implements cryptographic algorithms that may be subject to export controls in some jurisdictions. Users are responsible for ensuring compliance with applicable laws and regulations.
+
+For reporting security vulnerabilities, please use the responsible disclosure process outlined in SECURITY.md.
+
+## Acknowledgments
+
+- NIST Post-Quantum Cryptography Standardization Program
+- StarkWare for StarkNet technology
+- Open Quantum Safe Project for library components
+- IPFS and Web3.Storage teams for decentralized storage capabilities
+
+## Contact
+
+For questions, support, or collaboration inquiries:
+- GitHub Issues: [Project Issues](https://github.com/your-org/TetraCryptPQC_Nexus/issues)
+- Email: security@example.com
