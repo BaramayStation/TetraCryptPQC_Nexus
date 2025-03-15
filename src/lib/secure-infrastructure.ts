@@ -6,9 +6,9 @@
  * TPM/SGX integration, immutable rootfs, and SELinux/AppArmor confinement.
  */
 
-import { logSecurityEvent } from './ai-security';
+import { logSecurityEvent, SecurityEventType } from './ai-security';
 import { detectHardwareSecurity } from './enterprise-security';
-import { SecureContainerConfig, SecureInfraNode, SecureServiceMesh } from './storage-types';
+import { SecureContainerConfig, SecureInfraNode, SecureServiceMesh, HSMType } from './storage-types';
 
 // Infrastructure security level types
 export type SecurityLevel = 'standard' | 'enhanced' | 'confidential' | 'military';
@@ -42,10 +42,10 @@ export async function checkHardwareSecurityCapabilities(): Promise<HardwareSecur
   
   // Map to hardware security capabilities
   return {
-    tpmAvailable: hwSecurity.type === 'tpm',
-    tpmVersion: hwSecurity.type === 'tpm' ? hwSecurity.firmwareVersion : undefined,
-    sgxAvailable: hwSecurity.type === 'sgx',
-    sgxVersion: hwSecurity.type === 'sgx' ? hwSecurity.firmwareVersion : undefined,
+    tpmAvailable: hwSecurity.type === HSMType.TPM,
+    tpmVersion: hwSecurity.type === HSMType.TPM ? hwSecurity.firmwareVersion : undefined,
+    sgxAvailable: hwSecurity.type === HSMType.SGX,
+    sgxVersion: hwSecurity.type === HSMType.SGX ? hwSecurity.firmwareVersion : undefined,
     sevAvailable: hwSecurity.features.includes("AMD SEV"),
     secureBootEnabled: hwSecurity.features.includes("Secure Boot"),
     measuredBoot: hwSecurity.features.includes("Measured Boot"),
@@ -120,7 +120,7 @@ export async function createSecureContainer(
   
   // Log the container creation as a security event
   logSecurityEvent({
-    eventType: 'infrastructure',
+    eventType: 'infrastructure' as SecurityEventType,
     userId: 'system',
     operation: 'create-secure-container',
     status: 'success',
@@ -246,7 +246,7 @@ export async function createSecureInfraNode(
   
   // Log the node creation as a security event
   logSecurityEvent({
-    eventType: 'infrastructure',
+    eventType: 'infrastructure' as SecurityEventType,
     userId: 'system',
     operation: 'create-infra-node',
     status: 'success',
@@ -303,7 +303,7 @@ export async function rotateContainer(
   
   // Log the container rotation as a security event
   logSecurityEvent({
-    eventType: 'infrastructure',
+    eventType: 'infrastructure' as SecurityEventType,
     userId: 'system',
     operation: 'rotate-container',
     status: 'success',
@@ -350,7 +350,7 @@ export async function verifyContainerIntegrity(
   
   // Log the integrity verification as a security event
   logSecurityEvent({
-    eventType: 'infrastructure',
+    eventType: 'infrastructure' as SecurityEventType,
     userId: 'system',
     operation: 'verify-container-integrity',
     status: verified ? 'success' : 'failure',
@@ -365,4 +365,84 @@ export async function verifyContainerIntegrity(
     issues,
     attestationReport
   };
+}
+
+/**
+ * Create a confidential computing container for AI processing
+ */
+export async function createConfidentialAIContainer(
+  name: string,
+  aiProcessType: 'inference' | 'training' | 'anomaly-detection',
+  config: {
+    hardware: 'sgx' | 'sev' | 'auto';
+    memoryLimit: string;
+    cpuLimit: string;
+    networkPolicy?: 'isolated' | 'restricted' | 'aionly';
+    attestationRequired?: boolean;
+  }
+): Promise<SecureContainerConfig> {
+  console.log(`🔹 Creating confidential AI container: ${name} for ${aiProcessType}`);
+  
+  // Check hardware security capabilities
+  const hwCapabilities = await checkHardwareSecurityCapabilities();
+  
+  // Determine which hardware security to use
+  let securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave';
+  
+  if (config.hardware === 'sgx' && hwCapabilities.sgxAvailable) {
+    securityProfile = 'sgx-enclave';
+  } else if (config.hardware === 'sev' && hwCapabilities.sevAvailable) {
+    securityProfile = 'hardened'; // SEV is implemented as a hardened profile
+  } else if (hwCapabilities.sgxAvailable) {
+    securityProfile = 'sgx-enclave';
+  } else if (hwCapabilities.tpmAvailable) {
+    securityProfile = 'tpm-protected';
+  } else {
+    securityProfile = 'hardened';
+    console.warn("No hardware security available, falling back to software-only hardened container");
+  }
+  
+  // Create the container with AI-specific configuration
+  const container = await createSecureContainer(name, securityProfile, {
+    immutableRootfs: true,
+    confinement: 'selinux',
+    networkPolicy: config.networkPolicy === 'isolated' ? 'isolated' : 
+                   config.networkPolicy === 'restricted' ? 'e2e-encrypted' : 
+                   'service-mesh',
+    rotationEnabled: aiProcessType !== 'training', // Don't rotate training containers
+    rotationInterval: 60 // Rotate more frequently for AI containers
+  });
+  
+  // Update resources based on AI type
+  container.resources = {
+    cpuLimit: config.cpuLimit || "4",
+    memoryLimit: config.memoryLimit || "8G",
+    storageLimit: "10G"
+  };
+  
+  // Add AI-specific metadata
+  const aiMetadata = {
+    confidentialComputing: true,
+    aiType: aiProcessType,
+    hardwareProtection: securityProfile,
+    attestationEnabled: config.attestationRequired || false,
+    homomorphicProcessing: aiProcessType === 'inference',
+    memoryEncryption: securityProfile === 'sgx-enclave' || hwCapabilities.sevAvailable
+  };
+  
+  // Log AI container creation
+  logSecurityEvent({
+    eventType: 'infrastructure' as SecurityEventType,
+    userId: 'system',
+    operation: 'create-confidential-ai',
+    status: 'success',
+    metadata: {
+      containerId: container.id,
+      aiType: aiProcessType,
+      securityProfile,
+      ...aiMetadata
+    }
+  });
+  
+  return container;
 }
