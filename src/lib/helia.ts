@@ -5,7 +5,7 @@
  */
 
 // Function to simulate adding a file to IPFS
-export function addFileToIPFS(content: string): Promise<string> {
+export async function addFileToIPFS(content: string): Promise<string> {
   console.log("Mock: Adding file to IPFS", content.substring(0, 20) + "...");
   
   // Generate a fake CID
@@ -15,7 +15,7 @@ export function addFileToIPFS(content: string): Promise<string> {
 }
 
 // Function to simulate getting a file from IPFS
-export function getFileFromIPFS(cid: string): Promise<string> {
+export async function getFileFromIPFS(cid: string): Promise<string> {
   console.log("Mock: Getting file from IPFS with CID:", cid);
   
   // Return mock data

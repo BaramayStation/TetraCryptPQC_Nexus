@@ -26,15 +26,13 @@ const SecurityArchitecture: React.FC = () => {
         }
 
         // Check IPFS status
-        if (profile?.latestMessage?.ipfsHash) {
-          try {
-            const data = await loadFromIPFS(profile.latestMessage.ipfsHash);
-            setIpfsStatus(data ? "✅ IPFS Active" : "⚠️ IPFS Error");
-          } catch {
-            setIpfsStatus("❌ IPFS Offline");
-          }
-        } else {
-          setIpfsStatus("⚠️ No IPFS Data");
+        try {
+          // Try to load a test IPFS hash to check connectivity
+          const testCid = "QmTest123456789";
+          const data = await loadFromIPFS(testCid);
+          setIpfsStatus(data ? "✅ IPFS Active" : "⚠️ IPFS Error");
+        } catch {
+          setIpfsStatus("❌ IPFS Offline");
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
