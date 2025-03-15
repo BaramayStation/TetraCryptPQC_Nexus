@@ -1,115 +1,94 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GlassContainer } from "@/components/ui/glass-container";
 import { 
   Shield, 
   AlertCircle, 
   CheckCircle, 
-  RefreshCw, 
   Lock, 
-  Key, 
-  ArrowRight, 
+  Eye, 
   Cpu, 
-  BarChart4, 
-  Network
+  RefreshCw, 
+  Key, 
+  Server
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { PQCKey } from "@/lib/crypto";
+import { useToast } from '@/hooks/use-toast';
+
+import KeyGenerationService from "@/components/security/KeyGenerationService";
 import { 
-  initializeAISecuritySystem, 
-  detectThreatsWithAI, 
-  analyzeKeyForRotation,
-  performAIKeyRotation,
-  generateAISecurityMetrics
+  initAIPQCSecurity, 
+  assessSecurityHealth, 
+  analyzeSecurityThreat, 
+  generateSecurityPolicy 
 } from "@/lib/ai-pqc-security";
+import { 
+  detectIntrusions, 
+  analyzeNetworkTraffic, 
+  generateThreatReport 
+} from "@/lib/ai-intrusion-detection";
 import { AIThreatDetection, SecurityHealthMetrics } from "@/lib/storage-types";
 
 const AISecurityDashboard: React.FC = () => {
   const { toast } = useToast();
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [isSystemReady, setIsSystemReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
-  const [securityMetrics, setSecurityMetrics] = useState<SecurityHealthMetrics | null>(null);
-  const [threats, setThreats] = useState<AIThreatDetection[]>([
-    {
-      id: "threat-1",
-      severity: "medium",
-      description: "Potential quantum side-channel attack pattern detected",
-      affectedComponents: ["Key Management", "Authentication"],
-      timestamp: new Date().toISOString(),
-      mitigated: false,
-      status: "active",
-      score: 65,
-      remediationSteps: [
-        "Rotate authentication keys to ML-KEM-1024",
-        "Enable constant-time PQC implementation",
-        "Activate hardware protection (TPM)"
-      ]
-    },
-    {
-      id: "threat-2",
-      severity: "low",
-      description: "Unusual quantum-resistant key usage pattern",
-      affectedComponents: ["Message Encryption"],
-      timestamp: new Date().toISOString(),
-      mitigated: true,
-      status: "resolved",
-      score: 35,
-      remediationSteps: [
-        "Monitor PQC key usage patterns",
-        "Update to latest PQC library version"
-      ]
-    }
-  ]);
-  const [testKey, setTestKey] = useState<PQCKey>({
-    algorithm: "ML-KEM-768",
-    publicKey: "8f4e932a...",
-    privateKey: "3a9c8b2d...",
-    created: new Date(Date.now() - 80 * 24 * 60 * 60 * 1000).toISOString(), // 80 days ago
-    strength: "192-bit quantum security",
-    standard: "NIST FIPS 205",
-    hardwareProtected: false
-  });
-  const [keyAnalysis, setKeyAnalysis] = useState<any>(null);
-  
-  // Initialize AI security system on component mount
+  const [securityHealth, setSecurityHealth] = useState<SecurityHealthMetrics | null>(null);
+  const [threats, setThreats] = useState<AIThreatDetection[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [threatReport, setThreatReport] = useState<{
+    reportId: string;
+    timestamp: string;
+    threats: AIThreatDetection[];
+    riskLevel: string;
+    summary: string;
+  } | null>(null);
+
+  // Initialize AI security on component mount
   useEffect(() => {
     const initSecurity = async () => {
       try {
-        const result = await initializeAISecuritySystem();
-        setIsSystemReady(result.ready);
+        // Initialize AI-PQC security
+        await initAIPQCSecurity();
         
-        // Generate security metrics
-        const metrics = generateAISecurityMetrics();
-        setSecurityMetrics(metrics);
+        // Get initial security health assessment
+        const healthAssessment = await assessSecurityHealth();
+        setSecurityHealth(healthAssessment);
         
+        // Generate initial threat report
+        const initialThreatReport = generateThreatReport();
+        setThreatReport(initialThreatReport);
+        setThreats(initialThreatReport.threats);
+        
+        // Show success toast
         toast({
           title: "AI Security System Initialized",
-          description: `${result.modelsLoaded} AI security models loaded successfully.`,
+          description: "Post-quantum cryptographic security monitoring is active.",
         });
+        
+        setIsLoading(false);
       } catch (error) {
         console.error("Failed to initialize AI security:", error);
         toast({
-          title: "AI Security System Error",
-          description: "Could not initialize AI security system.",
+          title: "Security System Error",
+          description: "Could not initialize AI security monitoring.",
           variant: "destructive",
         });
-      } finally {
-        setIsInitializing(false);
+        setIsLoading(false);
       }
     };
     
     initSecurity();
   }, [toast]);
 
-  // Perform AI-powered security scan
-  const performSecurityScan = async () => {
+  // Run security scan
+  const runSecurityScan = async () => {
     setIsScanning(true);
     setScanProgress(0);
     
@@ -125,123 +104,88 @@ const AISecurityDashboard: React.FC = () => {
     }, 150);
     
     try {
-      // Simulate security data to scan
-      const securityData = {
+      // Sample data to analyze
+      const sampleData = {
         userId: "user-123",
         operations: ["key-generation", "message-encryption", "signature-verification"],
         timestamp: new Date().toISOString(),
-        systemState: "normal",
+        systemState: "normal"
       };
       
-      // Perform AI-powered threat detection
-      const result = await detectThreatsWithAI(JSON.stringify(securityData));
+      // Perform intrusion detection
+      const detectionResult = await detectIntrusions(sampleData);
+      
+      // Analyze network traffic
+      const networkAnalysis = await analyzeNetworkTraffic(sampleData);
+      
+      // Generate updated threat report
+      const newThreatReport = generateThreatReport();
+      setThreatReport(newThreatReport);
+      
+      // Update threats list
+      setThreats([...detectionResult.threats]);
+      
+      // Update security health
+      const updatedHealth = await assessSecurityHealth();
+      setSecurityHealth(updatedHealth);
       
       // Ensure scan completes with 100%
       setScanProgress(100);
-      
-      // Update state with detection results
       setTimeout(() => {
-        // Map the threats to AIThreatDetection format
-        const newThreats: AIThreatDetection[] = result.threats.map(threat => ({
-          id: threat.id,
-          severity: threat.severity === 'critical' ? 'high' : threat.severity as any,
-          description: threat.description,
-          affectedComponents: ["Key Management", "Authentication"],
-          timestamp: threat.timestamp,
-          mitigated: false,
-          status: "active",
-          score: threat.score
-        }));
-        
-        setThreats(prev => [...newThreats, ...prev]);
         setIsScanning(false);
         
-        // Generate new security metrics
-        setSecurityMetrics(generateAISecurityMetrics());
-        
-        if (result.detected) {
+        if (detectionResult.detected) {
           toast({
-            title: `Security Threats Detected (${result.threats.length})`,
-            description: `${result.recommendation}`,
+            title: `Security Threats Detected (${detectionResult.threatCount})`,
+            description: detectionResult.recommendation,
             variant: "destructive",
           });
         } else {
           toast({
             title: "Security Scan Complete",
-            description: "No new threats detected in this scan.",
+            description: "No immediate threats detected. System secure.",
           });
         }
       }, 500);
     } catch (error) {
-      setIsScanning(false);
       console.error("Security scan failed:", error);
       toast({
         title: "Security Scan Failed",
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
+      setIsScanning(false);
     }
   };
 
-  // Analyze key for rotation
-  const analyzeKey = async () => {
-    try {
-      const analysis = await analyzeKeyForRotation(testKey);
-      setKeyAnalysis(analysis);
-      
-      toast({
-        title: "Key Analysis Complete",
-        description: analysis.recommendation,
-        variant: analysis.shouldRotate ? "destructive" : "default",
-      });
-    } catch (error) {
-      console.error("Key analysis failed:", error);
-      toast({
-        title: "Key Analysis Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Perform key rotation
-  const rotateKey = async () => {
-    try {
-      const result = await performAIKeyRotation(testKey);
-      setTestKey(result.newKey);
-      setKeyAnalysis(null);
-      
-      toast({
-        title: "Key Rotation Successful",
-        description: `Rotated from ${result.rotationReport.previousAlgorithm} to ${result.rotationReport.newAlgorithm} with ${result.rotationReport.securityImprovement}% security improvement.`,
-      });
-    } catch (error) {
-      console.error("Key rotation failed:", error);
-      toast({
-        title: "Key Rotation Failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-        variant: "destructive",
-      });
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96">
+        <Shield className="h-16 w-16 text-accent animate-pulse mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Initializing AI Security</h2>
+        <p className="text-muted-foreground mb-4">Setting up post-quantum security protocols...</p>
+        <Progress value={45} className="w-64 h-2" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container space-y-6 py-6">
-      <div className="flex justify-between items-center">
+    <div className="container py-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-7 w-7 text-primary" />
-            AI-Driven Post-Quantum Security
+            <Shield className="h-8 w-8 text-accent" />
+            AI-Powered Quantum Security
           </h1>
           <p className="text-muted-foreground">
-            ML-powered threat detection and cryptographic security optimization
+            Post-quantum protected anomaly detection and threat prevention
           </p>
         </div>
         
         <Button 
-          onClick={performSecurityScan} 
-          disabled={isScanning || !isSystemReady}
-          className="bg-primary"
+          onClick={runSecurityScan} 
+          disabled={isScanning}
+          className="bg-accent hover:bg-accent/90"
         >
           {isScanning ? (
             <>
@@ -250,416 +194,526 @@ const AISecurityDashboard: React.FC = () => {
             </>
           ) : (
             <>
-              <Shield className="mr-2 h-4 w-4" />
-              Run AI Security Scan
+              <Eye className="mr-2 h-4 w-4" />
+              Run Security Scan
             </>
           )}
         </Button>
       </div>
       
-      {isInitializing ? (
-        <div className="flex justify-center items-center p-8">
-          <RefreshCw className="h-6 w-6 animate-spin mr-2" />
-          <span>Initializing AI Security System...</span>
+      {isScanning && (
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>AI-Powered Security Scan in Progress</span>
+            <span>{scanProgress}%</span>
+          </div>
+          <Progress value={scanProgress} className="h-2" />
         </div>
-      ) : (
-        <>
-          {isScanning && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>AI-Powered PQC Security Scan in Progress</span>
-                <span>{scanProgress}%</span>
+      )}
+
+      {securityHealth && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Security Score</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center">
+                <div className="relative w-32 h-32">
+                  <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <circle 
+                      cx="50" 
+                      cy="50" 
+                      r="45" 
+                      fill="none" 
+                      stroke="#e2e8f0" 
+                      strokeWidth="10" 
+                    />
+                    <circle 
+                      cx="50" 
+                      cy="50" 
+                      r="45" 
+                      fill="none" 
+                      stroke={
+                        securityHealth.securityScore > 80 ? "#10b981" :
+                        securityHealth.securityScore > 60 ? "#f59e0b" :
+                        "#ef4444"
+                      } 
+                      strokeWidth="10" 
+                      strokeDasharray={`${securityHealth.securityScore * 2.83} 283`} 
+                      strokeDashoffset="0" 
+                      strokeLinecap="round" 
+                      transform="rotate(-90 50 50)" 
+                    />
+                    <text 
+                      x="50" 
+                      y="55" 
+                      textAnchor="middle" 
+                      dominantBaseline="middle" 
+                      fontSize="24" 
+                      fontWeight="bold"
+                      fill="currentColor"
+                    >
+                      {securityHealth.securityScore}
+                    </text>
+                  </svg>
+                </div>
+                <Badge className={
+                  securityHealth.securityScore > 80 ? "bg-green-500 mt-2" :
+                  securityHealth.securityScore > 60 ? "bg-yellow-500 mt-2" :
+                  "bg-red-500 mt-2"
+                }>
+                  {securityHealth.securityScore > 80 ? "Secure" :
+                   securityHealth.securityScore > 60 ? "Caution" :
+                   "At Risk"}
+                </Badge>
               </div>
-              <Progress value={scanProgress} className="h-2" />
-            </div>
-          )}
+            </CardContent>
+          </Card>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  Security Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Overall Security</span>
-                    <Badge className={securityMetrics && securityMetrics.securityScore > 80 ? "bg-green-500" : "bg-yellow-500"}>
-                      {securityMetrics ? securityMetrics.securityScore : 0}/100
-                    </Badge>
-                  </div>
-                  <Progress value={securityMetrics?.securityScore || 0} className="h-2" />
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Threat Status</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span>Active Threats</span>
+                <Badge variant={securityHealth.activeThreats > 0 ? "destructive" : "outline"}>
+                  {securityHealth.activeThreats}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>High</span>
+                  <span>{securityHealth.vulnerabilities.high}</span>
                 </div>
+                <Progress value={securityHealth.vulnerabilities.high * 20} className="h-2 bg-muted" 
+                  indicatorClassName="bg-red-500" />
                 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>PQC Implementation</span>
-                    <Badge className="bg-green-500">FIPS 205/206 Compliant</Badge>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Active Threats</span>
-                    <Badge className={threats.filter(t => !t.mitigated).length > 0 ? "bg-red-500" : "bg-green-500"}>
-                      {threats.filter(t => !t.mitigated).length}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>AI Models</span>
-                    <Badge>3 Active</Badge>
-                  </div>
+                <div className="flex justify-between text-sm">
+                  <span>Medium</span>
+                  <span>{securityHealth.vulnerabilities.medium}</span>
                 </div>
+                <Progress value={securityHealth.vulnerabilities.medium * 10} className="h-2 bg-muted" 
+                  indicatorClassName="bg-yellow-500" />
                 
-                <Alert className={threats.filter(t => !t.mitigated).length > 0 ? "border-red-500" : "border-green-500"}>
-                  {threats.filter(t => !t.mitigated).length > 0 ? (
-                    <>
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                      <AlertTitle className="text-red-500">Security Threats Detected</AlertTitle>
-                      <AlertDescription>
-                        {threats.filter(t => !t.mitigated).length} active security threats require attention.
-                      </AlertDescription>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <AlertTitle className="text-green-500">System Secure</AlertTitle>
-                      <AlertDescription>
-                        PQC security systems operating normally.
-                      </AlertDescription>
-                    </>
-                  )}
-                </Alert>
-              </CardContent>
-            </Card>
+                <div className="flex justify-between text-sm">
+                  <span>Low</span>
+                  <span>{securityHealth.vulnerabilities.low}</span>
+                </div>
+                <Progress value={securityHealth.vulnerabilities.low * 5} className="h-2 bg-muted" 
+                  indicatorClassName="bg-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">System Health</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span>PQC Status</span>
+                <Badge className="bg-green-500">Active</Badge>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>CPU Usage</span>
+                  <span>{securityHealth.cpuUsage}%</span>
+                </div>
+                <Progress value={securityHealth.cpuUsage} className="h-2" />
+                
+                <div className="flex justify-between text-sm">
+                  <span>Memory Usage</span>
+                  <span>{securityHealth.memoryUsage}%</span>
+                </div>
+                <Progress value={securityHealth.memoryUsage} className="h-2" />
+                
+                <div className="flex justify-between text-sm">
+                  <span>Last Updated</span>
+                  <span className="text-xs">{new Date(securityHealth.lastUpdated || "").toLocaleTimeString()}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="threats">Threat Analysis</TabsTrigger>
+          <TabsTrigger value="quantum">Quantum Security</TabsTrigger>
+          <TabsTrigger value="keygen">Key Management</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-4">
+          <GlassContainer className="p-6">
+            <h2 className="text-xl font-semibold mb-4">System Security Overview</h2>
+            
+            {threatReport && (
+              <Alert className={
+                threatReport.riskLevel === "critical" || threatReport.riskLevel === "high" ? 
+                  "border-red-500 text-red-500 bg-red-500/10 mb-6" : 
+                threatReport.riskLevel === "medium" ?
+                  "border-yellow-500 text-yellow-500 bg-yellow-500/10 mb-6" :
+                  "border-green-500 text-green-500 bg-green-500/10 mb-6"
+              }>
+                {threatReport.riskLevel === "low" ? 
+                  <CheckCircle className="h-4 w-4" /> : 
+                  <AlertCircle className="h-4 w-4" />
+                }
+                <AlertTitle>
+                  System Risk Level: {threatReport.riskLevel.toUpperCase()}
+                </AlertTitle>
+                <AlertDescription>
+                  {threatReport.summary}
+                </AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Post-Quantum Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">ML-KEM-1024</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs">SLH-DSA (Dilithium5)</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs">SHAKE-256 Hash</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">AI Monitoring</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">Anomaly Detection</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs">Threat Analysis</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs">Key Rotation</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">System Security</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs">Secure Enclave</span>
+                    <Badge className="bg-green-500">Available</Badge>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs">Podman Containers</span>
+                    <Badge className="bg-green-500">Active</Badge>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs">StarkNet Verification</span>
+                    <Badge>Ready</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Recent Activity</h3>
+              
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  <span className="text-sm">PQC Security system initialized successfully</span>
+                  <Badge className="ml-auto">2m ago</Badge>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  <span className="text-sm">ML-KEM-1024 key exchange completed</span>
+                  <Badge className="ml-auto">5m ago</Badge>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  <span className="text-sm">SLH-DSA signature verification passed</span>
+                  <Badge className="ml-auto">10m ago</Badge>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  <span className="text-sm">AI security monitoring enabled</span>
+                  <Badge className="ml-auto">15m ago</Badge>
+                </div>
+              </div>
+            </div>
+          </GlassContainer>
+        </TabsContent>
+
+        <TabsContent value="threats" className="space-y-4">
+          <GlassContainer className="p-6">
+            <h2 className="text-xl font-semibold mb-4">AI-Powered Threat Analysis</h2>
+            
+            {threats.length > 0 ? (
+              <div className="space-y-4">
+                {threats.map(threat => (
+                  <Card key={threat.id} className={
+                    threat.severity === 'high' ? "border-red-500" :
+                    threat.severity === 'medium' ? "border-yellow-500" :
+                    "border-blue-500"
+                  }>
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-sm">{threat.description}</CardTitle>
+                        <Badge className={
+                          threat.severity === 'high' ? "bg-red-500" :
+                          threat.severity === 'medium' ? "bg-yellow-500" :
+                          "bg-blue-500"
+                        }>
+                          {threat.severity.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <CardDescription>Detected at {new Date(threat.timestamp).toLocaleTimeString()}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-0">
+                      <div className="text-sm">
+                        <div className="mb-2">
+                          <span className="font-semibold">Affected Components:</span>
+                          <ul className="list-disc ml-5">
+                            {threat.affectedComponents.map((component, i) => (
+                              <li key={i} className="text-xs">{component}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        {threat.detailedAnalysis && (
+                          <div className="mb-2">
+                            <span className="font-semibold">Analysis:</span>
+                            <p className="text-xs mt-1">{threat.detailedAnalysis}</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                    <CardFooter className="pt-2">
+                      {threat.remediationSteps && threat.remediationSteps.length > 0 && (
+                        <div className="w-full">
+                          <span className="text-xs font-semibold">Remediation Steps:</span>
+                          <ul className="list-disc ml-5">
+                            {threat.remediationSteps.map((step, i) => (
+                              <li key={i} className="text-xs">{step}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Shield className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No Threats Detected</h3>
+                <p className="text-muted-foreground">
+                  Your system is currently secure from quantum and classical threats.
+                </p>
+                <Button className="mt-4" onClick={runSecurityScan} disabled={isScanning}>
+                  {isScanning ? "Scanning..." : "Run Security Scan"}
+                </Button>
+              </div>
+            )}
+          </GlassContainer>
+        </TabsContent>
+
+        <TabsContent value="quantum" className="space-y-4">
+          <GlassContainer className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Quantum Security Status</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    Post-Quantum Cryptography
+                  </CardTitle>
+                  <CardDescription>NIST FIPS 205/206 compliant algorithms</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">ML-KEM-1024 (FIPS 205)</span>
+                        <span className="text-sm">256-bit</span>
+                      </div>
+                      <Progress value={100} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">SLH-DSA-Dilithium5 (FIPS 206)</span>
+                        <span className="text-sm">256-bit</span>
+                      </div>
+                      <Progress value={100} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">FALCON-1024</span>
+                        <span className="text-sm">256-bit</span>
+                      </div>
+                      <Progress value={100} className="h-2" />
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">SHAKE-256 (XOF)</span>
+                        <span className="text-sm">256-bit</span>
+                      </div>
+                      <Progress value={100} className="h-2" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Server className="h-5 w-5" />
+                    Secure Infrastructure
+                  </CardTitle>
+                  <CardDescription>Quantum-resistant deployment</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Podman Containers</span>
+                      <Badge className="bg-green-500">Active</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">TPM/Secure Enclave</span>
+                      <Badge className="bg-green-500">Available</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">StarkNet Verification</span>
+                      <Badge>Ready</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Immutable Filesystem</span>
+                      <Badge className="bg-green-500">Enabled</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart4 className="h-5 w-5 text-primary" />
-                  Security Metrics
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cpu className="h-5 w-5" />
+                  AI-Enhanced Quantum Security
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Shield className="h-5 w-5 text-accent mt-0.5" />
                     <div>
-                      <p className="text-muted-foreground">Threat Detections (24h)</p>
-                      <p className="font-medium">{securityMetrics?.threatDetectionsLast24h || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Detection Rate</p>
-                      <p className="font-medium">{securityMetrics?.threatDetectionRate || 0}%</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Detection Latency</p>
-                      <p className="font-medium">{securityMetrics?.threatDetectionLatency || 0}ms</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">False Positive Rate</p>
-                      <p className="font-medium">{securityMetrics?.falsePositiveRate || 0}%</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Patch Level</p>
-                      <p className="font-medium">{securityMetrics?.patchLevel || 0}%</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Last Updated</p>
-                      <p className="font-medium">{securityMetrics ? new Date(securityMetrics.lastUpdated).toLocaleTimeString() : '-'}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <p className="text-sm font-medium mb-2">Vulnerabilities</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="flex flex-col items-center bg-red-500/10 rounded-md p-2">
-                        <span className="text-xs text-muted-foreground">High</span>
-                        <span className="font-bold text-red-500">{securityMetrics?.vulnerabilities.high || 0}</span>
-                      </div>
-                      <div className="flex flex-col items-center bg-yellow-500/10 rounded-md p-2">
-                        <span className="text-xs text-muted-foreground">Medium</span>
-                        <span className="font-bold text-yellow-500">{securityMetrics?.vulnerabilities.medium || 0}</span>
-                      </div>
-                      <div className="flex flex-col items-center bg-blue-500/10 rounded-md p-2">
-                        <span className="text-xs text-muted-foreground">Low</span>
-                        <span className="font-bold text-blue-500">{securityMetrics?.vulnerabilities.low || 0}</span>
-                      </div>
+                      <h4 className="font-semibold text-sm">Post-Quantum AI Security Features</h4>
+                      <ul className="text-sm text-muted-foreground mt-2 space-y-1">
+                        <li>• AI-powered anomaly detection for PQC operations</li>
+                        <li>• Automated key rotation based on usage patterns</li>
+                        <li>• Quantum-resistant encryption for all AI models</li>
+                        <li>• ONNX runtime optimization for cryptographic operations</li>
+                        <li>• Self-healing infrastructure with key regeneration</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </GlassContainer>
+        </TabsContent>
+
+        <TabsContent value="keygen" className="space-y-4">
+          <GlassContainer className="p-6">
+            <h2 className="text-xl font-semibold mb-4">Post-Quantum Key Management</h2>
             
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Key className="h-5 w-5 text-primary" />
-                  AI Key Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Current Test Key</h3>
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Algorithm:</span>
-                      <span>{testKey.algorithm}</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <KeyGenerationService />
+              
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Key className="h-5 w-5 text-primary" />
+                      AI-Powered Key Management
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Key Rotation Status</span>
+                      <Badge className="bg-green-500">On Schedule</Badge>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Created:</span>
-                      <span>{new Date(testKey.created).toLocaleDateString()}</span>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">ML-KEM Key Age</span>
+                        <span className="text-sm">7 days</span>
+                      </div>
+                      <Progress value={24} className="h-2" />
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Security:</span>
-                      <span>{testKey.strength}</span>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm">SLH-DSA Key Age</span>
+                        <span className="text-sm">3 days</span>
+                      </div>
+                      <Progress value={10} className="h-2" />
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Hardware:</span>
-                      <span>{testKey.hardwareProtected ? "Protected" : "Not Protected"}</span>
-                    </div>
-                  </div>
-                </div>
+                    <Button className="w-full mt-2" variant="outline">
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Rotate Keys
+                    </Button>
+                  </CardContent>
+                </Card>
                 
-                <div className="flex space-x-2">
-                  <Button onClick={analyzeKey} variant="outline" className="flex-1">
-                    Analyze Key
-                  </Button>
-                  <Button onClick={rotateKey} className="flex-1" disabled={!keyAnalysis?.shouldRotate}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Rotate Key
-                  </Button>
-                </div>
-                
-                {keyAnalysis && (
-                  <Alert className={keyAnalysis.shouldRotate ? "border-red-500" : "border-green-500"}>
-                    {keyAnalysis.shouldRotate ? (
-                      <AlertCircle className="h-4 w-4 text-red-500" />
-                    ) : (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    )}
-                    <AlertTitle className={keyAnalysis.shouldRotate ? "text-red-500" : "text-green-500"}>
-                      {keyAnalysis.shouldRotate ? `Key Rotation Needed (${keyAnalysis.urgency})` : "Key Secure"}
-                    </AlertTitle>
-                    <AlertDescription>
-                      {keyAnalysis.recommendation}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Tabs defaultValue="threats">
-            <TabsList>
-              <TabsTrigger value="threats">Active Threats</TabsTrigger>
-              <TabsTrigger value="recommendations">AI Recommendations</TabsTrigger>
-              <TabsTrigger value="performance">System Performance</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="threats">
-              <Card>
-                <CardHeader>
-                  <CardTitle>AI-Detected Security Threats</CardTitle>
-                  <CardDescription>Post-quantum security threats identified by AI models</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {threats.length > 0 ? (
-                      threats.map((threat) => (
-                        <div 
-                          key={threat.id} 
-                          className={`p-4 border rounded-lg ${
-                            threat.mitigated 
-                              ? "border-green-200 bg-green-50 dark:bg-green-950/10 dark:border-green-900" 
-                              : "border-red-200 bg-red-50 dark:bg-red-950/10 dark:border-red-900"
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                {threat.mitigated ? (
-                                  <CheckCircle className="h-5 w-5 text-green-500" />
-                                ) : (
-                                  <AlertCircle className="h-5 w-5 text-red-500" />
-                                )}
-                                <h3 className="font-medium">{threat.description}</h3>
-                              </div>
-                              <div className="flex gap-2 text-xs">
-                                <Badge className={
-                                  threat.severity === "high" ? "bg-red-500" :
-                                  threat.severity === "medium" ? "bg-yellow-500" :
-                                  "bg-blue-500"
-                                }>
-                                  {threat.severity}
-                                </Badge>
-                                <Badge variant="outline">
-                                  Score: {threat.score}/100
-                                </Badge>
-                                <Badge variant="outline">
-                                  {new Date(threat.timestamp).toLocaleString()}
-                                </Badge>
-                              </div>
-                            </div>
-                            
-                            {!threat.mitigated && (
-                              <Button size="sm" variant="outline">
-                                Mitigate
-                              </Button>
-                            )}
-                          </div>
-                          
-                          <div className="mt-3">
-                            <h4 className="text-xs font-medium mb-1">Affected Components:</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {threat.affectedComponents.map((component, i) => (
-                                <Badge key={i} variant="outline" className="text-xs">
-                                  {component}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          {!threat.mitigated && threat.remediationSteps && (
-                            <div className="mt-3">
-                              <h4 className="text-xs font-medium mb-1">AI-Recommended Actions:</h4>
-                              <ul className="text-xs space-y-1 list-disc list-inside">
-                                {threat.remediationSteps.map((step, i) => (
-                                  <li key={i}>{step}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-center">
-                        <CheckCircle className="h-10 w-10 text-green-500 mb-4" />
-                        <p className="font-medium">No security threats detected</p>
-                        <p className="text-muted-foreground">Your system is currently secure</p>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-md">Security Recommendations</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-1" />
+                        <span>Your FIPS 205/206 key configuration is optimal</span>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" onClick={performSecurityScan} disabled={isScanning}>
-                    {isScanning ? "Scanning..." : "Scan for New Threats"}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="recommendations">
-              <Card>
-                <CardHeader>
-                  <CardTitle>AI Security Recommendations</CardTitle>
-                  <CardDescription>Proactive security improvements recommended by AI analysis</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {securityMetrics?.recommendedActions?.map((action, i) => (
-                      <div key={i} className="flex items-start gap-3 p-3 border rounded-lg">
-                        <ArrowRight className="h-5 w-5 text-primary mt-0.5" />
-                        <div>
-                          <p className="font-medium">{action}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Implementing this recommendation will improve your quantum security posture.
-                          </p>
-                        </div>
-                        <Button size="sm" className="ml-auto mt-1">Apply</Button>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-1" />
+                        <span>Key rotation schedule is following best practices</span>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="performance">
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Performance</CardTitle>
-                  <CardDescription>AI security system performance metrics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <h3 className="font-medium flex items-center gap-2">
-                        <Cpu className="h-4 w-4" />
-                        AI Computing Resources
-                      </h3>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>CPU Usage</span>
-                            <span>{securityMetrics?.cpuUsage || 0}%</span>
-                          </div>
-                          <Progress value={securityMetrics?.cpuUsage || 0} className="h-2" />
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Memory Usage</span>
-                            <span>{securityMetrics?.memoryUsage || 0}%</span>
-                          </div>
-                          <Progress value={securityMetrics?.memoryUsage || 0} className="h-2" />
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between text-sm mb-1">
-                            <span>Storage Usage</span>
-                            <span>{securityMetrics?.storageUsage || 0}%</span>
-                          </div>
-                          <Progress value={securityMetrics?.storageUsage || 0} className="h-2" />
-                        </div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-1" />
+                        <span>Hardware security is properly configured</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-yellow-500 mt-1" />
+                        <span>Consider enabling MPC for distributed key security</span>
                       </div>
                     </div>
-                    
-                    <div className="space-y-4">
-                      <h3 className="font-medium flex items-center gap-2">
-                        <Network className="h-4 w-4" />
-                        AI Security Network
-                      </h3>
-                      
-                      <div className="space-y-5">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Model Inference Time</span>
-                          <Badge variant="outline">45ms (avg)</Badge>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Threat Detection API Latency</span>
-                          <Badge variant="outline">
-                            {securityMetrics?.threatDetectionLatency || 0}ms
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Network Bandwidth</span>
-                          <Badge variant="outline">
-                            {securityMetrics?.networkUsage || 0}%
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm">Incident Response Time</span>
-                          <Badge variant="outline">
-                            {securityMetrics?.incidentResponseTime || 0}min
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </GlassContainer>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

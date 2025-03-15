@@ -1,28 +1,10 @@
 
-export interface HardwareSecurityCapabilities {
-  available: boolean;
-  tpm: boolean;
-  secureBoot: boolean;
-  encryptedMemory: boolean;
-  hardwareKeys: boolean;
-  tpmAvailable?: boolean;
-  tpmVersion?: string;
-  sgxAvailable?: boolean;
-  sgxVersion?: string;
-}
-
-export interface HSMDevice {
-  available: boolean;
-  type: string;
-  keyProtectionLevel: string;
-  lastVerified: string;
-  id?: string;
-}
+import { ContainerSecurityProfile, InfrastructureNodeType, SecurityThreshold } from './security-types';
 
 export interface SecureContainerConfig {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   status: "running" | "stopped" | "error" | "provisioning";
   createdAt: string;
   updatedAt: string;
@@ -37,25 +19,14 @@ export interface SecureContainerConfig {
     medium: number;
     low: number;
   };
-  type: "storage" | "compute" | "network" | "security" | "ai" | "general" | "application" | "kubernetes" | "docker";
+  type: "security" | "application" | "storage" | "compute" | "network" | "general" | "ai" | "kubernetes" | "docker";
   created?: string;
-  startedAt?: string;
-  containerType?: string;
-  options?: {
-    immutableRootfs?: boolean;
-    seccompProfile?: string;
-    rotationPolicy?: {
-      enabled: boolean;
-      intervalDays: number;
-      triggerOnAnomaly: boolean;
-    };
-  };
 }
 
 export interface SecureServiceMesh {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   status: "online" | "offline" | "degraded";
   createdAt: string;
   updatedAt: string;
@@ -73,8 +44,8 @@ export interface SecureServiceMesh {
 export interface SecureInfraNode {
   id: string;
   name: string;
-  description: string;
-  type: "storage" | "compute" | "network" | "security" | "ai" | "general" | "application" | "kubernetes" | "docker";
+  description?: string;
+  type: InfrastructureNodeType;
   status: "online" | "offline" | "degraded";
   createdAt: string;
   updatedAt: string;
@@ -86,5 +57,17 @@ export interface SecureInfraNode {
   created?: string;
 }
 
-// Import ContainerSecurityProfile from security-types to prevent circular references
-import { ContainerSecurityProfile } from './security-types';
+export interface HSMDevice {
+  id: string;
+  type: "TPM" | "YubiKey" | "SmartCard" | "HSM" | "CloudHSM" | "SecureEnclave";
+  model?: string;
+  version?: string;
+  firmware?: string;
+  status: "active" | "inactive" | "error";
+  capabilities: string[];
+  securityLevel: "standard" | "high" | "maximum" | "enhanced";
+  lastVerified: string;
+  available: boolean;
+  supportedAlgorithms: string[];
+  keyProtectionLevel: string;
+}

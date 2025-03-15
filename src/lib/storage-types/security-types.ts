@@ -153,3 +153,22 @@ export interface WebRTCPeerStatus {
   latency?: number;
   integrityHash?: string;
 }
+
+export interface SecurityEvent {
+  id: string;
+  timestamp: string;
+  eventType: SecurityEventType;
+  userId: string;
+  resourceId?: string;
+  operation: string;
+  status: 'success' | 'failure' | 'blocked';
+  metadata: Record<string, any>;
+}
+
+export type SecurityEventType = 
+  | 'authentication' 
+  | 'key-usage' 
+  | 'data-access' 
+  | 'system-change'
+  | 'network-access'
+  | 'cryptographic-operation';

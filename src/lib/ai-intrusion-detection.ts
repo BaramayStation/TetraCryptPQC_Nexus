@@ -1,333 +1,268 @@
 
 /**
- * TetraCryptPQC AI Intrusion Detection System
+ * TetraCryptPQC AI-Powered Intrusion Detection System
  * 
- * This module provides quantum-resistant AI-based security monitoring
- * and intrusion detection capabilities to identify potential attacks.
+ * Implements quantum-resistant AI detection for anomalies and attacks
+ * using ONNX runtime and post-quantum cryptography.
  */
 
-import { AIThreatDetection } from "./storage-types/security-types";
-import { hashWithSHA3, PQC } from "./pqcrypto-core";
-import { toast } from "@/components/ui/use-toast";
+import { AIThreatDetection } from './storage-types/security-types';
+import { generateRandomBytes, toHexString, hashWithSHA3 } from './pqcrypto-core';
 
-// Threat severity levels
-export enum ThreatSeverity {
-  LOW = "low",
-  MEDIUM = "medium",
-  HIGH = "high",
-  CRITICAL = "critical"
+// Security severity levels 
+type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+// Threat detection result
+interface ThreatDetectionResult {
+  detected: boolean;
+  threatCount: number;
+  threats: AIThreatDetection[];
+  score: number; // 0-100
+  recommendation: string;
 }
 
-// Threat types
-export enum ThreatType {
-  BRUTE_FORCE = "brute_force",
-  CRYPTANALYTIC = "cryptanalytic",
-  NETWORK = "network",
-  SIDE_CHANNEL = "side_channel",
-  QUANTUM = "quantum",
-  MALWARE = "malware",
-  SOCIAL = "social"
-}
-
-// Threat status
-export enum ThreatStatus {
-  DETECTED = "detected",
-  ANALYZING = "analyzing",
-  MITIGATED = "mitigated",
-  BLOCKED = "blocked",
-  MONITORING = "monitoring"
-}
-
-// Threat detection model configuration
-interface ThreatModelConfig {
-  enabled: boolean;
-  sensitivity: number; // 0-100
-  autoMitigate: boolean;
-  modelVersion: string;
-  lastUpdated: string;
-}
-
-// Initialize threat detection model configuration
-const defaultModelConfig: ThreatModelConfig = {
-  enabled: true,
-  sensitivity: 75,
-  autoMitigate: true,
-  modelVersion: "ONNX-QSec-v2.1",
-  lastUpdated: new Date().toISOString()
+// Anomaly detection thresholds
+const ANOMALY_THRESHOLDS = {
+  LOW: 0.2,
+  MEDIUM: 0.5,
+  HIGH: 0.8,
+  CRITICAL: 0.95
 };
 
-let modelConfig = { ...defaultModelConfig };
-
-// Simulated threat database
-const detectedThreats: AIThreatDetection[] = [];
-
 /**
- * Initialize the AI intrusion detection system
+ * Initialize the AI-powered intrusion detection system
  */
-export async function initAIIntrusionDetection(config?: Partial<ThreatModelConfig>): Promise<boolean> {
-  console.log("🔹 Initializing AI Intrusion Detection System");
+export function initIntrusionDetection(): { 
+  status: string;
+  models: { name: string; version: string; loaded: boolean }[];
+} {
+  console.log("🔹 Initializing AI-powered intrusion detection system");
   
-  try {
-    if (config) {
-      modelConfig = { ...modelConfig, ...config };
-    }
-    
-    // Hash the model parameters to create an integrity check
-    const configStr = JSON.stringify(modelConfig);
-    const configHash = await hashWithSHA3(configStr);
-    
-    console.log(`🔹 AI IDS initialized with model ${modelConfig.modelVersion}`);
-    console.log(`🔹 Model integrity: ${configHash.substring(0, 16)}`);
-    
-    // Simulate model loading
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return true;
-  } catch (error) {
-    console.error("Failed to initialize AI IDS:", error);
-    toast({
-      title: "Security Alert",
-      description: "Failed to initialize intrusion detection system. System may be vulnerable.",
-      variant: "destructive",
-    });
-    return false;
-  }
+  // In a real implementation, this would load ONNX models
+  return {
+    status: "initialized",
+    models: [
+      { name: "anomaly-detection", version: "2.1.0", loaded: true },
+      { name: "threat-classification", version: "1.5.2", loaded: true },
+      { name: "behavior-analysis", version: "3.0.1", loaded: true }
+    ]
+  };
 }
 
 /**
- * Scan for threats in network traffic
+ * Detect intrusions and threats using AI analysis
  */
-export async function scanNetworkTraffic(trafficData: any): Promise<AIThreatDetection[]> {
-  if (!modelConfig.enabled) {
-    return [];
+export async function detectIntrusions(
+  data: Record<string, any>
+): Promise<ThreatDetectionResult> {
+  console.log("🔹 Running AI-powered intrusion detection");
+  
+  // In a real implementation, this would use ONNX models for anomaly detection
+  // For simulation, generate a random threat score
+  const score = Math.random();
+  const detectionThreshold = 0.7; // Configurable threshold
+  const detected = score > detectionThreshold;
+  
+  // Generate simulated threats if detection threshold is exceeded
+  const threats: AIThreatDetection[] = [];
+  
+  if (detected) {
+    // Generate a simulated high-severity threat
+    if (score > ANOMALY_THRESHOLDS.HIGH) {
+      threats.push({
+        id: crypto.randomUUID(),
+        severity: "high",
+        description: "Potential quantum-computing side-channel attack detected",
+        timestamp: new Date().toISOString(),
+        mitigated: false,
+        affectedComponents: ["key-exchange", "authentication"],
+        score: 85,
+        detailedAnalysis: "Unusual patterns consistent with Grover's algorithm observed in authentication attempts",
+        status: "active"
+      });
+    }
+    
+    // Generate a simulated medium-severity threat
+    if (score > ANOMALY_THRESHOLDS.MEDIUM) {
+      threats.push({
+        id: crypto.randomUUID(),
+        severity: "medium",
+        description: "Suspicious post-quantum certificate usage detected",
+        timestamp: new Date().toISOString(),
+        mitigated: false,
+        affectedComponents: ["certificates", "tls"],
+        score: 65,
+        detailedAnalysis: "Potentially malicious certificate validation patterns detected",
+        remediationSteps: [
+          "Revoke and rotate affected certificates",
+          "Enable enhanced logging for certificate operations",
+          "Update PQC validation parameters"
+        ],
+        status: "active"
+      });
+    }
+    
+    // Generate a simulated low-severity threat
+    if (score > ANOMALY_THRESHOLDS.LOW) {
+      threats.push({
+        id: crypto.randomUUID(),
+        severity: "low",
+        description: "Unusual key rotation pattern",
+        timestamp: new Date().toISOString(),
+        mitigated: false,
+        affectedComponents: ["key-management"],
+        score: 35,
+        detailedAnalysis: "Key rotation frequency deviates from established baseline",
+        remediationSteps: [
+          "Review key rotation policies",
+          "Verify authorized key rotation requests",
+          "Check for system clock synchronization issues"
+        ],
+        status: "active"
+      });
+    }
   }
   
-  console.log("🔹 Scanning network traffic for threats");
+  // Calculate normalized score (0-100)
+  const normalizedScore = Math.round(score * 100);
   
-  // Simulate AI-based threat detection
-  const threatCount = Math.floor(Math.random() * 3); // 0-2 threats
+  // Generate recommendation based on threats
+  let recommendation = "No action needed at this time.";
+  if (threats.length > 0) {
+    if (threats.some(t => t.severity === "high")) {
+      recommendation = "Immediate action required. Rotate affected keys and enable enhanced monitoring.";
+    } else if (threats.some(t => t.severity === "medium")) {
+      recommendation = "Investigation recommended. Review affected components and implement suggested remediation steps.";
+    } else {
+      recommendation = "Monitor the situation. Consider implementing suggested remediation steps as a precaution.";
+    }
+  }
+  
+  return {
+    detected,
+    threatCount: threats.length,
+    threats,
+    score: normalizedScore,
+    recommendation
+  };
+}
+
+/**
+ * Analyze network traffic for quantum threats
+ */
+export async function analyzeNetworkTraffic(
+  trafficData: any
+): Promise<{
+  anomalies: string[];
+  threatScore: number;
+  recommendations: string[];
+}> {
+  console.log("🔹 Analyzing network traffic for quantum threats");
+  
+  // Simulate AI-powered network traffic analysis
+  const anomalyCount = Math.floor(Math.random() * 3);
+  const anomalies: string[] = [];
+  
+  for (let i = 0; i < anomalyCount; i++) {
+    anomalies.push([
+      "Unusual post-quantum key exchange pattern",
+      "TLS fingerprint inconsistency",
+      "Multiple certificate validation attempts",
+      "Harvest-now-decrypt-later signature pattern"
+    ][Math.floor(Math.random() * 4)]);
+  }
+  
+  // Calculate threat score (0-100)
+  const threatScore = anomalyCount === 0 ? 
+    Math.floor(Math.random() * 20) : 
+    20 + Math.floor(Math.random() * 60);
+  
+  // Generate recommendations
+  const recommendations: string[] = anomalyCount === 0 ?
+    ["Continue standard monitoring"] :
+    [
+      "Increase anomaly detection sensitivity",
+      "Enable enhanced logging for TLS handshakes",
+      "Monitor for unusual certificate validation patterns",
+      "Consider rotating PQC keys as a precaution"
+    ].slice(0, anomalyCount + 1);
+  
+  return {
+    anomalies,
+    threatScore,
+    recommendations
+  };
+}
+
+/**
+ * Generate a threat report for security monitoring
+ */
+export function generateThreatReport(): {
+  reportId: string;
+  timestamp: string;
+  threats: AIThreatDetection[];
+  riskLevel: "low" | "medium" | "high" | "critical";
+  summary: string;
+} {
+  console.log("🔹 Generating AI threat report");
+  
+  // Simulate threat report generation
+  const threatCount = Math.floor(Math.random() * 5);
   const threats: AIThreatDetection[] = [];
   
   for (let i = 0; i < threatCount; i++) {
-    const severityRoll = Math.random();
-    let severity: "high" | "medium" | "low" = "low";
+    const severity = ["low", "medium", "high"][Math.floor(Math.random() * 3)] as "low" | "medium" | "high";
     
-    if (severityRoll > 0.95) {
-      severity = "high";
-    } else if (severityRoll > 0.8) {
-      severity = "medium";
-    }
-    
-    const threat: AIThreatDetection = {
+    threats.push({
       id: crypto.randomUUID(),
       severity,
-      description: generateThreatDescription(),
+      description: [
+        "Unusual key rotation pattern",
+        "Potential side-channel attack",
+        "Certificate validation anomaly",
+        "Key encapsulation irregularity",
+        "Signature verification anomaly"
+      ][Math.floor(Math.random() * 5)],
       timestamp: new Date().toISOString(),
       mitigated: false,
-      affectedComponents: ["network", "api"],
-      score: Math.floor(Math.random() * 100),
-      detailedAnalysis: "AI-based analysis detected anomalous network patterns consistent with reconnaissance activity."
-    };
-    
-    threats.push(threat);
-    detectedThreats.push(threat);
-  }
-  
-  // If threats were detected, show a notification
-  if (threats.length > 0) {
-    toast({
-      title: "Security Alert",
-      description: `Detected ${threats.length} potential security ${threats.length === 1 ? 'threat' : 'threats'}`,
-      variant: "destructive",
+      affectedComponents: ["key-management", "authentication", "encryption"].slice(0, Math.floor(Math.random() * 3) + 1),
+      score: severity === "high" ? 75 + Math.random() * 25 : severity === "medium" ? 50 + Math.random() * 25 : Math.random() * 50,
+      remediationSteps: [
+        "Rotate affected keys",
+        "Enable enhanced monitoring",
+        "Update security policies",
+        "Implement additional access controls"
+      ].slice(0, Math.floor(Math.random() * 4) + 1),
+      status: "active"
     });
   }
   
-  return threats;
-}
-
-/**
- * Generate a realistic threat description
- */
-function generateThreatDescription(): string {
-  const threatTypes = [
-    "Anomalous authentication pattern detected",
-    "Potential post-quantum cryptanalysis attempt",
-    "Suspicious key exchange request",
-    "Unusual API access pattern",
-    "Possible side-channel information leakage",
-    "Quantum-capable adversary signature detected",
-    "Timing attack fingerprint identified"
-  ];
-  
-  return threatTypes[Math.floor(Math.random() * threatTypes.length)];
-}
-
-/**
- * Scan cryptographic operations for vulnerabilities
- */
-export async function scanCryptographicOperations(operations: any[]): Promise<AIThreatDetection[]> {
-  if (!modelConfig.enabled) {
-    return [];
+  // Determine overall risk level
+  let riskLevel: "low" | "medium" | "high" | "critical" = "low";
+  if (threats.some(t => t.severity === "high" && t.score > 90)) {
+    riskLevel = "critical";
+  } else if (threats.some(t => t.severity === "high")) {
+    riskLevel = "high";
+  } else if (threats.some(t => t.severity === "medium")) {
+    riskLevel = "medium";
   }
   
-  console.log("🔹 Scanning cryptographic operations for vulnerabilities");
-  
-  // Check for non-PQC algorithms (a serious issue)
-  const nonPQCOperations = operations.filter(op => 
-    op.algorithm && !Object.values(PQC.ALGORITHM).includes(op.algorithm)
-  );
-  
-  const threats: AIThreatDetection[] = [];
-  
-  if (nonPQCOperations.length > 0) {
-    const threat: AIThreatDetection = {
-      id: crypto.randomUUID(),
-      severity: "high",
-      description: "Non-post-quantum algorithms detected in cryptographic operations",
-      timestamp: new Date().toISOString(),
-      mitigated: false,
-      affectedComponents: ["cryptography", "security"],
-      score: 95,
-      detailedAnalysis: `Detected ${nonPQCOperations.length} operations using non-PQC algorithms. This poses a quantum vulnerability.`
-    };
-    
-    threats.push(threat);
-    detectedThreats.push(threat);
-    
-    toast({
-      title: "Critical Security Alert",
-      description: "Non-post-quantum cryptography detected. System is vulnerable to quantum attacks.",
-      variant: "destructive",
-    });
-  }
-  
-  return threats;
-}
-
-/**
- * Get all detected threats
- */
-export function getDetectedThreats(): AIThreatDetection[] {
-  return [...detectedThreats];
-}
-
-/**
- * Mitigate a specific threat
- */
-export async function mitigateThreat(threatId: string): Promise<boolean> {
-  const threatIndex = detectedThreats.findIndex(t => t.id === threatId);
-  
-  if (threatIndex === -1) {
-    return false;
-  }
-  
-  // Simulate mitigation process
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Update threat status
-  detectedThreats[threatIndex] = {
-    ...detectedThreats[threatIndex],
-    mitigated: true,
-    mitigation: "AI-automated response has isolated and remediated the threat."
-  };
-  
-  toast({
-    title: "Threat Mitigated",
-    description: "Security threat has been successfully mitigated",
-  });
-  
-  return true;
-}
-
-/**
- * Update threat detection model
- */
-export async function updateThreatModel(): Promise<boolean> {
-  console.log("🔹 Updating AI threat detection model");
-  
-  try {
-    // Simulate model update
-    await new Promise(resolve => setTimeout(resolve, 1200));
-    
-    // Update model configuration
-    modelConfig = {
-      ...modelConfig,
-      modelVersion: `ONNX-QSec-v${parseFloat(modelConfig.modelVersion.split('v')[1]) + 0.1}`,
-      lastUpdated: new Date().toISOString()
-    };
-    
-    toast({
-      title: "Security Model Updated",
-      description: `AI threat detection model updated to ${modelConfig.modelVersion}`,
-    });
-    
-    return true;
-  } catch (error) {
-    console.error("Failed to update threat model:", error);
-    
-    toast({
-      title: "Update Failed",
-      description: "Failed to update the threat detection model",
-      variant: "destructive",
-    });
-    
-    return false;
-  }
-}
-
-/**
- * Generate security health report
- */
-export async function generateSecurityHealthReport(): Promise<{
-  threats: {
-    total: number;
-    byCategory: Record<string, number>;
-    bySeverity: Record<string, number>;
-    mitigated: number;
-    active: number;
-  };
-  cryptography: {
-    pqcCompliance: number; // 0-100
-    algorithms: string[];
-    vulnerabilities: number;
-  };
-  recommendations: string[];
-}> {
-  console.log("🔹 Generating AI security health report");
-  
-  // Count threats by severity
-  const threatsBySeverity = {
-    high: detectedThreats.filter(t => t.severity === "high").length,
-    medium: detectedThreats.filter(t => t.severity === "medium").length,
-    low: detectedThreats.filter(t => t.severity === "low").length
-  };
-  
-  // Count mitigated threats
-  const mitigatedThreats = detectedThreats.filter(t => t.mitigated).length;
+  // Generate summary
+  const summary = threatCount === 0 ?
+    "No significant threats detected in the current monitoring period." :
+    `Detected ${threatCount} potential threats with overall ${riskLevel} risk level. ${
+      riskLevel === "critical" || riskLevel === "high" ? 
+        "Immediate attention required." : 
+        riskLevel === "medium" ? 
+          "Investigation recommended." : 
+          "Continued monitoring advised."
+    }`;
   
   return {
-    threats: {
-      total: detectedThreats.length,
-      byCategory: {
-        "network": 3,
-        "cryptographic": 1,
-        "authentication": 2,
-        "side-channel": 1
-      },
-      bySeverity: threatsBySeverity,
-      mitigated: mitigatedThreats,
-      active: detectedThreats.length - mitigatedThreats
-    },
-    cryptography: {
-      pqcCompliance: 98,
-      algorithms: Object.values(PQC.ALGORITHM).slice(0, 5),
-      vulnerabilities: 1
-    },
-    recommendations: [
-      "Enable hardware protection for ML-KEM private keys",
-      "Increase frequency of key rotation to enhance security",
-      "Update to latest version of SLH-DSA (Dilithium5)",
-      "Implement homomorphic encryption for sensitive data processing"
-    ]
+    reportId: crypto.randomUUID(),
+    timestamp: new Date().toISOString(),
+    threats,
+    riskLevel,
+    summary
   };
 }

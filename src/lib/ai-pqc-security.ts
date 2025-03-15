@@ -1,509 +1,300 @@
 
 /**
- * AI-Powered Post-Quantum Cryptography Security Module
+ * AI-Powered Post-Quantum Cryptography Security
  * 
- * This module implements AI-driven security features for post-quantum
- * cryptography, including anomaly detection, threat prevention, and
- * automated key management.
+ * Integrates AI with PQC for enhanced security and threat detection
  */
 
-import * as ort from 'onnxruntime-web';
-import { PQCKey } from './crypto';
 import { 
-  generateMLKEMKeypair, 
-  generateSLHDSAKeypair,
-  scanForThreats,
-  PQCThreatScanResult
-} from './pqcrypto';
-import { 
-  SecurityEvent, 
-  SecurityThreshold,
-  SecurityHealthMetrics 
+  AISecurityPolicy, 
+  AIThreatDetection, 
+  SecurityHealthMetrics,
+  SecurityEvent
 } from './storage-types';
+import { generateMLKEMKeypair, generateSLHDSAKeypair } from './pqcrypto';
+import { detectIntrusions, analyzeNetworkTraffic } from './ai-intrusion-detection';
+import { PQCKey } from './crypto';
+import { hashWithSHA3 } from './pqcrypto-core';
 
-// AI model types
-export type AIModelType = 'anomaly-detection' | 'threat-prediction' | 'identity-verification';
-
-// Threat severity levels
-export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical';
-
-/**
- * AI-powered threat detection result
- */
-export interface AIThreatDetectionResult {
-  detected: boolean;
-  threats: {
-    id: string;
-    severity: ThreatSeverity;
-    description: string;
-    indicators: string[];
-    mitigationSteps: string[];
-    timestamp: string;
-    score: number;
-  }[];
-  overallScore: number; // 0-100, higher is more suspicious
-  recommendation: string;
-  mitigationActions: string[];
-}
+// AI model types for security
+type SecurityAIModelType = 'anomaly-detection' | 'threat-prediction' | 'key-rotation';
 
 /**
- * AI model information
+ * Initialize AI-powered PQC security system
  */
-export interface AISecurityModel {
-  id: string;
-  type: AIModelType;
-  version: string;
-  path: string;
-  lastUpdated: string;
-  accuracy: number;
-  loaded: boolean;
-  session?: ort.InferenceSession;
-}
-
-/**
- * AI-driven key rotation recommendations
- */
-export interface KeyRotationRecommendation {
-  shouldRotate: boolean;
-  reason: string;
-  urgency: 'low' | 'medium' | 'high';
-  recommendedAlgorithm: string;
-  securityImprovement: number; // percentage
-  recommendation: string;
-}
-
-// Available AI security models
-const AI_MODELS: AISecurityModel[] = [
-  {
-    id: 'anomaly-detection-v1',
-    type: 'anomaly-detection',
-    version: '1.0.0',
-    path: '/models/anomaly-detection-v1.onnx',
-    lastUpdated: '2023-11-15T00:00:00Z',
-    accuracy: 0.95,
-    loaded: false
-  },
-  {
-    id: 'threat-prediction-v1',
-    type: 'threat-prediction',
-    version: '1.0.0',
-    path: '/models/threat-prediction-v1.onnx',
-    lastUpdated: '2023-11-15T00:00:00Z',
-    accuracy: 0.92,
-    loaded: false
-  },
-  {
-    id: 'identity-verification-v1',
-    type: 'identity-verification',
-    version: '1.0.0',
-    path: '/models/identity-verification-v1.onnx',
-    lastUpdated: '2023-11-15T00:00:00Z',
-    accuracy: 0.97,
-    loaded: false
-  }
-];
-
-/**
- * Initialize the AI security system
- */
-export async function initializeAISecuritySystem(): Promise<{ 
-  status: string; 
-  modelsLoaded: number;
-  ready: boolean;
+export async function initAIPQCSecurity(): Promise<{
+  status: string;
+  models: { name: string; version: string; loaded: boolean }[];
+  pqcEnabled: boolean;
+  aiEnabled: boolean;
 }> {
-  console.log("🔹 Initializing AI security system");
+  console.log("🔹 Initializing AI-powered PQC security system");
   
-  try {
-    // Set ONNX WebAssembly backend path
-    ort.env.wasm.wasmPaths = {
-      'ort-wasm.wasm': '/onnx/ort-wasm.wasm',
-      'ort-wasm-simd.wasm': '/onnx/ort-wasm-simd.wasm',
-      'ort-wasm-threaded.wasm': '/onnx/ort-wasm-threaded.wasm'
-    };
-    
-    // For simulation, we're not actually loading models
-    // In a real implementation, we would load the ONNX models here
-    
-    return {
-      status: "initialized",
-      modelsLoaded: AI_MODELS.length,
-      ready: true
-    };
-  } catch (error) {
-    console.error("Failed to initialize AI security system:", error);
-    return {
-      status: "failed",
-      modelsLoaded: 0,
-      ready: false
-    };
-  }
-}
-
-/**
- * Perform AI-powered threat detection
- */
-export async function detectThreatsWithAI(
-  data: string | SecurityEvent[], 
-  modelType: AIModelType = 'anomaly-detection'
-): Promise<AIThreatDetectionResult> {
-  console.log(`🔹 Running AI-powered threat detection using ${modelType} model`);
-  
-  // Convert input to string for analysis if it's an array
-  const analysisData = typeof data === 'string' ? 
-    data : 
-    JSON.stringify(data);
-  
-  // Call the PQC threat scanning function
-  const threatScanResult = await scanForThreats(analysisData);
-  
-  // Convert scan results to AI-enhanced threat detection
-  const aiThreats = threatScanResult.detectedThreats.map((threat, index) => {
-    const severityMap: Record<string, ThreatSeverity> = {
-      'high': 'critical',
-      'medium': 'high',
-      'low': 'medium'
-    };
-    
-    // AI-enhanced indicators based on threat type
-    const indicators = getAIEnhancedIndicators(threat.type);
-    
-    // AI-recommended mitigation steps
-    const mitigationSteps = getAIMitigationSteps(threat.type, threat.severity);
-    
-    return {
-      id: `threat-${Date.now()}-${index}`,
-      severity: severityMap[threat.severity] || 'low' as ThreatSeverity,
-      description: threat.description,
-      indicators,
-      mitigationSteps,
-      timestamp: threat.timestamp,
-      score: scoreFromSeverity(threat.severity)
-    };
-  });
-  
-  // Calculate overall threat score
-  const overallScore = aiThreats.length > 0 
-    ? aiThreats.reduce((sum, threat) => sum + threat.score, 0) / aiThreats.length
-    : 0;
-  
-  // Get AI-generated recommendation
-  const recommendation = getAIRecommendation(overallScore, aiThreats);
-  
-  // Get AI-recommended mitigation actions
-  const mitigationActions = getAIMitigationActions(aiThreats);
-  
+  // In a real implementation, this would initialize ONNX models
   return {
-    detected: aiThreats.length > 0,
-    threats: aiThreats,
-    overallScore,
-    recommendation,
-    mitigationActions
+    status: "initialized",
+    models: [
+      { name: "anomaly-detection", version: "3.0.2", loaded: true },
+      { name: "key-rotation-predictor", version: "2.1.5", loaded: true },
+      { name: "threat-classification", version: "4.2.0", loaded: true }
+    ],
+    pqcEnabled: true,
+    aiEnabled: true
   };
 }
 
 /**
- * AI-driven key rotation analysis
+ * AI-Powered Key Rotation and Management
  */
-export async function analyzeKeyForRotation(
-  key: PQCKey,
-  securityThreshold: SecurityThreshold = 'normal'
-): Promise<KeyRotationRecommendation> {
-  console.log(`🔹 Analyzing key for rotation: ${key.algorithm}`);
+export async function performAIKeyRotation(
+  currentKeys: { encryption: PQCKey, signature: PQCKey },
+  securityPolicy: AISecurityPolicy
+): Promise<{
+  rotated: boolean;
+  newKeys?: { encryption: PQCKey, signature: PQCKey };
+  reason?: string;
+}> {
+  console.log("🔹 Performing AI-guided PQC key rotation analysis");
   
-  // Parse key creation date
-  const created = new Date(key.created);
-  const now = new Date();
-  const daysSinceCreation = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+  // In a real implementation, this would use AI to determine if key rotation is needed
+  // Based on usage patterns, threat intelligence, and security policy
   
-  // Determine if key should be rotated based on age and security level
-  let shouldRotate = false;
-  let reason = "";
-  let urgency: 'low' | 'medium' | 'high' = 'low';
-  let recommendedAlgorithm = key.algorithm;
-  let securityImprovement = 0;
-  
-  // Check key age
-  if (daysSinceCreation > 90) {
-    shouldRotate = true;
-    reason = "Key age exceeds 90 days";
-    urgency = 'high';
-    securityImprovement = 25;
-  } else if (daysSinceCreation > 60) {
-    shouldRotate = true;
-    reason = "Key age exceeds 60 days";
-    urgency = 'medium';
-    securityImprovement = 15;
-  } else if (daysSinceCreation > 30 && securityThreshold === 'elevated') {
-    shouldRotate = true;
-    reason = "Key age exceeds 30 days under elevated security";
-    urgency = 'low';
-    securityImprovement = 10;
-  }
-  
-  // Check algorithm strength and recommend upgrades
-  if (key.algorithm === 'ML-KEM-512' || key.algorithm === 'FALCON-512') {
-    shouldRotate = true;
-    reason = `${reason ? reason + " and algorithm" : "Algorithm"} security level can be improved`;
-    recommendedAlgorithm = key.algorithm.includes('KEM') ? 'ML-KEM-1024' : 'FALCON-1024';
-    securityImprovement += 20;
-    urgency = urgency === 'high' ? 'high' : 'medium';
-  }
-  
-  // Check if hardware protection is needed
-  if (!key.hardwareProtected && (securityThreshold === 'elevated' || securityThreshold === 'compromised')) {
-    shouldRotate = true;
-    reason = `${reason ? reason + " and hardware" : "Hardware"} protection recommended under current security level`;
-    securityImprovement += 15;
-    urgency = urgency === 'high' ? 'high' : 'medium';
-  }
-  
-  // Generate recommendation
-  const recommendation = generateRotationRecommendation(
-    shouldRotate,
-    urgency,
-    recommendedAlgorithm,
-    key.hardwareProtected,
-    daysSinceCreation
+  // Calculate key age in days
+  const encryptionKeyAge = Math.floor(
+    (Date.now() - new Date(currentKeys.encryption.created).getTime()) / (1000 * 60 * 60 * 24)
   );
   
+  const signatureKeyAge = Math.floor(
+    (Date.now() - new Date(currentKeys.signature.created).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  
+  // Simulate AI decision based on key age and security policy
+  let rotateEncryption = false;
+  let rotateSignature = false;
+  let reason = "";
+  
+  // Adjust rotation thresholds based on security policy
+  const rotationThreshold = securityPolicy.threatLevel === "high" ? 30 :
+                           securityPolicy.threatLevel === "medium" ? 60 : 90;
+  
+  if (encryptionKeyAge > rotationThreshold) {
+    rotateEncryption = true;
+    reason += `Encryption key age (${encryptionKeyAge} days) exceeds threshold. `;
+  }
+  
+  if (signatureKeyAge > rotationThreshold) {
+    rotateSignature = true;
+    reason += `Signature key age (${signatureKeyAge} days) exceeds threshold. `;
+  }
+  
+  // In a real implementation, also consider threat intelligence
+  const threatRotationProbability = Math.random();
+  if (threatRotationProbability > 0.8) {
+    rotateEncryption = true;
+    rotateSignature = true;
+    reason += "Potential security threats detected. Preventative rotation recommended. ";
+  }
+  
+  // Perform key rotation if needed
+  if (rotateEncryption || rotateSignature) {
+    const newKeys = {
+      encryption: rotateEncryption ? await generateMLKEMKeypair() : currentKeys.encryption,
+      signature: rotateSignature ? await generateSLHDSAKeypair() : currentKeys.signature
+    };
+    
+    return {
+      rotated: true,
+      newKeys,
+      reason: reason.trim()
+    };
+  }
+  
   return {
-    shouldRotate,
-    reason,
-    urgency,
-    recommendedAlgorithm,
-    securityImprovement,
-    recommendation
+    rotated: false,
+    reason: "Keys are within safe age thresholds and no threats detected."
   };
 }
 
 /**
- * Generate AI-enhanced security metrics
+ * AI-Powered Threat Detection
  */
-export function generateAISecurityMetrics(): SecurityHealthMetrics {
+export async function analyzeSecurityThreat(
+  eventData: Record<string, any>
+): Promise<{
+  threatDetected: boolean;
+  threatDetails?: AIThreatDetection;
+  confidence: number;
+  recommendedActions: string[];
+}> {
+  console.log("🔹 Performing AI-powered security threat analysis");
+  
+  // Detect intrusions using the AI intrusion detection system
+  const detectionResult = await detectIntrusions(eventData);
+  
+  // Extract the most severe threat (if any)
+  const mostSevereThreat = detectionResult.threats
+    .sort((a, b) => b.score - a.score)
+    .shift();
+  
+  // Generate recommended actions
+  const recommendedActions = mostSevereThreat?.remediationSteps || 
+    ["Continue monitoring", "Update threat detection models", "Review security logs"];
+  
   return {
-    threatDetectionsLast24h: Math.floor(Math.random() * 10),
-    activeThreats: Math.floor(Math.random() * 5),
-    patchLevel: 95 + Math.floor(Math.random() * 5),
-    vulnerabilities: {
-      high: Math.floor(Math.random() * 2),
-      medium: Math.floor(Math.random() * 4),
-      low: Math.floor(Math.random() * 6)
-    },
-    securityScore: 70 + Math.floor(Math.random() * 30),
-    threatDetectionRate: 85 + Math.floor(Math.random() * 15),
-    threatDetectionLatency: 100 + Math.floor(Math.random() * 900), // ms
-    incidentResponseTime: 5 + Math.floor(Math.random() * 25), // minutes
-    falsePositiveRate: 2 + Math.floor(Math.random() * 8), // percentage
+    threatDetected: detectionResult.detected,
+    threatDetails: mostSevereThreat,
+    confidence: detectionResult.score / 100, // Convert to 0-1 range
+    recommendedActions
+  };
+}
+
+/**
+ * AI-Enhanced Security Health Assessment
+ */
+export async function assessSecurityHealth(): Promise<SecurityHealthMetrics> {
+  console.log("🔹 Performing AI-enhanced security health assessment");
+  
+  // In a real implementation, this would analyze system security metrics
+  // For simulation, generate example metrics
+  
+  const vulnerabilities = {
+    high: Math.floor(Math.random() * 2),
+    medium: Math.floor(Math.random() * 3) + 1,
+    low: Math.floor(Math.random() * 5) + 2
+  };
+  
+  // Calculate security score (0-100)
+  // Lower is worse because more vulnerabilities = lower score
+  const vulnerabilityScore = 100 - (
+    (vulnerabilities.high * 20) + 
+    (vulnerabilities.medium * 5) + 
+    (vulnerabilities.low * 1)
+  );
+  
+  const securityScore = Math.max(0, Math.min(100, vulnerabilityScore));
+  
+  // Full metrics
+  return {
+    threatDetectionsLast24h: Math.floor(Math.random() * 5),
+    activeThreats: vulnerabilities.high + Math.floor(vulnerabilities.medium / 2),
+    patchLevel: 90 + Math.floor(Math.random() * 10),
+    vulnerabilities,
+    securityScore,
+    overallScore: securityScore,
+    complianceScore: 85 + Math.floor(Math.random() * 15),
+    threatDetectionRate: 95 + Math.floor(Math.random() * 5),
+    threatDetectionLatency: 50 + Math.floor(Math.random() * 100),
+    incidentResponseTime: 300 + Math.floor(Math.random() * 600),
+    falsePositiveRate: Math.floor(Math.random() * 5),
     lastUpdated: new Date().toISOString(),
     recommendedActions: [
-      "Rotate ML-KEM-768 keys to ML-KEM-1024",
-      "Enable hardware protection for signature keys",
-      "Update PQC firmware to latest version"
+      "Update PQC libraries to latest versions",
+      "Enable enhanced monitoring for key operations",
+      "Review and update security policies"
     ],
-    cpuUsage: 10 + Math.floor(Math.random() * 40),
-    memoryUsage: 20 + Math.floor(Math.random() * 40),
-    storageUsage: 15 + Math.floor(Math.random() * 40),
-    networkUsage: 5 + Math.floor(Math.random() * 30)
+    cpuUsage: 20 + Math.floor(Math.random() * 30),
+    memoryUsage: 30 + Math.floor(Math.random() * 40),
+    storageUsage: 40 + Math.floor(Math.random() * 30),
+    networkUsage: 10 + Math.floor(Math.random() * 40)
   };
 }
 
 /**
- * Perform automated key rotation using AI recommendations
+ * Generate AI-Enhanced Security Policy
  */
-export async function performAIKeyRotation(oldKey: PQCKey): Promise<{
-  newKey: PQCKey;
-  rotationReport: {
-    previousAlgorithm: string;
-    newAlgorithm: string;
-    securityImprovement: number;
-    hardwareProtected: boolean;
-    timestamp: string;
-  }
-}> {
-  console.log(`🔹 Performing AI-driven key rotation for ${oldKey.algorithm}`);
+export function generateSecurityPolicy(
+  threatLevel: "high" | "medium" | "low" = "medium"
+): AISecurityPolicy {
+  console.log(`🔹 Generating AI-enhanced security policy (${threatLevel} threat level)`);
   
-  // Analyze key to determine rotation strategy
-  const analysis = await analyzeKeyForRotation(oldKey);
+  // Create policy based on threat level
+  return {
+    id: crypto.randomUUID(),
+    name: `AI-Generated PQC Security Policy (${threatLevel.toUpperCase()})`,
+    enabled: true,
+    automatedResponse: threatLevel === "high",
+    threatLevel,
+    scanFrequency: threatLevel === "high" ? 1 : threatLevel === "medium" ? 4 : 12, // Hours
+    mlModelVersion: "4.2.1",
+    lastUpdated: new Date().toISOString(),
+    policyType: threatLevel === "high" ? "prevention" : "detection",
+    homomorphicEncryptionEnabled: threatLevel === "high",
+    zeroKnowledgeAuthEnabled: threatLevel !== "low",
+    autoRemediationEnabled: threatLevel === "high",
+    threatDetectionLevel: threatLevel === "high" ? "maximum" : 
+                         threatLevel === "medium" ? "enhanced" : "standard",
+    rules: [
+      {
+        id: crypto.randomUUID(),
+        name: "PQC Key Rotation",
+        priority: 1,
+        condition: `keyAge > ${threatLevel === "high" ? 30 : 
+                   threatLevel === "medium" ? 60 : 90}`,
+        action: "alert",
+        enabled: true
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Anomaly Detection",
+        priority: 2,
+        condition: "anomalyScore > 0.7",
+        action: threatLevel === "high" ? "block" : "alert",
+        enabled: true
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Certificate Validation",
+        priority: 3,
+        condition: "certificateFailure > 3",
+        action: threatLevel === "high" ? "quarantine" : 
+               threatLevel === "medium" ? "block" : "alert",
+        enabled: true
+      }
+    ],
+    created: new Date().toISOString(),
+    updated: new Date().toISOString()
+  };
+}
+
+/**
+ * AI-Powered Security Event Monitoring
+ */
+export function monitorSecurityEvent(
+  event: SecurityEvent
+): {
+  anomalyDetected: boolean;
+  anomalyScore: number;
+  action: "allow" | "alert" | "block";
+  reason?: string;
+} {
+  console.log(`🔹 Monitoring security event: ${event.eventType}`);
   
-  // Generate new key based on recommendation
-  let newKey: PQCKey;
+  // In a real implementation, this would use AI to analyze the event
+  // For simulation, generate a random anomaly score
+  const anomalyScore = Math.random();
+  const anomalyThreshold = 0.7;
   
-  if (oldKey.algorithm.includes('KEM')) {
-    newKey = await generateMLKEMKeypair();
-  } else if (oldKey.algorithm.includes('Dilithium')) {
-    newKey = await generateSLHDSAKeypair(5); // Use highest security level
-  } else {
-    // Default to ML-KEM-1024 as a safe fallback
-    newKey = await generateMLKEMKeypair();
-  }
+  // Determine if the event is anomalous
+  const anomalyDetected = anomalyScore > anomalyThreshold;
   
-  // Set hardware protection if recommended
-  if (analysis.reason.includes('hardware')) {
-    newKey.hardwareProtected = true;
-    newKey.hardwareType = 'TPM';
+  // Determine action based on event type and anomaly score
+  let action: "allow" | "alert" | "block" = "allow";
+  let reason: string | undefined;
+  
+  if (anomalyDetected) {
+    if (event.eventType === 'authentication' || event.eventType === 'cryptographic-operation') {
+      action = anomalyScore > 0.9 ? "block" : "alert";
+      reason = `High anomaly score (${(anomalyScore * 100).toFixed(1)}%) detected for ${event.eventType} operation`;
+    } else {
+      action = "alert";
+      reason = `Anomaly detected in ${event.eventType} operation`;
+    }
   }
   
   return {
-    newKey,
-    rotationReport: {
-      previousAlgorithm: oldKey.algorithm,
-      newAlgorithm: newKey.algorithm,
-      securityImprovement: analysis.securityImprovement,
-      hardwareProtected: newKey.hardwareProtected || false,
-      timestamp: new Date().toISOString()
-    }
+    anomalyDetected,
+    anomalyScore,
+    action,
+    reason
   };
-}
-
-/**
- * Helper functions
- */
-
-function scoreFromSeverity(severity: string): number {
-  switch (severity) {
-    case 'high': return 85;
-    case 'medium': return 60;
-    case 'low': return 30;
-    default: return 20;
-  }
-}
-
-function getAIEnhancedIndicators(threatType: string): string[] {
-  const indicators: Record<string, string[]> = {
-    'Shor Algorithm': [
-      'RSA/ECC encryption bypass attempt',
-      'Large integer factorization pattern',
-      'Quantum computing signature detected',
-      'Key extraction pattern identified'
-    ],
-    'Grover Attack': [
-      'Symmetric key brute force pattern',
-      'Hash function collision attempt',
-      'Quantum search algorithm signature',
-      'Encryption strength reduction attempt'
-    ],
-    'Side-Channel': [
-      'Timing analysis pattern detected',
-      'Power analysis signature',
-      'Cache analysis attempt',
-      'Electromagnetic leakage pattern'
-    ],
-    'Harvest Now Decrypt Later': [
-      'Bulk encrypted data collection',
-      'Long-term data storage pattern',
-      'Encrypted traffic capture attempt',
-      'Future decryption preparation'
-    ]
-  };
-  
-  return indicators[threatType] || [
-    'Unusual access pattern detected',
-    'Anomalous cryptographic behavior',
-    'Potential security policy violation'
-  ];
-}
-
-function getAIMitigationSteps(threatType: string, severity: string): string[] {
-  const mitigations: Record<string, string[]> = {
-    'Shor Algorithm': [
-      'Immediately rotate to ML-KEM-1024 key',
-      'Enable hardware-backed key protection',
-      'Implement post-quantum TLS 1.3',
-      'Use hybrid cryptography (PQC + symmetric)'
-    ],
-    'Grover Attack': [
-      'Increase hash function output size to 384+ bits',
-      'Implement SHA-3 (SHAKE-256) for all hashing',
-      'Use longer symmetric keys (AES-256)',
-      'Employ hardware-backed random number generation'
-    ],
-    'Side-Channel': [
-      'Enable constant-time PQC implementations',
-      'Implement memory access obfuscation',
-      'Use hardware secure elements (TPM/SGX)',
-      'Apply control flow masking techniques'
-    ],
-    'Harvest Now Decrypt Later': [
-      'Implement perfect forward secrecy (PFS)',
-      'Rotate encryption keys frequently',
-      'Apply data minimization techniques',
-      'Use ephemeral session keys for all communications'
-    ]
-  };
-  
-  const baseMitigations = mitigations[threatType] || [
-    'Update all cryptographic libraries',
-    'Implement zero-trust authentication model',
-    'Apply PQC signature verification',
-    'Enable security anomaly monitoring'
-  ];
-  
-  // Add severity-specific mitigations
-  if (severity === 'high') {
-    baseMitigations.unshift('URGENT: Isolate affected systems');
-    baseMitigations.push('Conduct full security audit');
-  }
-  
-  return baseMitigations;
-}
-
-function getAIRecommendation(score: number, threats: any[]): string {
-  if (score > 80) {
-    return "CRITICAL: Immediate action required. Multiple high-severity quantum threats detected. Initiate emergency PQC rotation and system isolation.";
-  } else if (score > 60) {
-    return "HIGH ALERT: Significant quantum-related security threats detected. Implement recommended mitigations within 24 hours.";
-  } else if (score > 40) {
-    return "MEDIUM ALERT: Potential quantum security vulnerabilities identified. Review and implement mitigations according to priority.";
-  } else if (score > 20) {
-    return "LOW ALERT: Minor quantum security concerns detected. Schedule mitigation during next maintenance window.";
-  } else {
-    return "No significant quantum security threats detected. Continue monitoring with regular PQC key rotation.";
-  }
-}
-
-function getAIMitigationActions(threats: any[]): string[] {
-  const actions = new Set<string>();
-  
-  threats.forEach(threat => {
-    threat.mitigationSteps.forEach((step: string) => actions.add(step));
-  });
-  
-  // Add general recommendations if there are threats
-  if (threats.length > 0) {
-    actions.add("Update to latest PQC library version");
-    actions.add("Enable AI-enhanced security monitoring");
-    actions.add("Schedule post-incident review");
-  }
-  
-  return Array.from(actions);
-}
-
-function generateRotationRecommendation(
-  shouldRotate: boolean,
-  urgency: 'low' | 'medium' | 'high',
-  recommendedAlgorithm: string,
-  hasHardwareProtection: boolean | undefined,
-  keyAge: number
-): string {
-  if (!shouldRotate) {
-    return `Key is currently within security parameters (age: ${keyAge} days). Continue with regular monitoring.`;
-  }
-  
-  const urgencyText = {
-    'high': 'URGENT: Immediate rotation required',
-    'medium': 'Recommended: Rotate within 7 days',
-    'low': 'Advisory: Schedule rotation within 30 days'
-  }[urgency];
-  
-  let recommendation = `${urgencyText}. `;
-  
-  recommendation += `Rotate to ${recommendedAlgorithm} algorithm`;
-  
-  if (!hasHardwareProtection) {
-    recommendation += " with hardware protection enabled";
-  }
-  
-  recommendation += `. Current key age: ${keyAge} days.`;
-  
-  return recommendation;
 }
