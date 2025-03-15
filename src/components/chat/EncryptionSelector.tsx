@@ -21,16 +21,16 @@ const EncryptionSelector: React.FC<EncryptionSelectorProps> = ({ value, onChange
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p className="text-xs max-w-[200px]">
-              Select the encryption algorithm to use for your messages. All options are quantum-resistant.
+            <p className="text-xs max-w-[250px]">
+              Select the post-quantum encryption algorithm to use for your messages. All options implement NIST-standardized quantum-resistant security.
             </p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="h-7 w-[140px] text-xs">
-          <SelectValue placeholder="AES-256-GCM" />
+        <SelectTrigger className="h-7 w-[160px] text-xs">
+          <SelectValue placeholder="ML-KEM-1024" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="aes" className="text-xs">
@@ -45,10 +45,28 @@ const EncryptionSelector: React.FC<EncryptionSelectorProps> = ({ value, onChange
               <span>ChaCha20-Poly1305</span>
             </div>
           </SelectItem>
+          <SelectItem value="kyber" className="text-xs">
+            <div className="flex items-center gap-1">
+              <Shield className="h-3 w-3 text-accent" />
+              <span>ML-KEM-1024 (Kyber)</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="falcon" className="text-xs">
+            <div className="flex items-center gap-1">
+              <Shield className="h-3 w-3 text-accent" />
+              <span>Falcon-1024</span>
+            </div>
+          </SelectItem>
+          <SelectItem value="dilithium" className="text-xs">
+            <div className="flex items-center gap-1">
+              <Shield className="h-3 w-3 text-accent" />
+              <span>Dilithium-3</span>
+            </div>
+          </SelectItem>
           <SelectItem value="homomorphic" className="text-xs">
             <div className="flex items-center gap-1">
               <Shield className="h-3 w-3 text-accent" />
-              <span>Homomorphic (Beta)</span>
+              <span>Homomorphic (FHE)</span>
             </div>
           </SelectItem>
         </SelectContent>

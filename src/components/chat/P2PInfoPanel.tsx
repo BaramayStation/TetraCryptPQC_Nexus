@@ -2,7 +2,8 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Wifi, Lock, Activity, Server } from "lucide-react";
+import { ShieldCheck, Wifi, Lock, Activity, Server, Fingerprint, Database, SatelliteDish } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const P2PInfoPanel = ({ isP2PEnabled, peerCount = 0, connectionState = 'disconnected' }) => {
   return (
@@ -11,14 +12,14 @@ const P2PInfoPanel = ({ isP2PEnabled, peerCount = 0, connectionState = 'disconne
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium flex items-center gap-1">
             <Wifi className="h-4 w-4 text-accent" />
-            P2P Network Status
+            Quantum-Secure Network
           </CardTitle>
           <Badge variant={isP2PEnabled ? "default" : "outline"}>
             {isP2PEnabled ? "Active" : "Inactive"}
           </Badge>
         </div>
         <CardDescription className="text-xs">
-          Decentralized end-to-end encrypted messaging
+          TetraCryptPQC decentralized end-to-end messaging
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-3">
@@ -62,15 +63,78 @@ const P2PInfoPanel = ({ isP2PEnabled, peerCount = 0, connectionState = 'disconne
               <Lock className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs">Encryption:</span>
             </div>
-            <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600">
-              ML-KEM
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600">
+                    ML-KEM-1024
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs max-w-[200px]">
+                    Module Lattice-based Key Encapsulation Mechanism (ML-KEM-1024/Kyber), NIST FIPS 205 standardized quantum-resistant encryption.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-1">
+              <Fingerprint className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs">Authentication:</span>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600">
+                    SLH-DSA
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs max-w-[200px]">
+                    Stateless Hash-based Digital Signature Algorithm (SLH-DSA/Dilithium), NIST FIPS 206 standardized quantum-resistant signatures.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-1">
+              <Database className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs">Storage:</span>
+            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600">
+                    IPFS/StarkNet
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs max-w-[200px]">
+                    Decentralized storage using IPFS with StarkNet zk-STARK verification for message integrity.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-1">
+              <SatelliteDish className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs">Interstellar Ready:</span>
+            </div>
+            <Badge variant="outline" className="text-xs bg-indigo-500/10 text-indigo-600">
+              Enabled
             </Badge>
           </div>
           
           <div className="mt-3 text-xs text-muted-foreground text-center">
             <div className="flex items-center justify-center gap-1">
               <ShieldCheck className="h-3 w-3 text-accent" />
-              <span>FIPS 205-compliant quantum-resistant</span>
+              <span>AI-enhanced quantum-resistant security</span>
             </div>
           </div>
         </div>

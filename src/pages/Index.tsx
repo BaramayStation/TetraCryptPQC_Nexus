@@ -5,7 +5,8 @@ import { MainLayout } from "@/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Lock, MessageSquare, Key, FileText, Server, Building2, BarChart3 } from "lucide-react";
+import { Shield, Lock, MessageSquare, Key, FileText, Server, Building2, BarChart3, Rocket, Cpu, Globe, Clock } from "lucide-react";
+import WhitepaperPreview from "@/components/whitepaper/WhitepaperPreview";
 
 const Index = () => {
   return (
@@ -19,7 +20,7 @@ const Index = () => {
               TetraCryptPQC Enterprise Suite
             </h1>
             <p className="text-xl mb-8 text-muted-foreground">
-              Post-Quantum Cryptography for Secure AI-Driven Enterprises
+              Post-Quantum Cryptography for Secure AI-Driven Interstellar Finance
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" asChild>
@@ -45,8 +46,24 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Whitepaper Section */}
       <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold">Interstellar Quantum Security</h2>
+            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+              Our groundbreaking research on quantum-resistant cryptography for interstellar finance
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <WhitepaperPreview />
+          </div>
+        </div>
+      </section>
+      
+      {/* Features Section */}
+      <section className="py-16 bg-secondary/10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold">Enterprise-Grade Quantum Security</h2>
@@ -63,7 +80,7 @@ const Index = () => {
                 </div>
                 <CardTitle>Secure Messaging</CardTitle>
                 <CardDescription>
-                  End-to-end encrypted communications with post-quantum security
+                  End-to-end encrypted communications with post-quantum security using ML-KEM-1024 and SLH-DSA
                 </CardDescription>
               </CardHeader>
               <CardFooter>
@@ -80,7 +97,7 @@ const Index = () => {
                 </div>
                 <CardTitle>Key Management</CardTitle>
                 <CardDescription>
-                  Advanced cryptographic key management with quantum resistance
+                  Advanced quantum-resistant key management with HSM and QKD integration
                 </CardDescription>
               </CardHeader>
               <CardFooter>
@@ -93,11 +110,11 @@ const Index = () => {
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="mb-2 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-primary" />
+                  <Rocket className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Enterprise Security</CardTitle>
+                <CardTitle>Interstellar DeFi</CardTitle>
                 <CardDescription>
-                  AI-enhanced security monitoring and threat analysis
+                  UM1 token integration with million-year sustainability for interstellar economies
                 </CardDescription>
               </CardHeader>
               <CardFooter>
@@ -114,7 +131,7 @@ const Index = () => {
                 </div>
                 <CardTitle>Secure Communication</CardTitle>
                 <CardDescription>
-                  Channel-based secure communication for teams and organizations
+                  Homomorphic encryption and zero-knowledge proofs for private, verifiable communication
                 </CardDescription>
               </CardHeader>
               <CardFooter>
@@ -127,16 +144,16 @@ const Index = () => {
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="mb-2 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Server className="h-6 w-6 text-primary" />
+                  <Cpu className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Secure Execution</CardTitle>
+                <CardTitle>AI Governance</CardTitle>
                 <CardDescription>
-                  Podman-based secure execution environment for sensitive operations
+                  AI-driven policy optimization for autonomous economic management across light-years
                 </CardDescription>
               </CardHeader>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/enterprise">Open Execution</Link>
+                  <Link to="/enterprise">View Governance</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -144,16 +161,16 @@ const Index = () => {
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="mb-2 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-primary" />
+                  <Globe className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Organization Management</CardTitle>
+                <CardTitle>StarkNet Integration</CardTitle>
                 <CardDescription>
-                  Advanced identity and access management for enterprises
+                  zk-STARK-powered smart contracts for scalable, verifiable interstellar transactions
                 </CardDescription>
               </CardHeader>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link to="/settings">Manage Access</Link>
+                  <Link to="/documentation">Learn More</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -162,7 +179,7 @@ const Index = () => {
       </section>
 
       {/* Technical Features */}
-      <section className="py-16 bg-secondary/10">
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold">Technical Specifications</h2>
@@ -182,7 +199,7 @@ const Index = () => {
                   <li className="flex items-start">
                     <Shield className="h-5 w-5 text-green-500 mr-2" />
                     <div>
-                      <span className="font-medium">ML-KEM-1024</span>
+                      <span className="font-medium">ML-KEM-1024 (Kyber)</span>
                       <p className="text-sm text-muted-foreground">
                         Lattice-based key encapsulation with 256-bit quantum security level
                       </p>
@@ -194,6 +211,15 @@ const Index = () => {
                       <span className="font-medium">Hybrid X25519 + ML-KEM</span>
                       <p className="text-sm text-muted-foreground">
                         Combined classical and post-quantum security for transition period
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex items-start">
+                    <Shield className="h-5 w-5 text-green-500 mr-2" />
+                    <div>
+                      <span className="font-medium">Quantum Key Distribution (QKD)</span>
+                      <p className="text-sm text-muted-foreground">
+                        Simulated BB84 protocol for information-theoretic security
                       </p>
                     </div>
                   </li>
@@ -226,6 +252,149 @@ const Index = () => {
                       </p>
                     </div>
                   </li>
+                  <li className="flex items-start">
+                    <Shield className="h-5 w-5 text-green-500 mr-2" />
+                    <div>
+                      <span className="font-medium">zk-STARK Proofs</span>
+                      <p className="text-sm text-muted-foreground">
+                        Transparent, scalable zero-knowledge proofs via StarkNet
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Million-Year Sustainability */}
+      <section className="py-16 bg-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold">Million-Year Financial Sustainability</h2>
+            <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
+              UM1 token secured by TetraCryptPQC for sustainable interstellar economies
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <div className="mb-2 w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-accent" />
+                </div>
+                <CardTitle>Million-Year Liquidity</CardTitle>
+                <CardDescription>
+                  Locked token distribution system
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      1 trillion UM1 tokens locked in smart contracts
+                    </p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      1 million UM1 released annually for 1 million years
+                    </p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Quantum-secure multi-signature governance
+                    </p>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <div className="mb-2 w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <Cpu className="h-6 w-6 text-accent" />
+                </div>
+                <CardTitle>AI-Driven Governance</CardTitle>
+                <CardDescription>
+                  Autonomous economic management
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Adaptive monetary policy based on economic data
+                    </p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Privacy-preserving analytics with homomorphic encryption
+                    </p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Self-evolving algorithms for generational adaptation
+                    </p>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <div className="mb-2 w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
+                  <Rocket className="h-6 w-6 text-accent" />
+                </div>
+                <CardTitle>Interstellar Applications</CardTitle>
+                <CardDescription>
+                  Post-human economic infrastructure
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Cross-planetary settlement with light-speed latency compensation
+                    </p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Autonomous economic systems for post-human civilizations
+                    </p>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="mt-0.5 h-4 w-4 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+                      <Shield className="h-2.5 w-2.5 text-accent" />
+                    </div>
+                    <p className="text-muted-foreground">
+                      Decentralized resources allocation across star systems
+                    </p>
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -237,18 +406,20 @@ const Index = () => {
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to Secure Your Enterprise?</h2>
+            <h2 className="text-3xl font-bold mb-4">Ready for Quantum-Secure Interstellar Finance?</h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Get started with TetraCryptPQC Enterprise Suite today
+              Experience the future of cryptographic security today
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Button size="lg" asChild>
                 <Link to="/dashboard">
+                  <BarChart3 className="mr-2 h-5 w-5" />
                   Go to Dashboard
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link to="/documentation">
+                  <FileText className="mr-2 h-5 w-5" />
                   Read Documentation
                 </Link>
               </Button>

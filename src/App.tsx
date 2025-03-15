@@ -54,6 +54,7 @@ function App() {
           <Route path="/enterprise" element={<Enterprise />} />
           <Route path="/documentation" element={<Documentation />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/whitepaper" element={<Navigate to="/documentation" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
