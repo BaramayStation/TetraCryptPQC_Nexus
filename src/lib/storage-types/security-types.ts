@@ -1,34 +1,59 @@
-
 /**
  * TetraCryptPQC Security Type Definitions
  * 
  * Type definitions for security-related data structures and events
  */
 
-export type SecurityEventType = 'storage' | 'crypto' | 'key-management' | 'identity' | 'authentication' | 'network' | 'application';
+export type SecurityEventType = 'storage' | 'crypto' | 'key-management' | 'identity' | 'authentication' | 'network' | 'application' | 'cryptography';
 export type SecurityLevel = 'top-secret' | 'secret' | 'confidential' | 'restricted' | 'unclassified';
 export type SecurityStatus = 'success' | 'failure' | 'warning';
 
 export interface SecurityEvent {
+  id?: string;
   eventType: SecurityEventType;
   operation: string;
   status: SecurityStatus;
   timestamp: string;
   metadata?: Record<string, any>;
+  userId?: string;
+  type?: string;
+  severity?: string;
+  description?: string;
+  sourceIp?: string;
+  systemComponent?: string;
+  resolved?: boolean;
+  resolutionTimestamp?: string;
+  resolutionNotes?: string;
+  data?: Record<string, any>;
+}
+
+export interface Threat {
+  id: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  timestamp: string;
+  indicators: string[];
+  mitigationSteps: string[];
 }
 
 export interface AIThreatDetection {
   id: string;
-  type: string;
-  severity: 'critical' | 'high' | 'medium' | 'low';
-  description: string;
+  threatType: 'anomaly' | 'malware' | 'intrusion' | 'data_leak' | 'ddos' | 'ransomware' | 'other';
+  type?: string;
+  details: string;
+  description?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
   timestamp: string;
-  source: string;
-  status: 'active' | 'mitigated' | 'investigating' | 'resolved';
-  affectedComponents: string[];
-  mitigationApplied?: boolean;
+  sourceIp?: string;
+  targetSystem?: string;
+  mitigated: boolean;
+  score: number;
   remediationSteps?: string[];
-  quantumResistant: boolean;
+  indicators?: string[];
+  mitigationSteps?: string[];
+  detailedAnalysis?: string;
+  quantumResistant?: boolean;
+  affectedComponents?: string[];
 }
 
 export interface PQCThreatScanResult {
@@ -45,6 +70,14 @@ export interface AISecurityPolicy {
   name: string;
   description: string;
   enforced: boolean;
+  enabled?: boolean;
+  policyType?: 'detection' | 'prevention' | 'response';
+  createdAt?: string;
+  updatedAt?: string;
+  threatLevel?: 'low' | 'medium' | 'high' | 'critical';
+  automatedResponse?: boolean;
+  mlModelVersion?: string;
+  zeroKnowledgeAuthEnabled?: boolean;
   level: SecurityLevel;
   components: string[];
   lastUpdated: string;
@@ -52,6 +85,7 @@ export interface AISecurityPolicy {
   pqcEnabled: boolean;
   zeroKnowledgeEnabled: boolean;
   aiAnomalyDetection: boolean;
+  scanFrequency?: number;
   thresholds: {
     anomalyScore: number;
     threatSeverity: number;
@@ -217,4 +251,29 @@ export interface QuantumSecureLink {
   established: string;
   lastHealthCheck: string;
   pqcEnabled: boolean;
+}
+
+export interface SecurityHealthMetrics {
+  threatLevel: number;
+  vulnerabilities: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  patchStatus: number;
+  patchLevel?: number;
+  encryptionStrength: number;
+  accessControlScore: number;
+  authenticationScore: number;
+  dataProtectionScore: number;
+  networkSecurityScore: number;
+  updated: string;
+  securityScore?: number;
+  activeThreats?: number;
+  threatDetectionRate?: number;
+  lastUpdated?: string;
+  cpuUsage?: number;
+  memoryUsage?: number;
+  recommendedActions?: string[];
 }

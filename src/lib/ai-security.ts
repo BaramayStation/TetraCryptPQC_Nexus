@@ -44,6 +44,19 @@ export async function verifyStarkNetIdentity(publicKey: Uint8Array): Promise<boo
 }
 
 /**
+ * Initialize AI security monitoring
+ * This is a mock implementation for demonstration purposes
+ */
+export function initAISecurityMonitoring(): Promise<boolean> {
+  console.log("🔹 Initializing AI security monitoring");
+  
+  // Simulate initialization delay
+  return new Promise(resolve => {
+    setTimeout(() => resolve(true), 300);
+  });
+}
+
+/**
  * Detect intrusions using AI
  * This is a mock implementation for demonstration purposes
  * 
@@ -172,6 +185,7 @@ export function detectThreats(data: any): {
   detected: boolean;
   threats: AIThreatDetection[];
   score: number;
+  recommendation: string;
 } {
   console.log("🔹 Detecting threats with AI:", data);
   
@@ -196,7 +210,8 @@ export function detectThreats(data: any): {
   return {
     detected: score > 70,
     threats,
-    score
+    score,
+    recommendation: score > 70 ? 'Immediate investigation recommended' : 'Continue regular monitoring'
   };
 }
 

@@ -1,3 +1,17 @@
+/**
+ * TetraCryptPQC Hardware Type Definitions
+ */
+
+// Let's add StarkNetID to fix errors in components that reference it
+export interface StarkNetID {
+  id: string;
+  address: string;
+  domain: string;
+  verified: boolean;
+  timestamp: string;
+  validUntil: string;
+  signature: string;
+}
 
 export interface SecureContainerConfig {
   id: string;

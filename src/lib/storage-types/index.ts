@@ -19,7 +19,8 @@ export type {
   AIThreatDetection as ThreatDetection,
   WebRTCPeerStatus,
   SecurityEvent,
-  SecurityEventType
+  SecurityEventType,
+  Threat
 } from './security-types';
 
 export type {
@@ -36,14 +37,28 @@ export type {
   BackupJob,
   UndergroundCommunicationNode,
   MilitaryMeshNetwork,
-  QuantumSecureLink
+  QuantumSecureLink,
+  StarkNetID
 } from './hardware-types';
 
 // User profile and identity types
-export type { UserProfile, UserSettings, KeyPairs, BiometricData } from './user-types';
+export type { UserProfile, UserSettings, KeyPairs, BiometricData, DIDDocument } from './user-types';
 
 // Message types
-export type { Message, SecureMessageOptions, Conversation, MessagePreview } from './message-types';
+export type { 
+  Message,
+  SecureMessageOptions,
+  Conversation,
+  MessagePreview,
+  QuantumChannel,
+  SecureChannelMetrics
+} from './message-types';
 
 // Contact types
 export type { Contact } from './contacts';
+
+// Secure channel types
+export type { SecureChannel } from './secure-channel-types';
+
+// Export PQC types
+export type { PQSCIFEnvironment, SecureCommand } from './pqc-types';

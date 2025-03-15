@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import MainSidebar from '@/components/MainSidebar';
+import { MainSidebar } from '@/components/MainSidebar';
 
 interface MainLayoutProps {
   children?: React.ReactNode;

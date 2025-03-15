@@ -15,7 +15,7 @@ export interface Message {
   encrypted: boolean;
   signature?: string;
   verified?: boolean;
-  encryptionType: string;
+  encryptionType?: string;
   status: "sent" | "delivered" | "read" | "failed";
   kemType?: string;
   pqSignatureType?: string;
@@ -27,6 +27,7 @@ export interface Message {
   encryptedContent?: string;
   encryptionAlgorithm?: string;
   integrityHash?: string;
+  read?: boolean;
 }
 
 export interface SecureMessageOptions {
