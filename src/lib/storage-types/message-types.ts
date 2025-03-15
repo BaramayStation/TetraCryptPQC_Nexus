@@ -2,7 +2,7 @@
 export interface Message {
   id: string;
   senderId: string;
-  recipientId: string;
+  recipientId?: string;
   receiverId: string; // Making this required to match the interface
   content: string;
   timestamp: string;
@@ -20,6 +20,7 @@ export interface Message {
   webrtcSecured?: boolean;
   encryptedContent?: string;
   encryptionAlgorithm?: string;
+  integrityHash?: string;
 }
 
 export interface SecureMessageOptions {

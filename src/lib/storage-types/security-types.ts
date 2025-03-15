@@ -13,7 +13,8 @@ export interface SecurityHealthMetrics {
     low: number;
   };
   securityScore: number;
-  activeUsers?: number; // Added optional field
+  overallScore?: number;
+  activeUsers?: number;
   complianceScore?: number;
   threatDetectionRate?: number;
   threatDetectionLatency?: number;
@@ -34,7 +35,8 @@ export interface AISecurityPolicy {
   scanFrequency: number;
   mlModelVersion: string;
   lastUpdated: string;
-  homomorphicEncryptionEnabled?: boolean; // Added optional field
+  homomorphicEncryptionEnabled?: boolean;
+  zeroKnowledgeAuthEnabled?: boolean;
   autoRemediationEnabled?: boolean;
   threatDetectionLevel?: "standard" | "enhanced" | "maximum";
   id?: string;
@@ -64,6 +66,7 @@ export interface AICloudConnectionStatus {
   id?: string;
   provider?: string;
   encryptionStatus?: "encrypted" | "unencrypted";
+  connectionUptime?: number;
 }
 
 export interface PodmanContainerStatus {
@@ -83,6 +86,7 @@ export interface PodmanContainerStatus {
   restartCount?: number;
   lastRestart?: string;
   containerName?: string;
+  rootless?: boolean;
 }
 
 // Adding container security types
@@ -128,6 +132,8 @@ export interface AIThreatDetection {
   mitigation?: string;
   score: number;
   detailedAnalysis?: string;
+  remediationSteps?: string[];
+  status: "active" | "mitigated" | "resolved";
 }
 
 // Add WebRTC status types
@@ -144,4 +150,6 @@ export interface WebRTCPeerStatus {
   lastMessageTimestamp?: string;
   dataTransferred?: number;
   encryptionEnabled?: boolean;
+  latency?: number;
+  integrityHash?: string;
 }

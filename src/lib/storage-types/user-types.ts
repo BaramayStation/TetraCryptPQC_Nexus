@@ -40,6 +40,7 @@ export interface UserProfile {
     keyProtectionLevel: string;
     lastVerified: string;
     id?: string;
+    status?: string;
   };
   settings: UserSettings;
   securityScore?: number;
@@ -52,6 +53,7 @@ export interface UserProfile {
   pqcCapable?: boolean;
   privateKey?: string; // For backward compatibility
   created?: string;
+  updated?: string;
   starkNetId?: any;
   didDocument?: any;
   publicKey?: string;
