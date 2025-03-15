@@ -28,6 +28,7 @@ export interface Message {
   encryptionAlgorithm?: string;
   integrityHash?: string;
   read?: boolean;
+  senderName?: string;
 }
 
 export interface SecureMessageOptions {

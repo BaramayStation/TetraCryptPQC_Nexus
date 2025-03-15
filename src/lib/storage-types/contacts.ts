@@ -6,6 +6,7 @@
 export interface Contact {
   id: string;
   name: string;
+  displayName?: string;
   email?: string;
   status?: "online" | "away" | "offline";
   publicKey: string;
@@ -15,4 +16,5 @@ export interface Contact {
   unreadCount?: number;
   pqcEnabled?: boolean;
   verificationStatus?: "verified" | "unverified" | "pending";
+  created?: string;
 }

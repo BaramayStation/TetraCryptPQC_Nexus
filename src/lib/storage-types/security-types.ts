@@ -1,62 +1,91 @@
 
-export type ConnectionStatus = "degraded" | "disconnected" | "connected" | "active";
-export type PodmanContainerStatus = "running" | "stopped" | "error" | "provisioning";
-export type InfrastructureNodeType = "network" | "storage" | "application" | "compute" | "general" | "ai" | "kubernetes" | "docker" | "security";
+/**
+ * TetraCryptPQC Security Type Definitions
+ */
 
-export interface SecurityHealthMetrics {
+export type SecurityEventType = 'authentication' | 'authorization' | 'network' | 'cryptography' | 'data' | 'system' | 'user' | 'other';
+export type SecurityEventSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface AIThreatDetection {
+  id: string;
+  threatType: 'anomaly' | 'malware' | 'intrusion' | 'data_leak' | 'ddos' | 'ransomware' | 'other';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  sourceIp?: string;
+  targetSystem?: string;
+  mitigated: boolean;
+  score: number;
+  details: string;
+  description: string;
+  remediationSteps?: string[];
+  indicators?: string[];
+  detailedAnalysis?: string;
+  affectedComponents?: string[];
+}
+
+export interface SecurityEvent {
+  id: string;
+  type: SecurityEventType;
+  severity: SecurityEventSeverity;
+  timestamp: string;
+  description: string;
+  sourceIp?: string;
+  userId?: string;
+  systemComponent?: string;
+  resolved: boolean;
+  resolutionTimestamp?: string;
+  resolutionNotes?: string;
+  data?: Record<string, any>;
+  eventType?: string;
+}
+
+export interface AISecurityPolicy {
+  id: string;
+  name: string;
+  description: string;
+  policyType: 'detection' | 'prevention' | 'response';
+  createdAt: string;
+  updatedAt: string;
+  enabled: boolean;
+  threatLevel: 'low' | 'medium' | 'high' | 'critical';
+  automatedResponse: boolean;
+  mlModelVersion: string;
+  zeroKnowledgeAuthEnabled: boolean;
+  scanFrequency?: number;
+  lastUpdated?: string;
+}
+
+export interface SecureContainerConfig {
+  id: string;
+  name: string;
+  description: string;
+  type?: InfrastructureNodeType;
+  status: 'running' | 'stopped' | 'error' | 'provisioning';
+  created: string;
+  lastUpdated: string;
+  securityStatus: 'secure' | 'warning' | 'vulnerable' | 'compromised' | 'suspicious';
   securityScore: number;
-  activeThreats: number;
-  patchLevel: string;
-  threatLevel?: number;
-  vulnerabilities?: {
+  vulnerabilities: {
     critical: number;
     high: number;
     medium: number;
     low: number;
   };
-  threatDetectionRate?: number;
-  mitigationRate?: number;
-  patchStatus?: number;
-  encryptionStrength?: number;
-  accessControlScore?: number;
-  authenticationScore?: number;
-  dataProtectionScore?: number;
-  networkSecurityScore?: number;
-  cpuUsage?: number;
-  memoryUsage?: number;
-  updated?: string;
-  lastUpdated?: string;
-  recommendedActions?: string[];
+  securityProfile?: ContainerSecurityProfile;
 }
 
-export interface AICloudConnectionStatus {
-  connected: boolean;
-  provider?: string;
-  status: string;
-  latency: number;
-  encryptionStatus: string;
-  lastConnected?: string;
-  encryptionEnabled?: boolean;
-  authenticationType?: 'token' | 'certificate' | 'oauth' | 'mfa';
-  nodeId?: string;
-  health?: 'healthy' | 'degraded' | 'critical';
+export interface ContainerSecurityProfile {
+  immutableRootfs: boolean;
+  seccomp: boolean;
+  appArmor: boolean;
+  selinux: boolean;
+  privileged: boolean;
+  userNamespace: boolean;
+  readOnlyFs: boolean;
+  securityScore: number;
 }
 
-export interface AISecurityPolicy {
-  id?: string;
-  name?: string;
-  description?: string;
-  policyType?: 'detection' | 'prevention' | 'response';
-  createdAt?: string;
-  updatedAt?: string;
-  enabled: boolean;
-  threatLevel: string;
-  automatedResponse: boolean;
-  mlModelVersion: string;
-  zeroKnowledgeAuthEnabled?: boolean;
-  homomorphicEncryptionEnabled?: boolean;
-  scanFrequency?: number;
-}
+export type InfrastructureNodeType = 'storage' | 'network' | 'application' | 'compute' | 'general' | 'ai' | 'kubernetes' | 'docker' | 'security';
 
 export interface SecurityThreshold {
   warning: number;
@@ -68,41 +97,31 @@ export interface HealthStatus {
   lastUpdated: string;
 }
 
-export interface ContainerSecurityProfile {
-  immutableRootfs: boolean;
-  seccomp: boolean;
-  appArmor?: boolean;
-  selinux?: boolean;
-  rootless?: boolean;
-  readOnly?: boolean;
-  privileged: boolean;
-  capabilities?: string[];
-  securityScore: number;
-}
-
-export interface SecureContainerConfig {
-  id: string;
-  name: string;
-  description: string;
-  status: "running" | "stopped" | "error" | "provisioning";
-  created: string;
-  lastUpdated: string;
-  securityStatus: "secure" | "warning" | "vulnerable" | "compromised" | "suspicious";
-  securityScore: number;
-  type?: InfrastructureNodeType;
-  image?: string;
-  vulnerabilities?: {
+export interface SecurityHealthMetrics {
+  threatLevel: number;
+  vulnerabilities: {
     critical: number;
     high: number;
     medium: number;
     low: number;
   };
-  pqcEnabled?: boolean;
-  immutableRootfs?: boolean;
-  encryptionEnabled?: boolean;
-  securityProfile?: ContainerSecurityProfile;
-  createdAt?: string;
-  updatedAt?: string;
+  patchStatus: number;
+  encryptionStrength: number;
+  accessControlScore: number;
+  authenticationScore: number;
+  dataProtectionScore: number;
+  networkSecurityScore: number;
+  updated: string;
+  securityScore: number;
+  patchLevel?: number;
+  threatDetectionRate?: number;
+  activeThreats?: number;
+  recommendedActions?: string[];
+  cpuUsage?: number;
+  memoryUsage?: number;
+  lastUpdated?: string;
+  threatDetectionsLast24h?: number;
+  detectionRate?: number;
 }
 
 export interface SecurityRule {
@@ -117,63 +136,36 @@ export interface SecurityRule {
   lastModified: string;
 }
 
-export interface AISyncStatus {
-  lastSynced: string;
-  syncState: 'synced' | 'syncing' | 'error' | 'disconnected';
-  pendingChanges: number;
-  errorCount: number;
-  errorMessages: string[];
-  cloudAvailable?: boolean;
-  p2pAvailable?: boolean;
-  offlineMode?: boolean;
-  lastSelfHealingAction?: string;
-  lastCloudSync?: string;
-  id?: string;
+export interface AICloudConnectionStatus {
+  connected: boolean;
+  latency: number;
+  lastConnected: string;
+  encryptionEnabled: boolean;
+  authenticationType: 'token' | 'certificate' | 'oauth' | 'mfa';
+  nodeId: string;
+  health: 'healthy' | 'degraded' | 'critical';
 }
 
-export interface WebRTCPeerStatus {
-  id?: string;
-  peerId?: string;
-  connected: boolean;
-  candidates: number;
-  negotiating: boolean;
-  localDescription?: string;
-  remoteDescription?: string;
-  iceCandidates: number;
-  lastUpdated: string;
-  connectionState: string;
-  connectionStatus?: string;
-  latency: number;
-  lastMessageTimestamp?: string;
-  dataTransferred?: number;
+export interface PodmanContainerStatus {
+  id: string;
+  name: string;
+  status: 'running' | 'stopped' | 'created' | 'exited' | 'error';
+  created: string;
+  image: string;
+  ports: string[];
+  health: 'healthy' | 'unhealthy' | 'unknown';
+  memory: number;
+  cpu: number;
 }
 
 export interface Threat {
   id: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
   timestamp: string;
-  severity: "low" | "medium" | "high" | "critical";
   source: string;
   target: string;
-  type: string;
   description: string;
-  status: "active" | "mitigated" | "resolved";
-  mitigationSteps?: string[];
-}
-
-export interface AIThreatDetection {
-  id: string;
-  timestamp: string;
-  severity: "low" | "medium" | "high" | "critical";
-  threatType?: string;
-  details?: string;
-  description?: string;
-  sourceIp?: string;
-  targetSystem?: string;
-  mitigated?: boolean;
-  score?: number;
-  status?: string;
-  mitigationSteps?: string[];
-  indicators?: string[];
-  detailedAnalysis?: string;
-  affectedComponents?: string[];
+  mitigated: boolean;
+  metadata?: Record<string, any>;
 }

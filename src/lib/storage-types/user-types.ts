@@ -1,4 +1,8 @@
 
+/**
+ * TetraCryptPQC User Type Definitions
+ */
+
 export interface UserProfile {
   id: string;
   userId: string;
@@ -78,7 +82,7 @@ export interface UserSettings {
   notifications: boolean;
   secureLogin: boolean;
   twoFactorAuth: boolean;
-  twoFactorEnabled?: boolean;
+  twoFactorEnabled: boolean;
   autoLock: boolean;
   autoLockTimeout: number;
   privacyMode: "standard" | "enhanced" | "maximum";
@@ -88,7 +92,7 @@ export interface UserSettings {
   hardwareKeyEnabled: boolean;
   webrtcEnabled: boolean;
   p2pEnabled: boolean;
-  dataRetentionDays?: number;
+  dataRetentionDays: number;
 }
 
 export interface BiometricData {

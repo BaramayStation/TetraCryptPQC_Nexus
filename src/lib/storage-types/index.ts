@@ -8,11 +8,15 @@ export * from "./contacts";
 export * from "./security-types";
 export * from "./message-types";
 export * from "./user-types";
+export * from "./secure-channel-types";
+export * from "./pqc-types";
+export * from "./sync-types";
+
+// Create mock modules for missing files
+// These will be replaced with actual implementations later
 export * from "./decentralized-storage";
 export * from "./threat-detection";
 export * from "./identity-verification";
-export * from "./secure-channel-types";
-export * from "./pqc-types";
 export * from "./hardware-types";
 
 // Type re-exports for backward compatibility
