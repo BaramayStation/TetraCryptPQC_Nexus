@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -11,7 +12,6 @@ import {
   ServerCrash,
   Settings,
   Book,
-  LucideIcon,
   Building2,
   ShieldAlert
 } from "lucide-react";
@@ -19,7 +19,7 @@ import {
 interface NavItem {
   title: string;
   href: string;
-  icon: LucideIcon;
+  icon: React.ReactNode;
 }
 
 const navigation: NavItem[] = [

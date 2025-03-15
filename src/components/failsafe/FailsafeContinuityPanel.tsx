@@ -1,460 +1,466 @@
 
 import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, AlertTriangle, Radio, Satellite, Wifi, Key, HardDrive, RefreshCw, Check, X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { initializeFailsafeSystem, testFailsafeRecovery, getFailsafeStatus, ResilienceLevel, CommunicationMode, CryptoFallbackAlgorithm } from "@/lib/failsafe-continuity";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Shield, 
+  AlertTriangle, 
+  Radio, 
+  Shuffle, 
+  RefreshCw, 
+  Power,
+  Zap,
+  AlertCircle
+} from "lucide-react";
+import {
+  getFailsafeStatus,
+  assessThreatLevel,
+  switchCommunicationMode,
+  switchCryptoAlgorithm,
+  testFailsafeRecovery,
+  ResilienceLevel,
+  CommunicationMode,
+  CryptoFallbackAlgorithm
+} from "@/lib/failsafe-continuity";
 
 const FailsafeContinuityPanel: React.FC = () => {
-  const { toast } = useToast();
-  const [failsafeStatus, setFailsafeStatus] = useState<any>(null);
-  const [recoveryKey, setRecoveryKey] = useState<string | null>(null);
+  const [status, setStatus] = useState<any>(null);
   const [testResults, setTestResults] = useState<any>(null);
-  const [isInitializing, setIsInitializing] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-
-  // Initialize the failsafe system
+  const [loading, setLoading] = useState(false);
+  const [threatAssessment, setThreatAssessment] = useState<any>(null);
+  
   useEffect(() => {
-    const initializeSystem = async () => {
-      try {
-        const status = getFailsafeStatus();
-        setFailsafeStatus(status);
-      } catch (error) {
-        console.error("Failed to get failsafe status:", error);
-      }
-    };
-
-    initializeSystem();
+    // Initialize failsafe status on component mount
+    const initialStatus = getFailsafeStatus();
+    setStatus(initialStatus);
   }, []);
-
-  // Initialize the failsafe system
-  const handleInitializeSystem = async () => {
-    setIsInitializing(true);
+  
+  const handleThreatAssessment = async () => {
+    setLoading(true);
     try {
-      const { status, emergencyRecoveryKey } = await initializeFailsafeSystem();
-      setFailsafeStatus(status);
-      setRecoveryKey(emergencyRecoveryKey);
+      // Simulate network latency and connection failures
+      const networkLatency = Math.floor(Math.random() * 300) + 50;
+      const failedConnections = Math.floor(Math.random() * 5);
+      const cryptoFailures = Math.floor(Math.random() * 3);
+      const anomalyScore = Math.floor(Math.random() * 30);
       
-      toast({
-        title: "Failsafe System Initialized",
-        description: "COG-grade resilience system is now operational",
-      });
+      const assessment = await assessThreatLevel(
+        networkLatency,
+        failedConnections,
+        cryptoFailures,
+        anomalyScore
+      );
+      
+      setThreatAssessment(assessment);
+      
+      // Update status with new threat level
+      setStatus(prev => ({
+        ...prev,
+        threatLevel: assessment.threatLevel
+      }));
     } catch (error) {
-      console.error("Failed to initialize failsafe system:", error);
-      toast({
-        title: "Initialization Failed",
-        description: "Could not initialize failsafe system",
-        variant: "destructive",
-      });
+      console.error("Error assessing threat level:", error);
     } finally {
-      setIsInitializing(false);
+      setLoading(false);
     }
   };
-
-  // Test the failsafe recovery system
-  const handleTestFailsafe = async () => {
-    setIsTesting(true);
+  
+  const handleSwitchCommunicationMode = async (mode: CommunicationMode) => {
+    setLoading(true);
+    try {
+      const result = await switchCommunicationMode(mode);
+      
+      if (result.success) {
+        setStatus(prev => ({
+          ...prev,
+          communicationMode: result.currentMode
+        }));
+      }
+    } catch (error) {
+      console.error("Error switching communication mode:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleSwitchCryptoAlgorithm = async (algorithm: CryptoFallbackAlgorithm) => {
+    setLoading(true);
+    try {
+      const result = await switchCryptoAlgorithm(algorithm);
+      
+      if (result.success) {
+        setStatus(prev => ({
+          ...prev,
+          cryptoAlgorithm: result.currentAlgorithm
+        }));
+      }
+    } catch (error) {
+      console.error("Error switching crypto algorithm:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleTestRecovery = async () => {
+    setLoading(true);
     try {
       const results = await testFailsafeRecovery();
       setTestResults(results);
-      
-      if (results.testSuccessful) {
-        toast({
-          title: "Failsafe Test Successful",
-          description: "All failsafe systems are operational",
-        });
-      } else {
-        toast({
-          title: "Failsafe Test Incomplete",
-          description: "Some failsafe systems require attention",
-          variant: "destructive",
-        });
-      }
     } catch (error) {
-      console.error("Failed to test failsafe recovery:", error);
-      toast({
-        title: "Test Failed",
-        description: "Could not complete failsafe recovery test",
-        variant: "destructive",
-      });
+      console.error("Error testing failsafe recovery:", error);
     } finally {
-      setIsTesting(false);
+      setLoading(false);
     }
   };
-
-  // Helper function to get badge color based on resilience level
+  
   const getResilienceBadgeColor = (level: ResilienceLevel) => {
     switch (level) {
       case ResilienceLevel.NORMAL:
-        return "bg-green-500";
+        return "bg-green-500/10 text-green-500 hover:bg-green-500/20";
       case ResilienceLevel.ELEVATED:
-        return "bg-blue-500";
+        return "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20";
       case ResilienceLevel.HIGH:
-        return "bg-yellow-500";
+        return "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20";
       case ResilienceLevel.SEVERE:
-        return "bg-orange-500";
+        return "bg-red-500/10 text-red-500 hover:bg-red-500/20";
       case ResilienceLevel.CATASTROPHIC:
-        return "bg-red-500";
+        return "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20";
       default:
-        return "";
+        return "bg-slate-500/10 text-slate-500 hover:bg-slate-500/20";
     }
   };
-
+  
+  const getCommunicationBadgeColor = (mode: CommunicationMode) => {
+    switch (mode) {
+      case CommunicationMode.STANDARD:
+        return "bg-green-500/10 text-green-500 hover:bg-green-500/20";
+      case CommunicationMode.MESH:
+        return "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20";
+      case CommunicationMode.SATELLITE:
+        return "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20";
+      case CommunicationMode.RADIO:
+        return "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20";
+      case CommunicationMode.OFFLINE:
+        return "bg-red-500/10 text-red-500 hover:bg-red-500/20";
+      default:
+        return "bg-slate-500/10 text-slate-500 hover:bg-slate-500/20";
+    }
+  };
+  
+  const getCryptoAlgorithmBadgeColor = (algorithm: CryptoFallbackAlgorithm) => {
+    switch (algorithm) {
+      case CryptoFallbackAlgorithm.PRIMARY:
+        return "bg-green-500/10 text-green-500 hover:bg-green-500/20";
+      case CryptoFallbackAlgorithm.SECONDARY:
+        return "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20";
+      case CryptoFallbackAlgorithm.TERTIARY:
+        return "bg-orange-500/10 text-orange-500 hover:bg-orange-500/20";
+      case CryptoFallbackAlgorithm.SIGNATURE_PRIMARY:
+        return "bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20";
+      case CryptoFallbackAlgorithm.SIGNATURE_SECONDARY:
+        return "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20";
+      case CryptoFallbackAlgorithm.LAST_RESORT:
+        return "bg-red-500/10 text-red-500 hover:bg-red-500/20";
+      default:
+        return "bg-slate-500/10 text-slate-500 hover:bg-slate-500/20";
+    }
+  };
+  
+  if (!status) {
+    return <div>Loading failsafe status...</div>;
+  }
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
-          COG-Grade Failsafe Continuity System
-        </CardTitle>
-        <CardDescription>
-          Continuity of Government (COG) disaster resilience for TetraCryptPQC
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!failsafeStatus ? (
-          <div className="p-6 text-center">
-            <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Failsafe System Not Initialized</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Initialize the COG-grade failsafe system to ensure TetraCryptPQC remains operational
-              during catastrophic events.
-            </p>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Failsafe Continuity Status
+          </CardTitle>
+          <CardDescription>
+            Real-time status of PQC cryptographic resilience and disaster preparedness
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Resilience Level</span>
+                <Badge className={getResilienceBadgeColor(status.resilienceLevel)}>
+                  {status.resilienceLevel.toUpperCase()}
+                </Badge>
+              </div>
+              <Progress
+                value={
+                  status.resilienceLevel === ResilienceLevel.NORMAL ? 20 :
+                  status.resilienceLevel === ResilienceLevel.ELEVATED ? 40 :
+                  status.resilienceLevel === ResilienceLevel.HIGH ? 60 :
+                  status.resilienceLevel === ResilienceLevel.SEVERE ? 80 : 100
+                }
+                className="h-2"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Communication Mode</span>
+                <Badge className={getCommunicationBadgeColor(status.communicationMode)}>
+                  {status.communicationMode.toUpperCase()}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Radio className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs text-muted-foreground">
+                  {status.communicationMode === CommunicationMode.STANDARD ? "Internet-based standard protocol" :
+                   status.communicationMode === CommunicationMode.MESH ? "P2P mesh network active" :
+                   status.communicationMode === CommunicationMode.SATELLITE ? "Satellite uplink established" :
+                   status.communicationMode === CommunicationMode.RADIO ? "LoRa/Ham radio fallback" :
+                   "Air-gapped offline mode"}
+                </span>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Cryptographic Algorithm</span>
+                <Badge className={getCryptoAlgorithmBadgeColor(status.cryptoAlgorithm)}>
+                  {status.cryptoAlgorithm.replace(/-/g, " ")}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Shuffle className="h-3.5 w-3.5 text-primary" />
+                <span className="text-xs text-muted-foreground">
+                  {status.cryptoAlgorithm === CryptoFallbackAlgorithm.PRIMARY ? "ML-KEM primary algorithm active" :
+                   status.cryptoAlgorithm === CryptoFallbackAlgorithm.SECONDARY ? "BIKE secondary algorithm active" :
+                   status.cryptoAlgorithm === CryptoFallbackAlgorithm.TERTIARY ? "FrodoKEM tertiary algorithm active" :
+                   status.cryptoAlgorithm === CryptoFallbackAlgorithm.SIGNATURE_PRIMARY ? "SLH-DSA signature active" :
+                   status.cryptoAlgorithm === CryptoFallbackAlgorithm.SIGNATURE_SECONDARY ? "Falcon signature active" :
+                   "Last resort lattice backup active"}
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">Threat Level</div>
+            <div className="flex items-center">
+              <Progress value={status.threatLevel} className="w-40 h-2 mr-2" />
+              <span className={`text-sm font-medium ${
+                status.threatLevel < 20 ? "text-green-500" :
+                status.threatLevel < 40 ? "text-yellow-500" :
+                status.threatLevel < 60 ? "text-orange-500" :
+                status.threatLevel < 80 ? "text-red-500" : "text-purple-500"
+              }`}>
+                {status.threatLevel}%
+              </span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-sm flex justify-between">
+              <span className="text-muted-foreground">Network Status</span>
+              <span className={`font-medium ${
+                status.networkStatus === "online" ? "text-green-500" :
+                status.networkStatus === "degraded" ? "text-yellow-500" : "text-red-500"
+              }`}>
+                {status.networkStatus.toUpperCase()}
+              </span>
+            </div>
+            <div className="text-sm flex justify-between">
+              <span className="text-muted-foreground">Backup Nodes</span>
+              <span className="font-medium">{status.backupNodesAvailable}</span>
+            </div>
+          </div>
+          
+          {status.activeMitigations.length > 0 && (
+            <Alert className="bg-amber-500/10 border-amber-500/50">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertDescription>
+                <span className="font-medium">Active Mitigations:</span> {status.activeMitigations.join(", ")}
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+        <CardFooter className="flex-col items-start space-y-2">
+          <div className="text-xs text-muted-foreground">Last updated: {new Date(status.lastUpdated).toLocaleString()}</div>
+          <div className="flex flex-wrap gap-2">
             <Button 
-              onClick={handleInitializeSystem} 
-              disabled={isInitializing}
-              className="mx-auto"
+              size="sm" 
+              onClick={handleThreatAssessment}
+              disabled={loading}
             >
-              {isInitializing ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Initializing...
-                </>
-              ) : (
-                "Initialize Failsafe System"
-              )}
+              <AlertCircle className="mr-1 h-4 w-4" />
+              Assess Threat Level
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={handleTestRecovery}
+              disabled={loading}
+            >
+              <RefreshCw className="mr-1 h-4 w-4" />
+              Test Failsafe Recovery
             </Button>
           </div>
-        ) : (
-          <Tabs defaultValue="status">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="status">System Status</TabsTrigger>
-              <TabsTrigger value="communications">Communications</TabsTrigger>
-              <TabsTrigger value="cryptography">Cryptography</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="status" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded">
-                  <h3 className="text-sm font-medium mb-2">Resilience Level</h3>
-                  <div className="flex justify-between items-center">
-                    <Badge className={getResilienceBadgeColor(failsafeStatus.resilienceLevel)}>
-                      {failsafeStatus.resilienceLevel.toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="p-4 border rounded">
-                  <h3 className="text-sm font-medium mb-2">Threat Level</h3>
-                  <div className="space-y-2">
-                    <Progress value={failsafeStatus.threatLevel} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Low</span>
-                      <span>Medium</span>
-                      <span>High</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 border rounded">
-                  <h3 className="text-sm font-medium mb-2">Backup Nodes</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold">{failsafeStatus.backupNodesAvailable}</span>
-                    <Badge variant="outline">Available</Badge>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 border rounded space-y-2">
-                <h3 className="text-sm font-medium">Network Status</h3>
-                <div className="flex items-center gap-2">
-                  {failsafeStatus.networkStatus === "online" ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : failsafeStatus.networkStatus === "degraded" ? (
-                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                  ) : (
-                    <X className="h-4 w-4 text-red-500" />
+        </CardFooter>
+      </Card>
+      
+      {threatAssessment && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Threat Assessment Results
+            </CardTitle>
+            <CardDescription>
+              Analysis of current security threats and recommended actions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Detected Threat Level</span>
+              <Badge className={`
+                ${threatAssessment.threatLevel < 20 ? "bg-green-500/10 text-green-500" :
+                  threatAssessment.threatLevel < 40 ? "bg-yellow-500/10 text-yellow-500" :
+                  threatAssessment.threatLevel < 60 ? "bg-orange-500/10 text-orange-500" :
+                  threatAssessment.threatLevel < 80 ? "bg-red-500/10 text-red-500" : 
+                  "bg-purple-500/10 text-purple-500"}
+              `}>
+                {threatAssessment.threatLevel}%
+              </Badge>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Recommended Resilience Level</span>
+              <Badge className={getResilienceBadgeColor(threatAssessment.recommendedResilienceLevel)}>
+                {threatAssessment.recommendedResilienceLevel.toUpperCase()}
+              </Badge>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="text-sm font-medium">Recommended Actions:</div>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                {threatAssessment.recommendedActions.map((action: string, i: number) => (
+                  <li key={i} className="flex items-start">
+                    <Zap className="h-3.5 w-3.5 text-primary mr-2 mt-0.5" />
+                    {action}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {threatAssessment.recommendedResilienceLevel !== ResilienceLevel.NORMAL && (
+                <Button 
+                  size="sm" 
+                  onClick={() => handleSwitchCommunicationMode(
+                    threatAssessment.recommendedResilienceLevel === ResilienceLevel.CATASTROPHIC ? 
+                      CommunicationMode.SATELLITE : 
+                    threatAssessment.recommendedResilienceLevel === ResilienceLevel.SEVERE ? 
+                      CommunicationMode.MESH : 
+                      CommunicationMode.STANDARD
                   )}
-                  <span className="capitalize">{failsafeStatus.networkStatus}</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Last updated: {new Date(failsafeStatus.lastUpdated).toLocaleString()}
-                </div>
-              </div>
-
-              {testResults && (
-                <Alert className={testResults.testSuccessful ? "border-green-500" : "border-yellow-500"}>
-                  {testResults.testSuccessful ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                  )}
-                  <AlertTitle>
-                    {testResults.testSuccessful
-                      ? "All Systems Operational"
-                      : "System Check Required"}
-                  </AlertTitle>
-                  <AlertDescription className="mt-2 space-y-2">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        {testResults.communicationTest ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <X className="h-3 w-3 text-red-500" />
-                        )}
-                        <span>Communication Systems</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {testResults.cryptoAlgorithmTest ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <X className="h-3 w-3 text-red-500" />
-                        )}
-                        <span>Cryptographic Algorithms</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {testResults.offlineOperationTest ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <X className="h-3 w-3 text-red-500" />
-                        )}
-                        <span>Offline Operations</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {testResults.satelliteConnectionTest ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <X className="h-3 w-3 text-red-500" />
-                        )}
-                        <span>Satellite Connection</span>
-                      </div>
-                    </div>
-                  </AlertDescription>
-                </Alert>
+                  disabled={loading}
+                >
+                  <Radio className="mr-1 h-4 w-4" />
+                  Switch Communication Mode
+                </Button>
               )}
               
-              {recoveryKey && (
-                <div className="p-4 border rounded space-y-2 bg-muted/50">
-                  <h3 className="text-sm font-medium flex items-center gap-2">
-                    <Key className="h-4 w-4" />
-                    Emergency Recovery Key
-                  </h3>
-                  <div className="p-2 bg-muted rounded text-xs font-mono break-all">
-                    {recoveryKey}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Store this key securely. It will be required for emergency recovery operations.
-                  </p>
-                </div>
+              {threatAssessment.threatLevel > 40 && (
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleSwitchCryptoAlgorithm(
+                    threatAssessment.threatLevel > 80 ? 
+                      CryptoFallbackAlgorithm.TERTIARY : 
+                    threatAssessment.threatLevel > 60 ? 
+                      CryptoFallbackAlgorithm.SECONDARY : 
+                      CryptoFallbackAlgorithm.PRIMARY
+                  )}
+                  disabled={loading}
+                >
+                  <Shuffle className="mr-1 h-4 w-4" />
+                  Switch Crypto Algorithm
+                </Button>
               )}
-            </TabsContent>
-
-            <TabsContent value="communications" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded space-y-2">
-                  <h3 className="text-sm font-medium mb-2">Current Communication Mode</h3>
-                  <div className="flex items-center gap-2">
-                    {failsafeStatus.communicationMode === CommunicationMode.STANDARD ? (
-                      <Wifi className="h-4 w-4 text-primary" />
-                    ) : failsafeStatus.communicationMode === CommunicationMode.MESH ? (
-                      <Wifi className="h-4 w-4 text-primary" />
-                    ) : failsafeStatus.communicationMode === CommunicationMode.SATELLITE ? (
-                      <Satellite className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Radio className="h-4 w-4 text-primary" />
-                    )}
-                    <span className="capitalize">{failsafeStatus.communicationMode}</span>
-                  </div>
-                </div>
-                <div className="p-4 border rounded space-y-2">
-                  <h3 className="text-sm font-medium mb-2">Failover Communication</h3>
-                  <div className="grid grid-cols-2 gap-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        P2P Mesh
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        Satellite
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600">
-                        <AlertTriangle className="h-3 w-3 mr-1" />
-                        LoRa Radio
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        Ham Radio
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {testResults && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Power className="h-5 w-5 text-primary" />
+              Failsafe Recovery Test Results
+            </CardTitle>
+            <CardDescription>
+              Results from testing the failsafe recovery systems
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium">Test Status</span>
+              <Badge className={testResults.testSuccessful ? 
+                "bg-green-500/10 text-green-500" : 
+                "bg-red-500/10 text-red-500"
+              }>
+                {testResults.testSuccessful ? "PASSED" : "FAILED"}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="text-sm flex justify-between">
+                <span className="text-muted-foreground">Communication Test</span>
+                <span className={`font-medium ${testResults.communicationTest ? "text-green-500" : "text-red-500"}`}>
+                  {testResults.communicationTest ? "Passed" : "Failed"}
+                </span>
               </div>
-
-              <div className="p-4 border rounded space-y-2">
-                <h3 className="text-sm font-medium">Disaster Communication Scenarios</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Scenario</th>
-                      <th className="text-left py-2">Fallback Method</th>
-                      <th className="text-left py-2">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="py-2">Internet Blackout</td>
-                      <td>Satellite Mesh Network</td>
-                      <td>
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                          Ready
-                        </Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">EMP Attack</td>
-                      <td>Faraday-Protected Radio</td>
-                      <td>
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                          Ready
-                        </Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">Infrastructure Collapse</td>
-                      <td>P2P LoRa + Ham Network</td>
-                      <td>
-                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600">
-                          Testing
-                        </Badge>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="text-sm flex justify-between">
+                <span className="text-muted-foreground">Crypto Algorithm Test</span>
+                <span className={`font-medium ${testResults.cryptoAlgorithmTest ? "text-green-500" : "text-red-500"}`}>
+                  {testResults.cryptoAlgorithmTest ? "Passed" : "Failed"}
+                </span>
               </div>
-            </TabsContent>
-
-            <TabsContent value="cryptography" className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 border rounded space-y-2">
-                  <h3 className="text-sm font-medium mb-2">Current Cryptographic Algorithm</h3>
-                  <div className="flex items-center gap-2">
-                    <Key className="h-4 w-4 text-primary" />
-                    <span>{failsafeStatus.cryptoAlgorithm}</span>
-                  </div>
-                </div>
-                <div className="p-4 border rounded space-y-2">
-                  <h3 className="text-sm font-medium mb-2">Fallback Algorithms</h3>
-                  <div className="grid grid-cols-1 gap-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        BIKE (Ring-Learning)
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        FrodoKEM (Lattice-Based)
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                        <Check className="h-3 w-3 mr-1" />
-                        Falcon (Alternative Signature)
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+              <div className="text-sm flex justify-between">
+                <span className="text-muted-foreground">Offline Operation Test</span>
+                <span className={`font-medium ${testResults.offlineOperationTest ? "text-green-500" : "text-red-500"}`}>
+                  {testResults.offlineOperationTest ? "Passed" : "Failed"}
+                </span>
               </div>
-
-              <div className="p-4 border rounded space-y-2">
-                <h3 className="text-sm font-medium">Quantum Threat Response Matrix</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Threat Scenario</th>
-                      <th className="text-left py-2">Algorithm Migration</th>
-                      <th className="text-left py-2">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="py-2">ML-KEM (Kyber) Compromise</td>
-                      <td>Switch to BIKE</td>
-                      <td>
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                          Ready
-                        </Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">SLH-DSA Vulnerability</td>
-                      <td>Switch to Falcon</td>
-                      <td>
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                          Ready
-                        </Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-2">Multiple PQC Exploits</td>
-                      <td>Air-Gapped FrodoKEM + MPC</td>
-                      <td>
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600">
-                          Ready
-                        </Badge>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="text-sm flex justify-between">
+                <span className="text-muted-foreground">Satellite Connection</span>
+                <span className={`font-medium ${testResults.satelliteConnectionTest ? "text-green-500" : "text-red-500"}`}>
+                  {testResults.satelliteConnectionTest ? "Passed" : "Failed"}
+                </span>
               </div>
-            </TabsContent>
-          </Tabs>
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-end">
-        <Button 
-          variant="outline" 
-          onClick={handleTestFailsafe}
-          disabled={isTesting || !failsafeStatus}
-          className="mr-2"
-        >
-          {isTesting ? (
-            <>
-              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              Testing...
-            </>
-          ) : (
-            "Test Failsafe Systems"
-          )}
-        </Button>
-        <Button 
-          disabled={isInitializing || !failsafeStatus}
-        >
-          Run Disaster Recovery Drill
-        </Button>
-      </CardFooter>
-    </Card>
+            </div>
+            
+            <Alert className={`${testResults.testSuccessful ? 
+              "bg-green-500/10 border-green-500/50" : 
+              "bg-amber-500/10 border-amber-500/50"}`}
+            >
+              <AlertDescription>
+                {testResults.testReport}
+              </AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 
