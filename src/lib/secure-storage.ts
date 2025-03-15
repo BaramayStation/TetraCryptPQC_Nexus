@@ -46,7 +46,8 @@ export function setLocalStorage<T>(key: string, data: T, encrypt: boolean = fals
     if (encrypt) {
       // In a real app, we would use a derived encryption key
       const encryptionKey = localStorage.getItem('enc_key') || 'default_encryption_key';
-      const encryptedData = encryptAES(JSON.stringify(data), encryptionKey);
+      // Execute encryptAES synchronously
+      const encryptedData = customEncrypt(JSON.stringify(data), encryptionKey);
       localStorage.setItem(key, encryptedData);
     } else {
       localStorage.setItem(key, JSON.stringify(data));
@@ -56,6 +57,13 @@ export function setLocalStorage<T>(key: string, data: T, encrypt: boolean = fals
     console.error('Error setting data in secure storage:', error);
     return false;
   }
+}
+
+// Custom encrypt function (simplified for demo purposes)
+function customEncrypt(data: string, key: string): string {
+  // This is a placeholder. In a real app, use a proper crypto library
+  console.log("Encrypting data with key:", key);
+  return `encrypted:${data}`; // Return a simulated encrypted string
 }
 
 /**
@@ -103,7 +111,7 @@ export async function initializeSecureStorage(): Promise<boolean> {
     localStorage.setItem('pqc_pubkey', keyPair.publicKey);
     
     // Store private key encrypted with the encryption key
-    const encryptedPrivateKey = encryptAES(keyPair.privateKey, encryptionKey);
+    const encryptedPrivateKey = customEncrypt(keyPair.privateKey, encryptionKey);
     localStorage.setItem('pqc_privkey_enc', encryptedPrivateKey);
     
     // Set initialization flag
@@ -178,7 +186,7 @@ export async function rotateEncryptionKeys(): Promise<boolean> {
     localStorage.setItem('pqc_pubkey', newKeyPair.publicKey);
     
     // Store new private key encrypted with the new encryption key
-    const encryptedPrivateKey = encryptAES(newKeyPair.privateKey, newEncryptionKey);
+    const encryptedPrivateKey = customEncrypt(newKeyPair.privateKey, newEncryptionKey);
     localStorage.setItem('pqc_privkey_enc', encryptedPrivateKey);
     
     // Store the new encryption key

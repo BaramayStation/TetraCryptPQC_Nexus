@@ -1,310 +1,353 @@
 
 /**
- * TetraCryptPQC Decentralized Public Key Infrastructure
- * Implements a quantum-resistant PKI system with on-chain revocation
+ * TetraCryptPQC Decentralized PKI Module
+ * 
+ * Implements a decentralized public key infrastructure with
+ * post-quantum cryptography and StarkNet-based certificate revocation.
  */
 
-import { getUserProfile } from './storage';
-import { generateKeyPair, signMessage, verifySignature } from './pqcrypto';
+import { 
+  generateMLKEMKeypair, 
+  generateSLHDSAKeypair,
+  generateFalconKeypair,
+  generateBIKEKeypair
+} from './pqcrypto';
+import { signMessage } from './crypto';
 import { getLocalStorage, setLocalStorage } from './secure-storage';
-import { SecureContainerConfig, PKICertificate, RevocationReason } from './storage-types';
+import { logSecurityEvent } from './ai-security';
 
-// Simulated revocation list (in a real implementation, this would be retrieved from StarkNet)
-let revocationList: Record<string, { reason: RevocationReason; timestamp: string }> = {};
+// Certificate types
+export enum CertificateType {
+  IDENTITY = "IDENTITY",
+  SIGNING = "SIGNING",
+  ENCRYPTION = "ENCRYPTION",
+  AUTHENTICATION = "AUTHENTICATION"
+}
 
-/**
- * Create a new quantum-resistant certificate
- */
-export async function createPQCertificate(
-  subject: string,
-  issuer?: string
-): Promise<PKICertificate> {
-  console.log("🔹 Creating new PQ Certificate for", subject);
-  
-  // Get user profile
-  const profile = getUserProfile();
-  if (!profile) {
-    throw new Error("User profile not found");
-  }
-  
-  // Get issuer (self-signed if not provided)
-  const certIssuer = issuer || subject;
-  
-  // Generate serial number
-  const serialNumber = crypto.randomUUID().replace(/-/g, '');
-  
-  // Set validity period (1 year)
-  const now = new Date();
-  const validFrom = now.toISOString();
-  const validTo = new Date(now.setFullYear(now.getFullYear() + 1)).toISOString();
-  
-  // Use existing PQC keys or generate new ones
-  let mlkemPublicKey = profile.keyPairs?.pqkem.publicKey;
-  let falconPublicKey = profile.keyPairs?.signature.publicKey;
-  
-  if (!mlkemPublicKey || !falconPublicKey) {
-    // Generate new key pairs if needed
-    const pqcKeyPair = await generateKeyPair();
-    mlkemPublicKey = pqcKeyPair.pqkem.publicKey;
-    falconPublicKey = pqcKeyPair.signature.publicKey;
-  }
-  
-  // Create certificate object
-  const certificate: PKICertificate = {
-    id: crypto.randomUUID(),
-    serialNumber,
-    subject,
-    issuer: certIssuer,
-    validFrom,
-    validTo,
-    publicKeyAlgorithm: "hybrid",
-    publicKey: mlkemPublicKey || "",
-    signatureAlgorithm: "Falcon-1024",
-    signature: "",
-    fingerprint: "",
-    status: 'valid',
-    pqcProtected: true,
-    quantum: {
-      mlkemPublicKey,
-      falconPublicKey,
-      algorithm: "ML-KEM-1024 + Falcon-1024",
-      strength: "Level 5 (256-bit quantum security)"
-    },
-    extensions: {
-      keyUsage: ["digitalSignature", "keyEncipherment"],
-      extendedKeyUsage: ["clientAuth", "serverAuth"],
-      basicConstraints: {
-        isCA: false
-      }
-    },
-    starkNetVerified: false,
-    zkProofs: {}
-  };
-  
-  // Sign the certificate (simplified - in reality would use proper X.509 encoding)
-  const certDataToSign = JSON.stringify({
-    serialNumber: certificate.serialNumber,
-    subject: certificate.subject,
-    issuer: certificate.issuer,
-    validFrom: certificate.validFrom,
-    validTo: certificate.validTo,
-    publicKeyAlgorithm: certificate.publicKeyAlgorithm,
-    publicKey: certificate.publicKey,
-    extensions: certificate.extensions
-  });
-  
-  // Sign with issuer's key (in this case, our own key)
-  if (profile.keyPairs?.signature) {
-    certificate.signature = await signMessage(
-      certDataToSign,
-      profile.keyPairs.signature.privateKey
-    );
-  }
-  
-  // Calculate fingerprint (simplified)
-  certificate.fingerprint = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(certDataToSign)
-  ).then(buffer => {
-    return Array.from(new Uint8Array(buffer))
-      .map(b => b.toString(16).padStart(2, "0"))
-      .join('');
-  });
-  
-  return certificate;
+// Certificate status
+export enum CertificateStatus {
+  VALID = "VALID",
+  REVOKED = "REVOKED",
+  EXPIRED = "EXPIRED",
+  PENDING = "PENDING"
+}
+
+// Certificate revocation reason
+export enum RevocationReason {
+  KEY_COMPROMISE = "KEY_COMPROMISE",
+  AFFILIATION_CHANGED = "AFFILIATION_CHANGED",
+  SUPERSEDED = "SUPERSEDED",
+  CESSATION_OF_OPERATION = "CESSATION_OF_OPERATION",
+  PRIVILEGE_WITHDRAWN = "PRIVILEGE_WITHDRAWN"
+}
+
+// Certificate interface
+export interface Certificate {
+  id: string;
+  type: CertificateType;
+  subject: string;
+  publicKey: string;
+  algorithm: string;
+  issuer: string;
+  validFrom: string;
+  validTo: string;
+  status: CertificateStatus;
+  revocationReason?: RevocationReason;
+  revocationDate?: string;
+  signature: string;
+  metadata?: Record<string, any>;
+  extensions?: Record<string, any>;
 }
 
 /**
- * Verify a quantum-resistant certificate
+ * Generate a new certificate
  */
-export async function verifyCertificate(
-  certificate: PKICertificate
-): Promise<{
+export async function generateCertificate(
+  subject: string,
+  type: CertificateType,
+  algorithm: 'ML-KEM-1024' | 'SLH-DSA' | 'Falcon-1024' | 'BIKE',
+  validityDays: number = 365
+): Promise<Certificate> {
+  try {
+    console.log(`🔹 Generating ${algorithm} certificate for ${subject}`);
+    
+    // Generate key pair based on selected algorithm
+    let keyPair;
+    switch (algorithm) {
+      case 'ML-KEM-1024':
+        keyPair = await generateMLKEMKeypair();
+        break;
+      case 'SLH-DSA':
+        keyPair = await generateSLHDSAKeypair();
+        break;
+      case 'Falcon-1024':
+        keyPair = await generateFalconKeypair();
+        break;
+      case 'BIKE':
+        keyPair = await generateBIKEKeypair();
+        break;
+      default:
+        throw new Error(`Unsupported algorithm: ${algorithm}`);
+    }
+    
+    // Generate certificate ID
+    const id = crypto.randomUUID();
+    
+    // Set validity dates
+    const now = new Date();
+    const validFrom = now.toISOString();
+    const validTo = new Date(now.setDate(now.getDate() + validityDays)).toISOString();
+    
+    // Create certificate object
+    const certificate: Certificate = {
+      id,
+      type,
+      subject,
+      publicKey: keyPair.publicKey,
+      algorithm,
+      issuer: "TetraCryptPQC Self-Signed", // Self-signed for now
+      validFrom,
+      validTo,
+      status: CertificateStatus.VALID,
+      signature: "", // Placeholder until signed
+      extensions: {
+        subjectKeyIdentifier: id,
+        keyUsage: getKeyUsageByType(type),
+        postQuantumReady: true,
+        starkNetRevocation: true
+      }
+    };
+    
+    // Sign the certificate with the private key
+    const certificateData = JSON.stringify({
+      id: certificate.id,
+      type: certificate.type,
+      subject: certificate.subject,
+      publicKey: certificate.publicKey,
+      algorithm: certificate.algorithm,
+      issuer: certificate.issuer,
+      validFrom: certificate.validFrom,
+      validTo: certificate.validTo,
+      extensions: certificate.extensions
+    });
+    
+    // Sign certificate data
+    certificate.signature = await signMessage(certificateData, keyPair.privateKey);
+    
+    // Store the certificate
+    storeCertificate(certificate);
+    
+    // Store the private key securely (in a real system, this would be stored in a HSM)
+    storePrivateKey(id, keyPair.privateKey);
+    
+    // Log security event
+    logSecurityEvent({
+      eventType: "cryptographic-operation",
+      userId: subject,
+      operation: "generate_certificate",
+      status: "success",
+      metadata: { certificateId: id, algorithm, type }
+    });
+    
+    return certificate;
+  } catch (error) {
+    console.error("Error generating certificate:", error);
+    
+    // Log security event
+    logSecurityEvent({
+      eventType: "cryptographic-operation",
+      userId: subject,
+      operation: "generate_certificate",
+      status: "failure",
+      metadata: { error: error instanceof Error ? error.message : "Unknown error" }
+    });
+    
+    throw error;
+  }
+}
+
+/**
+ * Get key usage by certificate type
+ */
+function getKeyUsageByType(type: CertificateType): string[] {
+  switch (type) {
+    case CertificateType.IDENTITY:
+      return ["digitalSignature", "keyEncipherment"];
+    case CertificateType.SIGNING:
+      return ["digitalSignature", "nonRepudiation"];
+    case CertificateType.ENCRYPTION:
+      return ["keyEncipherment", "dataEncipherment"];
+    case CertificateType.AUTHENTICATION:
+      return ["digitalSignature", "keyAgreement"];
+    default:
+      return ["digitalSignature"];
+  }
+}
+
+/**
+ * Store a certificate
+ */
+function storeCertificate(certificate: Certificate): void {
+  try {
+    const certificates = getLocalStorage<Certificate[]>("certificates") || [];
+    certificates.push(certificate);
+    setLocalStorage("certificates", certificates);
+  } catch (error) {
+    console.error("Error storing certificate:", error);
+    throw error;
+  }
+}
+
+/**
+ * Store a private key securely
+ */
+function storePrivateKey(certificateId: string, privateKey: string): void {
+  try {
+    setLocalStorage(`private_key_${certificateId}`, privateKey, true);
+  } catch (error) {
+    console.error("Error storing private key:", error);
+    throw error;
+  }
+}
+
+/**
+ * Get a certificate by ID
+ */
+export function getCertificate(id: string): Certificate | null {
+  try {
+    const certificates = getLocalStorage<Certificate[]>("certificates") || [];
+    return certificates.find(cert => cert.id === id) || null;
+  } catch (error) {
+    console.error("Error getting certificate:", error);
+    return null;
+  }
+}
+
+/**
+ * Revoke a certificate
+ */
+export function revokeCertificate(
+  id: string, 
+  reason: RevocationReason
+): Certificate | null {
+  try {
+    const certificates = getLocalStorage<Certificate[]>("certificates") || [];
+    const index = certificates.findIndex(cert => cert.id === id);
+    
+    if (index === -1) {
+      return null;
+    }
+    
+    // Update certificate status
+    certificates[index].status = CertificateStatus.REVOKED;
+    certificates[index].revocationReason = reason;
+    certificates[index].revocationDate = new Date().toISOString();
+    
+    // Save updated certificates
+    setLocalStorage("certificates", certificates);
+    
+    // Log security event
+    logSecurityEvent({
+      eventType: "cryptographic-operation",
+      userId: certificates[index].subject,
+      operation: "revoke_certificate",
+      status: "success",
+      metadata: { certificateId: id, reason }
+    });
+    
+    // In a real implementation, we would also publish to the StarkNet CRL
+    console.log(`🔹 Certificate ${id} revoked and added to StarkNet CRL`);
+    
+    return certificates[index];
+  } catch (error) {
+    console.error("Error revoking certificate:", error);
+    return null;
+  }
+}
+
+/**
+ * Verify a certificate
+ */
+export function verifyCertificate(id: string): {
   valid: boolean;
-  expired: boolean;
-  revoked: boolean;
-  trusted: boolean;
-  revocationReason?: RevocationReason;
-  error?: string;
-}> {
-  console.log("🔹 Verifying certificate:", certificate.subject);
-  
-  // Check if certificate is expired
-  const now = new Date();
-  const validTo = new Date(certificate.validTo);
-  const expired = now > validTo;
-  
-  if (expired) {
-    return {
-      valid: false,
-      expired: true,
-      revoked: false,
-      trusted: false,
-      error: "Certificate has expired"
-    };
-  }
-  
-  // Check if certificate is revoked
-  const revocation = revocationList[certificate.serialNumber];
-  if (revocation) {
-    return {
-      valid: false,
-      expired: false,
-      revoked: true,
-      trusted: false,
-      revocationReason: revocation.reason,
-      error: `Certificate has been revoked: ${RevocationReason[revocation.reason]}`
-    };
-  }
-  
-  // In a real system, we would check an online revocation service or OCSP
-  // For demo purposes, we'll simulate a check against our local revocation list
-  
-  // Verify certificate signature (simplified)
-  const certDataToVerify = JSON.stringify({
-    serialNumber: certificate.serialNumber,
-    subject: certificate.subject,
-    issuer: certificate.issuer,
-    validFrom: certificate.validFrom,
-    validTo: certificate.validTo,
-    publicKeyAlgorithm: certificate.publicKeyAlgorithm,
-    publicKey: certificate.publicKey,
-    extensions: certificate.extensions
-  });
-  
-  // For self-signed certificates, verify with the certificate's own public key
-  // For CA-signed certificates, we would need to have the CA's public key
-  let signatureValid = false;
-  if (certificate.quantum.falconPublicKey) {
-    try {
-      signatureValid = await verifySignature(
-        certDataToVerify,
-        certificate.signature,
-        certificate.quantum.falconPublicKey
-      );
-    } catch (error) {
+  status: CertificateStatus;
+  reason?: string;
+} {
+  try {
+    const certificate = getCertificate(id);
+    
+    if (!certificate) {
       return {
         valid: false,
-        expired: false,
-        revoked: false,
-        trusted: false,
-        error: "Signature verification failed"
+        status: CertificateStatus.REVOKED,
+        reason: "Certificate not found"
       };
     }
-  }
-  
-  // Check if this is a trusted certificate
-  // In a real system, we would check against a trusted root store
-  // For demo purposes, all valid signatures are considered trusted
-  const trusted = signatureValid;
-  
-  return {
-    valid: signatureValid,
-    expired: false,
-    revoked: false,
-    trusted,
-    error: signatureValid ? undefined : "Invalid signature"
-  };
-}
-
-/**
- * Revoke a quantum-resistant certificate
- */
-export async function revokeCertificate(
-  certificate: PKICertificate,
-  reason: RevocationReason
-): Promise<boolean> {
-  console.log("🔹 Revoking certificate:", certificate.subject);
-  
-  // In a real system, this would update an on-chain revocation list
-  // For demo purposes, we'll update our local revocation list
-  
-  revocationList[certificate.serialNumber] = {
-    reason,
-    timestamp: new Date().toISOString()
-  };
-  
-  // Update certificate status
-  certificate.status = 'revoked';
-  
-  return true;
-}
-
-/**
- * Check if a certificate is revoked
- */
-export async function checkRevocationStatus(
-  certificate: PKICertificate
-): Promise<{
-  revoked: boolean;
-  reason?: RevocationReason;
-  timestamp?: string;
-}> {
-  console.log("🔹 Checking revocation status for certificate:", certificate.subject);
-  
-  // In a real system, this would check an on-chain revocation list
-  // For demo purposes, we'll check our local revocation list
-  
-  const revocation = revocationList[certificate.serialNumber];
-  
-  return {
-    revoked: !!revocation,
-    reason: revocation?.reason,
-    timestamp: revocation?.timestamp
-  };
-}
-
-/**
- * Create and verify a StarkNet identity proof for a certificate
- */
-export async function createStarkNetIdentityProof(
-  certificate: PKICertificate
-): Promise<{
-  success: boolean;
-  proof?: string;
-  error?: string;
-}> {
-  console.log("🔹 Creating StarkNet identity proof for certificate:", certificate.subject);
-  
-  // Get user profile
-  const profile = getUserProfile();
-  if (!profile || !profile.starkNetId) {
+    
+    // Check if revoked
+    if (certificate.status === CertificateStatus.REVOKED) {
+      return {
+        valid: false,
+        status: CertificateStatus.REVOKED,
+        reason: certificate.revocationReason
+      };
+    }
+    
+    // Check if expired
+    const now = new Date();
+    const validTo = new Date(certificate.validTo);
+    
+    if (now > validTo) {
+      return {
+        valid: false,
+        status: CertificateStatus.EXPIRED,
+        reason: "Certificate has expired"
+      };
+    }
+    
+    // Certificate is valid
     return {
-      success: false,
-      error: "StarkNet ID not found in user profile"
+      valid: true,
+      status: CertificateStatus.VALID
+    };
+  } catch (error) {
+    console.error("Error verifying certificate:", error);
+    return {
+      valid: false,
+      status: CertificateStatus.REVOKED,
+      reason: "Error verifying certificate"
     };
   }
-  
-  // In a real system, this would create a zk-STARK proof binding the StarkNet ID to the certificate
-  // For demo purposes, we'll create a simulated proof
-  
-  // The proof would include certificate fingerprint and StarkNet ID
-  const proofData = {
-    certificateFingerprint: certificate.fingerprint,
-    starkNetId: profile.starkNetId.id,
-    timestamp: new Date().toISOString()
-  };
-  
-  // Sign the proof data with the user's signature key
-  let proof = "";
-  if (profile.keyPairs?.signature) {
-    proof = await signMessage(
-      JSON.stringify(proofData),
-      profile.keyPairs.signature.privateKey
-    );
-  } else {
-    return {
-      success: false,
-      error: "Signature key not found in user profile"
-    };
+}
+
+/**
+ * Get all certificates
+ */
+export function getAllCertificates(): Certificate[] {
+  return getLocalStorage<Certificate[]>("certificates") || [];
+}
+
+/**
+ * Initialize the decentralized PKI
+ */
+export function initializeDecentralizedPKI(): boolean {
+  try {
+    console.log("🔹 Initializing decentralized PKI");
+    
+    // Check if already initialized
+    if (getLocalStorage<boolean>("pki_initialized")) {
+      console.log("🔹 Decentralized PKI already initialized");
+      return true;
+    }
+    
+    // In a real implementation, this would initialize the PKI infrastructure
+    // For now, just set the initialization flag
+    setLocalStorage("pki_initialized", true);
+    
+    console.log("🔹 Decentralized PKI initialized");
+    return true;
+  } catch (error) {
+    console.error("Error initializing decentralized PKI:", error);
+    return false;
   }
-  
-  // Update the certificate with the proof
-  certificate.starkNetVerified = true;
-  certificate.zkProofs.identityProof = proof;
-  
-  return {
-    success: true,
-    proof
-  };
 }

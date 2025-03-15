@@ -1,448 +1,293 @@
 
 /**
- * TetraCryptPQC Secure Infrastructure
+ * TetraCryptPQC Secure Infrastructure Module
  * 
- * Implements Podman-based secure execution environments with
- * TPM/SGX integration, immutable rootfs, and SELinux/AppArmor confinement.
+ * Implements secure container orchestration, TPM/SGX integration, and
+ * confidential computing features for enterprise deployments.
  */
 
-import { logSecurityEvent, SecurityEventType } from './ai-security';
-import { detectHardwareSecurity } from './enterprise-security';
-import { SecureContainerConfig, SecureInfraNode, SecureServiceMesh, HSMType } from './storage-types';
+import { encryptAES } from './crypto';
+import { logSecurityEvent } from './ai-security';
+import { getLocalStorage, setLocalStorage } from './secure-storage';
 
-// Infrastructure security level types
-export type SecurityLevel = 'standard' | 'enhanced' | 'confidential' | 'military';
+// Types for secure infrastructure
+export enum HSMType {
+  TPM = "TPM",
+  SGX = "SGX",
+  OTHER = "OTHER"
+}
 
-// Container confinement types
-export type ConfinementType = 'selinux' | 'apparmor' | 'seccomp' | 'none';
+export interface SecureContainerConfig {
+  id: string;
+  name: string;
+  immutableRootfs: boolean;
+  selinuxEnabled: boolean;
+  hsmProtection: boolean;
+  hsmType?: HSMType;
+  encryptedMemory: boolean;
+  networkIsolation: boolean;
+  securityPolicies: string[];
+  created: string;
+}
 
-// Secure storage types
-export type SecureStorageType = 'tmpfs' | 'encrypted' | 'ephemeral' | 'memfd';
+export interface SecureMeshConfig {
+  id: string;
+  name: string;
+  containers: string[];
+  e2eEncryption: boolean;
+  dynamicRotation: boolean;
+  encryptionAlgorithm: string;
+  created: string;
+}
 
-// TPM/SGX capabilities check result
-export interface HardwareSecurityCapabilities {
+/**
+ * Check hardware security capabilities
+ */
+export async function checkHardwareSecurityCapabilities(): Promise<{
   tpmAvailable: boolean;
   tpmVersion?: string;
   sgxAvailable: boolean;
   sgxVersion?: string;
-  sevAvailable: boolean;
-  secureBootEnabled: boolean;
-  measuredBoot: boolean;
-  attestationCapable: boolean;
+  sevAvailable?: boolean;
+  sevVersion?: string;
+}> {
+  try {
+    // In a real implementation, this would check the actual hardware capabilities
+    // For simulation purposes, we'll return a static result
+    
+    // Detect HSM type and handle enums properly
+    const hsmType = await detectHSMType();
+    
+    return {
+      tpmAvailable: hsmType === HSMType.TPM,
+      tpmVersion: hsmType === HSMType.TPM ? "2.0" : undefined,
+      sgxAvailable: hsmType === HSMType.SGX,
+      sgxVersion: hsmType === HSMType.SGX ? "SGX2" : undefined,
+      sevAvailable: false,
+      sevVersion: undefined
+    };
+  } catch (error) {
+    console.error("Error checking hardware security capabilities:", error);
+    return {
+      tpmAvailable: false,
+      sgxAvailable: false,
+      sevAvailable: false
+    };
+  }
 }
 
 /**
- * Check for TPM/SGX capabilities on the system
+ * Detect HSM type
  */
-export async function checkHardwareSecurityCapabilities(): Promise<HardwareSecurityCapabilities> {
-  console.log("🔹 Checking hardware security capabilities");
-  
-  // Use the enterprise security module to detect hardware security
-  const hwSecurity = await detectHardwareSecurity();
-  
-  // Map to hardware security capabilities
-  return {
-    tpmAvailable: hwSecurity.type === HSMType.TPM,
-    tpmVersion: hwSecurity.type === HSMType.TPM ? hwSecurity.firmwareVersion : undefined,
-    sgxAvailable: hwSecurity.type === HSMType.SGX,
-    sgxVersion: hwSecurity.type === HSMType.SGX ? hwSecurity.firmwareVersion : undefined,
-    sevAvailable: hwSecurity.features.includes("AMD SEV"),
-    secureBootEnabled: hwSecurity.features.includes("Secure Boot"),
-    measuredBoot: hwSecurity.features.includes("Measured Boot"),
-    attestationCapable: hwSecurity.features.includes("Remote Attestation")
-  };
+export async function detectHSMType(): Promise<HSMType> {
+  try {
+    // In a real implementation, this would detect the actual HSM type
+    // For simulation purposes, we'll return a static result
+    
+    // Simulate detection with 40% chance of TPM, 30% chance of SGX, 30% chance of none
+    const random = Math.random();
+    
+    if (random < 0.4) {
+      return HSMType.TPM;
+    } else if (random < 0.7) {
+      return HSMType.SGX;
+    } else {
+      return HSMType.OTHER;
+    }
+  } catch (error) {
+    console.error("Error detecting HSM type:", error);
+    return HSMType.OTHER;
+  }
 }
 
 /**
- * Create a secure Podman container with TPM/SGX integration
+ * Create a secure container
  */
 export async function createSecureContainer(
   name: string,
-  securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave',
-  config: {
-    immutableRootfs?: boolean;
-    confinement?: ConfinementType;
-    networkPolicy?: 'isolated' | 'service-mesh' | 'e2e-encrypted' | 'none';
-    rotationEnabled?: boolean;
-    rotationInterval?: number;
-  } = {}
+  config: Partial<SecureContainerConfig> = {}
 ): Promise<SecureContainerConfig> {
-  console.log(`🔹 Creating secure container: ${name} with ${securityProfile} profile`);
-  
-  // Check hardware security capabilities
-  const hwCapabilities = await checkHardwareSecurityCapabilities();
-  
-  // Ensure required capabilities for selected profile
-  if (securityProfile === 'tpm-protected' && !hwCapabilities.tpmAvailable) {
-    throw new Error("TPM-protected containers require TPM hardware support");
+  try {
+    // Generate a new container ID
+    const id = crypto.randomUUID();
+    
+    // Create container config with defaults
+    const containerConfig: SecureContainerConfig = {
+      id,
+      name,
+      immutableRootfs: config.immutableRootfs ?? true,
+      selinuxEnabled: config.selinuxEnabled ?? true,
+      hsmProtection: config.hsmProtection ?? false,
+      hsmType: config.hsmType,
+      encryptedMemory: config.encryptedMemory ?? true,
+      networkIsolation: config.networkIsolation ?? true,
+      securityPolicies: config.securityPolicies ?? ["default", "pqc-protected"],
+      created: new Date().toISOString()
+    };
+    
+    // In a real implementation, this would create an actual container
+    console.log(`🔹 Creating secure container: ${name}`);
+    
+    // Store the container config
+    const containers = getLocalStorage<SecureContainerConfig[]>("secure_containers") || [];
+    containers.push(containerConfig);
+    setLocalStorage("secure_containers", containers);
+    
+    // Log security event
+    logSecurityEvent({
+      eventType: "system",
+      userId: "system",
+      operation: "create_secure_container",
+      status: "success",
+      metadata: { containerId: id, name }
+    });
+    
+    return containerConfig;
+  } catch (error) {
+    console.error("Error creating secure container:", error);
+    
+    // Log security event
+    logSecurityEvent({
+      eventType: "system",
+      userId: "system",
+      operation: "create_secure_container",
+      status: "failure",
+      metadata: { name, error: error instanceof Error ? error.message : "Unknown error" }
+    });
+    
+    throw error;
   }
-  
-  if (securityProfile === 'sgx-enclave' && !hwCapabilities.sgxAvailable) {
-    throw new Error("SGX enclave containers require Intel SGX hardware support");
+}
+
+/**
+ * Create a secure mesh
+ */
+export async function createSecureMesh(
+  name: string,
+  containers: string[],
+  config: Partial<SecureMeshConfig> = {}
+): Promise<SecureMeshConfig> {
+  try {
+    // Generate a new mesh ID
+    const id = crypto.randomUUID();
+    
+    // Create mesh config with defaults
+    const meshConfig: SecureMeshConfig = {
+      id,
+      name,
+      containers,
+      e2eEncryption: config.e2eEncryption ?? true,
+      dynamicRotation: config.dynamicRotation ?? true,
+      encryptionAlgorithm: config.encryptionAlgorithm ?? "ML-KEM-1024",
+      created: new Date().toISOString()
+    };
+    
+    // In a real implementation, this would create an actual mesh
+    console.log(`🔹 Creating secure mesh: ${name}`);
+    
+    // Store the mesh config
+    const meshes = getLocalStorage<SecureMeshConfig[]>("secure_meshes") || [];
+    meshes.push(meshConfig);
+    setLocalStorage("secure_meshes", meshes);
+    
+    // Log security event
+    logSecurityEvent({
+      eventType: "system",
+      userId: "system",
+      operation: "create_secure_mesh",
+      status: "success",
+      metadata: { meshId: id, name }
+    });
+    
+    return meshConfig;
+  } catch (error) {
+    console.error("Error creating secure mesh:", error);
+    
+    // Log security event
+    logSecurityEvent({
+      eventType: "system",
+      userId: "system",
+      operation: "create_secure_mesh",
+      status: "failure",
+      metadata: { name, error: error instanceof Error ? error.message : "Unknown error" }
+    });
+    
+    throw error;
   }
-  
-  // Set default confinement based on security profile
-  const confinement = config.confinement || 
-    (securityProfile === 'standard' ? 'seccomp' : 
-     securityProfile === 'hardened' ? 'apparmor' : 'selinux');
-  
-  // In a real implementation, this would create a Podman container with the specified security profile
-  // For simulation purposes, we'll create a container configuration object
-  
-  const containerId = `container-${Math.random().toString(36).substring(2, 10)}`;
-  const timestamp = new Date().toISOString();
-  
-  // Create container configuration
-  const containerConfig: SecureContainerConfig = {
-    id: containerId,
-    name,
-    type: 'podman',
-    securityProfile,
-    immutableRootfs: config.immutableRootfs ?? (securityProfile !== 'standard'),
-    confinement,
-    networkPolicy: config.networkPolicy || 'e2e-encrypted',
-    rotationPolicy: {
-      enabled: config.rotationEnabled ?? (securityProfile !== 'standard'),
-      interval: config.rotationInterval || (securityProfile === 'sgx-enclave' ? 60 : 240),
-      triggerOnAnomaly: securityProfile !== 'standard'
-    },
-    resources: {
-      cpuLimit: "2",
-      memoryLimit: "2G",
-      storageLimit: "5G"
-    },
-    verifiedBoot: securityProfile === 'tpm-protected' || securityProfile === 'sgx-enclave',
-    integrityMonitoring: securityProfile !== 'standard',
-    created: timestamp,
-    lastUpdated: timestamp,
-    status: 'running'
-  };
-  
-  // Log the container creation as a security event
-  logSecurityEvent({
-    eventType: 'infrastructure' as SecurityEventType,
-    userId: 'system',
-    operation: 'create-secure-container',
-    status: 'success',
-    metadata: {
-      containerId,
-      securityProfile,
-      immutableRootfs: containerConfig.immutableRootfs,
-      confinement
-    }
-  });
-  
-  return containerConfig;
 }
 
 /**
- * Create a secure service mesh for container orchestration
+ * Get all secure containers
  */
-export async function createSecureServiceMesh(
-  name: string,
-  services: string[],
-  config: {
-    encryptionType?: 'ml-kem' | 'hybrid-pqc' | 'tls-1-3' | 'none';
-    mutualAuthentication?: boolean;
-    certificateRotation?: boolean;
-    zkProofVerification?: boolean;
-  } = {}
-): Promise<SecureServiceMesh> {
-  console.log(`🔹 Creating secure service mesh: ${name} with ${services.length} services`);
-  
-  // In a real implementation, this would create a service mesh with the specified services
-  // For simulation purposes, we'll create a service mesh configuration object
-  
-  const meshId = `mesh-${Math.random().toString(36).substring(2, 10)}`;
-  const timestamp = new Date().toISOString();
-  
-  // Create service mesh configuration
-  const serviceMesh: SecureServiceMesh = {
-    id: meshId,
-    name,
-    services,
-    encryptionType: config.encryptionType || 'ml-kem',
-    mutualAuthentication: config.mutualAuthentication ?? true,
-    certificateRotation: config.certificateRotation ?? true,
-    trafficAnalysis: true,
-    anomalyDetection: true,
-    mtls: true,
-    zkProofVerification: config.zkProofVerification ?? false,
-    serviceDiscovery: true,
-    created: timestamp,
-    lastUpdated: timestamp
-  };
-  
-  // Log the service mesh creation as a security event
-  logSecurityEvent({
-    eventType: 'infrastructure',
-    userId: 'system',
-    operation: 'create-service-mesh',
-    status: 'success',
-    metadata: {
-      meshId,
-      services: services.length,
-      encryptionType: serviceMesh.encryptionType
-    }
-  });
-  
-  return serviceMesh;
+export function getSecureContainers(): SecureContainerConfig[] {
+  return getLocalStorage<SecureContainerConfig[]>("secure_containers") || [];
 }
 
 /**
- * Create a hardened infrastructure node
+ * Get all secure meshes
  */
-export async function createSecureInfraNode(
-  name: string,
-  type: 'physical' | 'virtual' | 'container' | 'serverless',
-  config: {
-    confidentialComputing?: boolean;
-    attestationSupport?: boolean;
-    compliance?: string[];
-  } = {}
-): Promise<SecureInfraNode> {
-  console.log(`🔹 Creating secure infrastructure node: ${name} (${type})`);
-  
-  // Check hardware security capabilities
-  const hwCapabilities = await checkHardwareSecurityCapabilities();
-  
-  // In a real implementation, this would provision a secure infrastructure node
-  // For simulation purposes, we'll create a node configuration object
-  
-  const nodeId = `node-${Math.random().toString(36).substring(2, 10)}`;
-  const timestamp = new Date().toISOString();
-  
-  // Create node configuration
-  const infraNode: SecureInfraNode = {
-    id: nodeId,
-    name,
-    type,
-    hardwareCapabilities: {
-      tpm: hwCapabilities.tpmAvailable,
-      sgx: hwCapabilities.sgxAvailable,
-      sev: hwCapabilities.sevAvailable,
-      nvdimm: type === 'physical',
-      secureBoot: hwCapabilities.secureBootEnabled
-    },
-    networkSecurity: {
-      encryptionInTransit: true,
-      firewallEnabled: true,
-      intrusionDetection: true,
-      ddosProtection: type !== 'container'
-    },
-    complianceStatus: {
-      fisma: config.compliance?.includes('fisma') ?? false,
-      fedramp: config.compliance?.includes('fedramp') ?? false,
-      hipaa: config.compliance?.includes('hipaa') ?? false,
-      pci: config.compliance?.includes('pci') ?? false,
-      gdpr: config.compliance?.includes('gdpr') ?? false,
-    },
-    confidentialComputing: config.confidentialComputing ?? (type === 'physical' && hwCapabilities.sgxAvailable),
-    attestationSupport: config.attestationSupport ?? hwCapabilities.attestationCapable,
-    patchStatus: 'up-to-date',
-    lastScan: timestamp,
-    threatLevel: 'minimal'
-  };
-  
-  // Log the node creation as a security event
-  logSecurityEvent({
-    eventType: 'infrastructure' as SecurityEventType,
-    userId: 'system',
-    operation: 'create-infra-node',
-    status: 'success',
-    metadata: {
-      nodeId,
-      type,
-      confidentialComputing: infraNode.confidentialComputing
-    }
-  });
-  
-  return infraNode;
+export function getSecureMeshes(): SecureMeshConfig[] {
+  return getLocalStorage<SecureMeshConfig[]>("secure_meshes") || [];
 }
 
 /**
- * Check if container rotation is needed based on security policy
+ * Initialize secure infrastructure
  */
-export function checkContainerRotationNeeded(
-  container: SecureContainerConfig
-): boolean {
-  if (!container.rotationPolicy?.enabled) {
+export async function initializeSecureInfrastructure(): Promise<boolean> {
+  try {
+    console.log("🔹 Initializing secure infrastructure");
+    
+    // Check if already initialized
+    if (getLocalStorage<boolean>("secure_infrastructure_initialized")) {
+      console.log("🔹 Secure infrastructure already initialized");
+      return true;
+    }
+    
+    // In a real implementation, this would initialize the actual infrastructure
+    
+    // Create default containers
+    await createSecureContainer("pqc-auth-service", {
+      immutableRootfs: true,
+      selinuxEnabled: true,
+      hsmProtection: true,
+      encryptedMemory: true,
+      networkIsolation: true
+    });
+    
+    await createSecureContainer("pqc-messaging-service", {
+      immutableRootfs: true,
+      selinuxEnabled: true,
+      hsmProtection: true,
+      encryptedMemory: true,
+      networkIsolation: true
+    });
+    
+    await createSecureContainer("pqc-key-management-service", {
+      immutableRootfs: true,
+      selinuxEnabled: true,
+      hsmProtection: true,
+      encryptedMemory: true,
+      networkIsolation: true
+    });
+    
+    // Create default mesh
+    await createSecureMesh("pqc-service-mesh", [
+      "pqc-auth-service",
+      "pqc-messaging-service",
+      "pqc-key-management-service"
+    ], {
+      e2eEncryption: true,
+      dynamicRotation: true,
+      encryptionAlgorithm: "ML-KEM-1024"
+    });
+    
+    // Mark as initialized
+    setLocalStorage("secure_infrastructure_initialized", true);
+    
+    console.log("🔹 Secure infrastructure initialized successfully");
+    return true;
+  } catch (error) {
+    console.error("Error initializing secure infrastructure:", error);
     return false;
   }
-  
-  // Parse timestamps
-  const lastUpdated = new Date(container.lastUpdated).getTime();
-  const now = Date.now();
-  
-  // Check if interval has elapsed
-  const intervalMs = container.rotationPolicy.interval * 60 * 1000;
-  return (now - lastUpdated) > intervalMs;
-}
-
-/**
- * Rotate a secure container (recreate with fresh state)
- */
-export async function rotateContainer(
-  container: SecureContainerConfig
-): Promise<SecureContainerConfig> {
-  console.log(`🔹 Rotating secure container: ${container.name}`);
-  
-  // In a real implementation, this would destroy and recreate the container
-  // For simulation purposes, we'll update the timestamp and generate a new ID
-  
-  const newContainerId = `container-${Math.random().toString(36).substring(2, 10)}`;
-  const timestamp = new Date().toISOString();
-  
-  // Create updated container configuration
-  const updatedContainer: SecureContainerConfig = {
-    ...container,
-    id: newContainerId,
-    created: timestamp,
-    lastUpdated: timestamp
-  };
-  
-  // Log the container rotation as a security event
-  logSecurityEvent({
-    eventType: 'infrastructure' as SecurityEventType,
-    userId: 'system',
-    operation: 'rotate-container',
-    status: 'success',
-    metadata: {
-      oldContainerId: container.id,
-      newContainerId,
-      securityProfile: container.securityProfile
-    }
-  });
-  
-  return updatedContainer;
-}
-
-/**
- * Verify the integrity of a secure container
- */
-export async function verifyContainerIntegrity(
-  container: SecureContainerConfig
-): Promise<{
-  verified: boolean;
-  issues: string[];
-  attestationReport?: string;
-}> {
-  console.log(`🔹 Verifying integrity of container: ${container.name}`);
-  
-  // In a real implementation, this would check the container's integrity
-  // For simulation purposes, we'll generate a verification result
-  
-  // For now, assume all containers are verified
-  const verified = Math.random() > 0.05; // 95% chance of verification success
-  
-  // Generate issues if not verified
-  const issues = verified ? [] : [
-    "Container filesystem modified",
-    "SELinux policy violation detected",
-    "Unexpected process execution"
-  ];
-  
-  // Generate attestation report for TPM or SGX containers
-  let attestationReport: string | undefined;
-  if (container.securityProfile === 'tpm-protected' || container.securityProfile === 'sgx-enclave') {
-    attestationReport = `ATTESTATION_REPORT_${Math.random().toString(36).substring(2, 10)}`;
-  }
-  
-  // Log the integrity verification as a security event
-  logSecurityEvent({
-    eventType: 'infrastructure' as SecurityEventType,
-    userId: 'system',
-    operation: 'verify-container-integrity',
-    status: verified ? 'success' : 'failure',
-    metadata: {
-      containerId: container.id,
-      issues: issues.length > 0 ? issues : undefined
-    }
-  });
-  
-  return {
-    verified,
-    issues,
-    attestationReport
-  };
-}
-
-/**
- * Create a confidential computing container for AI processing
- */
-export async function createConfidentialAIContainer(
-  name: string,
-  aiProcessType: 'inference' | 'training' | 'anomaly-detection',
-  config: {
-    hardware: 'sgx' | 'sev' | 'auto';
-    memoryLimit: string;
-    cpuLimit: string;
-    networkPolicy?: 'isolated' | 'restricted' | 'aionly';
-    attestationRequired?: boolean;
-  }
-): Promise<SecureContainerConfig> {
-  console.log(`🔹 Creating confidential AI container: ${name} for ${aiProcessType}`);
-  
-  // Check hardware security capabilities
-  const hwCapabilities = await checkHardwareSecurityCapabilities();
-  
-  // Determine which hardware security to use
-  let securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave';
-  
-  if (config.hardware === 'sgx' && hwCapabilities.sgxAvailable) {
-    securityProfile = 'sgx-enclave';
-  } else if (config.hardware === 'sev' && hwCapabilities.sevAvailable) {
-    securityProfile = 'hardened'; // SEV is implemented as a hardened profile
-  } else if (hwCapabilities.sgxAvailable) {
-    securityProfile = 'sgx-enclave';
-  } else if (hwCapabilities.tpmAvailable) {
-    securityProfile = 'tpm-protected';
-  } else {
-    securityProfile = 'hardened';
-    console.warn("No hardware security available, falling back to software-only hardened container");
-  }
-  
-  // Create the container with AI-specific configuration
-  const container = await createSecureContainer(name, securityProfile, {
-    immutableRootfs: true,
-    confinement: 'selinux',
-    networkPolicy: config.networkPolicy === 'isolated' ? 'isolated' : 
-                   config.networkPolicy === 'restricted' ? 'e2e-encrypted' : 
-                   'service-mesh',
-    rotationEnabled: aiProcessType !== 'training', // Don't rotate training containers
-    rotationInterval: 60 // Rotate more frequently for AI containers
-  });
-  
-  // Update resources based on AI type
-  container.resources = {
-    cpuLimit: config.cpuLimit || "4",
-    memoryLimit: config.memoryLimit || "8G",
-    storageLimit: "10G"
-  };
-  
-  // Add AI-specific metadata
-  const aiMetadata = {
-    confidentialComputing: true,
-    aiType: aiProcessType,
-    hardwareProtection: securityProfile,
-    attestationEnabled: config.attestationRequired || false,
-    homomorphicProcessing: aiProcessType === 'inference',
-    memoryEncryption: securityProfile === 'sgx-enclave' || hwCapabilities.sevAvailable
-  };
-  
-  // Log AI container creation
-  logSecurityEvent({
-    eventType: 'infrastructure' as SecurityEventType,
-    userId: 'system',
-    operation: 'create-confidential-ai',
-    status: 'success',
-    metadata: {
-      containerId: container.id,
-      aiType: aiProcessType,
-      securityProfile,
-      ...aiMetadata
-    }
-  });
-  
-  return container;
 }
