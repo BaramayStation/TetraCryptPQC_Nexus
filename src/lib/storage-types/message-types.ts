@@ -12,11 +12,11 @@ export interface Message {
   receiverId: string;
   content: string;
   timestamp: string;
-  encrypted: boolean;
+  encrypted?: boolean;
   signature?: string;
   verified?: boolean;
   encryptionType?: string;
-  status: "sent" | "delivered" | "read" | "failed";
+  status?: "sent" | "delivered" | "read" | "failed";
   kemType?: string;
   pqSignatureType?: string;
   selfHealingStatus?: "active" | "healing" | "healed" | "compromised";

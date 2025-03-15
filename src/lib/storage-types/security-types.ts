@@ -1,279 +1,179 @@
-/**
- * TetraCryptPQC Security Type Definitions
- * 
- * Type definitions for security-related data structures and events
- */
 
-export type SecurityEventType = 'storage' | 'crypto' | 'key-management' | 'identity' | 'authentication' | 'network' | 'application' | 'cryptography';
-export type SecurityLevel = 'top-secret' | 'secret' | 'confidential' | 'restricted' | 'unclassified';
-export type SecurityStatus = 'success' | 'failure' | 'warning';
-
-export interface SecurityEvent {
-  id?: string;
-  eventType: SecurityEventType;
-  operation: string;
-  status: SecurityStatus;
-  timestamp: string;
-  metadata?: Record<string, any>;
-  userId?: string;
-  type?: string;
-  severity?: string;
-  description?: string;
-  sourceIp?: string;
-  systemComponent?: string;
-  resolved?: boolean;
-  resolutionTimestamp?: string;
-  resolutionNotes?: string;
-  data?: Record<string, any>;
-}
-
-export interface Threat {
-  id: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  description: string;
-  timestamp: string;
-  indicators: string[];
-  mitigationSteps: string[];
-}
-
-export interface AIThreatDetection {
-  id: string;
-  threatType: 'anomaly' | 'malware' | 'intrusion' | 'data_leak' | 'ddos' | 'ransomware' | 'other';
-  type?: string;
-  details: string;
-  description?: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  timestamp: string;
-  sourceIp?: string;
-  targetSystem?: string;
-  mitigated: boolean;
-  score: number;
-  remediationSteps?: string[];
-  indicators?: string[];
-  mitigationSteps?: string[];
-  detailedAnalysis?: string;
-  quantumResistant?: boolean;
-  affectedComponents?: string[];
-}
-
-export interface PQCThreatScanResult {
-  threats: AIThreatDetection[];
-  timestamp: string;
-  scanDuration: number;
-  systemsScanned: number;
-  quantumVulnerabilities: number;
-  classicalVulnerabilities: number;
-}
-
-export interface AISecurityPolicy {
-  id: string;
-  name: string;
-  description: string;
-  enforced: boolean;
-  enabled?: boolean;
-  policyType?: 'detection' | 'prevention' | 'response';
-  createdAt?: string;
-  updatedAt?: string;
-  threatLevel?: 'low' | 'medium' | 'high' | 'critical';
-  automatedResponse?: boolean;
-  mlModelVersion?: string;
-  zeroKnowledgeAuthEnabled?: boolean;
-  level: SecurityLevel;
-  components: string[];
-  lastUpdated: string;
-  createdBy: string;
-  pqcEnabled: boolean;
-  zeroKnowledgeEnabled: boolean;
-  aiAnomalyDetection: boolean;
-  scanFrequency?: number;
-  thresholds: {
-    anomalyScore: number;
-    threatSeverity: number;
-    responseTime: number;
-  };
-}
-
-export interface HardwareSecurityDevice {
-  id?: string;
-  available: boolean;
-  type: string;
-  keyProtectionLevel: string;
-  lastVerified: string;
-  status?: 'active' | 'inactive' | 'compromised';
-}
-
-export interface WebRTCPeerStatus {
-  peerId: string;
-  connected: boolean;
-  encrypted: boolean;
-  encryptionType: string;
-  signatureVerified: boolean;
-  lastSeen: string;
-  pqcEnabled: boolean;
-  latency?: number;
-}
-
-export interface SecureInfraNode {
-  id: string;
-  name: string;
-  type: string;
-  ipAddress: string;
-  status: 'offline' | 'online' | 'provisioning' | 'degraded';
-  location: string;
-  lastChecked: string;
-  securityLevel: SecurityLevel;
-  quantum: boolean;
-}
-
-export interface SecureServiceMesh {
-  id: string;
-  name: string;
-  status: 'offline' | 'online' | 'active' | 'degraded' | 'created';
-  nodes: SecureInfraNode[];
-  connections: number;
-  encryptionType: string;
-  created: string;
-  updated: string;
-}
-
-export type ContainerSecurityProfile = 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave';
-
-export interface SecureContainerConfig {
-  id: string;
-  name: string;
-  type: 'application' | 'storage' | 'compute' | 'network' | 'general' | 'ai' | 'kubernetes' | 'docker' | 'security';
-  image: string;
-  securityProfile: ContainerSecurityProfile;
-  pqcEnabled: boolean;
-  status: string;
-  created: string;
-  lastUpdated: string;
-}
-
-export interface DecentralizedStorageNode {
-  id: string;
-  name: string;
-  type: 'ipfs' | 'filecoin' | 'arweave' | 'sia' | 'storj';
-  status: 'online' | 'offline' | 'syncing';
-  location: string;
-  capacity: number;
-  used: number;
-  encryptionType: string;
-  lastSynced: string;
-  pqcEnabled: boolean;
-}
-
-export interface AirGappedBackup {
-  id: string;
-  name: string;
-  created: string;
-  size: number;
-  files: number;
-  encryptionType: string;
-  verificationHash: string;
-  location: string;
-  status: 'valid' | 'pending-verification' | 'invalid';
-}
-
-export interface SatelliteConnection {
-  id: string;
-  name: string;
-  status: 'connected' | 'disconnected' | 'intermittent';
-  encryptionType: string;
-  latency: number;
-  lastContact: string;
-  bandwidth: number;
-  location: {
-    latitude: number;
-    longitude: number;
-    altitude: number;
-  };
-}
-
-export interface EMPHardenedSystem {
-  id: string;
-  name: string;
-  status: 'active' | 'standby' | 'offline';
-  shieldingLevel: 'military' | 'government' | 'commercial';
-  powerBackup: boolean;
-  autonomousDuration: number;
-  lastTestedDate: string;
-  location: string;
-}
-
-export interface DeploymentEnvironment {
-  id: string;
-  name: string;
-  type: 'production' | 'staging' | 'testing' | 'development';
-  status: 'active' | 'inactive' | 'deploying';
-  securityLevel: SecurityLevel;
-  containers: SecureContainerConfig[];
-  nodes: SecureInfraNode[];
-  created: string;
-  lastDeployed: string;
-}
-
-export interface UndergroundCommunicationNode {
-  id: string;
-  name: string;
-  depth: number;
-  location: string;
-  status: 'active' | 'standby' | 'offline';
-  shieldingLevel: string;
-  powerSource: 'grid' | 'autonomous' | 'hybrid';
-  backupPowerRemaining: number;
-  connectionCount: number;
-  lastContactTimestamp: string;
-}
-
-export interface MilitaryMeshNetwork {
-  id: string;
-  name: string;
-  classification: SecurityLevel;
-  status: 'operational' | 'degraded' | 'offline';
-  nodeCount: number;
-  encryptionAlgorithm: string;
-  signatureAlgorithm: string;
-  resilience: number;
-  lastSweepTimestamp: string;
-  autonomousModeCapable: boolean;
-}
-
-export interface QuantumSecureLink {
-  id: string;
-  sourceNodeId: string;
-  targetNodeId: string;
-  status: 'active' | 'inactive' | 'degraded';
-  encryptionType: string;
-  signatureType: string;
-  bandwidthMbps: number;
-  latencyMs: number;
-  established: string;
-  lastHealthCheck: string;
-  pqcEnabled: boolean;
-}
+export type ConnectionStatus = "degraded" | "disconnected" | "connected" | "active";
+export type PodmanContainerStatus = "running" | "stopped" | "error" | "provisioning";
+export type InfrastructureNodeType = "network" | "storage" | "application" | "compute" | "general" | "ai" | "kubernetes" | "docker" | "security";
 
 export interface SecurityHealthMetrics {
-  threatLevel: number;
-  vulnerabilities: {
+  securityScore: number;
+  activeThreats: number;
+  patchLevel: string;
+  threatLevel?: number;
+  vulnerabilities?: {
     critical: number;
     high: number;
     medium: number;
     low: number;
   };
-  patchStatus: number;
-  patchLevel?: number;
-  encryptionStrength: number;
-  accessControlScore: number;
-  authenticationScore: number;
-  dataProtectionScore: number;
-  networkSecurityScore: number;
-  updated: string;
-  securityScore?: number;
-  activeThreats?: number;
   threatDetectionRate?: number;
-  lastUpdated?: string;
+  mitigationRate?: number;
+  patchStatus?: number;
+  encryptionStrength?: number;
+  accessControlScore?: number;
+  authenticationScore?: number;
+  dataProtectionScore?: number;
+  networkSecurityScore?: number;
   cpuUsage?: number;
   memoryUsage?: number;
+  updated?: string;
+  lastUpdated?: string;
   recommendedActions?: string[];
+}
+
+export interface AICloudConnectionStatus {
+  connected: boolean;
+  provider?: string;
+  status: string;
+  latency: number;
+  encryptionStatus: string;
+  lastConnected?: string;
+  encryptionEnabled?: boolean;
+  authenticationType?: 'token' | 'certificate' | 'oauth' | 'mfa';
+  nodeId?: string;
+  health?: 'healthy' | 'degraded' | 'critical';
+}
+
+export interface AISecurityPolicy {
+  id?: string;
+  name?: string;
+  description?: string;
+  policyType?: 'detection' | 'prevention' | 'response';
+  createdAt?: string;
+  updatedAt?: string;
+  enabled: boolean;
+  threatLevel: string;
+  automatedResponse: boolean;
+  mlModelVersion: string;
+  zeroKnowledgeAuthEnabled?: boolean;
+  homomorphicEncryptionEnabled?: boolean;
+  scanFrequency?: number;
+}
+
+export interface SecurityThreshold {
+  warning: number;
+  critical: number;
+}
+
+export interface HealthStatus {
+  status: 'healthy' | 'degraded' | 'critical';
+  lastUpdated: string;
+}
+
+export interface ContainerSecurityProfile {
+  immutableRootfs: boolean;
+  seccomp: boolean;
+  appArmor?: boolean;
+  selinux?: boolean;
+  rootless?: boolean;
+  readOnly?: boolean;
+  privileged: boolean;
+  capabilities?: string[];
+  securityScore: number;
+}
+
+export interface SecureContainerConfig {
+  id: string;
+  name: string;
+  description: string;
+  status: "running" | "stopped" | "error" | "provisioning";
+  created: string;
+  lastUpdated: string;
+  securityStatus: "secure" | "warning" | "vulnerable" | "compromised" | "suspicious";
+  securityScore: number;
+  type?: InfrastructureNodeType;
+  image?: string;
+  vulnerabilities?: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  pqcEnabled?: boolean;
+  immutableRootfs?: boolean;
+  encryptionEnabled?: boolean;
+  securityProfile?: ContainerSecurityProfile;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SecurityRule {
+  id: string;
+  name: string;
+  description: string;
+  priority: number;
+  enabled: boolean;
+  conditions: any[];
+  actions: any[];
+  created: string;
+  lastModified: string;
+}
+
+export interface AISyncStatus {
+  lastSynced: string;
+  syncState: 'synced' | 'syncing' | 'error' | 'disconnected';
+  pendingChanges: number;
+  errorCount: number;
+  errorMessages: string[];
+  cloudAvailable?: boolean;
+  p2pAvailable?: boolean;
+  offlineMode?: boolean;
+  lastSelfHealingAction?: string;
+  lastCloudSync?: string;
+  id?: string;
+}
+
+export interface WebRTCPeerStatus {
+  id?: string;
+  peerId?: string;
+  connected: boolean;
+  candidates: number;
+  negotiating: boolean;
+  localDescription?: string;
+  remoteDescription?: string;
+  iceCandidates: number;
+  lastUpdated: string;
+  connectionState: string;
+  connectionStatus?: string;
+  latency: number;
+  lastMessageTimestamp?: string;
+  dataTransferred?: number;
+}
+
+export interface Threat {
+  id: string;
+  timestamp: string;
+  severity: "low" | "medium" | "high" | "critical";
+  source: string;
+  target: string;
+  type: string;
+  description: string;
+  status: "active" | "mitigated" | "resolved";
+  mitigationSteps?: string[];
+}
+
+export interface AIThreatDetection {
+  id: string;
+  timestamp: string;
+  severity: "low" | "medium" | "high" | "critical";
+  threatType?: string;
+  details?: string;
+  description?: string;
+  sourceIp?: string;
+  targetSystem?: string;
+  mitigated?: boolean;
+  score?: number;
+  status?: string;
+  mitigationSteps?: string[];
+  indicators?: string[];
+  detailedAnalysis?: string;
+  affectedComponents?: string[];
 }

@@ -31,3 +31,12 @@ export interface SecureCommand {
   result?: string;
   error?: string;
 }
+
+export interface StarkNetID {
+  id: string;
+  address: string;
+  timestamp: string;
+  verified: boolean;
+  proofOfIdentity?: string;
+  validUntil?: string;
+}

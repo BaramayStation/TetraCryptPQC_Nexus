@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { MainLayout } from "@/layout/MainLayout";
+import MainLayout from "@/layout/MainLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -20,11 +19,9 @@ const Chat: React.FC = () => {
   const [showAddContact, setShowAddContact] = useState(false);
   const [newContactName, setNewContactName] = useState('');
 
-  // Load contacts
   useEffect(() => {
     const loadedContacts = getContacts();
     if (loadedContacts.length === 0) {
-      // Add demo contacts if none exist
       const demoContacts: Contact[] = [
         {
           id: "contact1",
@@ -57,12 +54,10 @@ const Chat: React.FC = () => {
     }
   }, []);
 
-  // Filter contacts based on search query
   const filteredContacts = contacts.filter(contact => 
     contact.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle adding a new contact
   const handleAddContact = () => {
     if (!newContactName.trim()) {
       toast({
@@ -73,10 +68,8 @@ const Chat: React.FC = () => {
       return;
     }
     
-    // Generate a unique ID
     const contactId = crypto.randomUUID();
     
-    // Create new contact object
     const newContact: Contact = {
       id: contactId,
       displayName: newContactName,
@@ -87,14 +80,11 @@ const Chat: React.FC = () => {
       status: "offline"
     };
     
-    // Save the new contact
     saveContact(newContact);
     
-    // Update local state
     setContacts(prevContacts => [...prevContacts, newContact]);
     setSelectedContact(newContact);
     
-    // Reset form
     setNewContactName('');
     setShowAddContact(false);
     

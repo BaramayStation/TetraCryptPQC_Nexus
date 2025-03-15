@@ -16,3 +16,15 @@ export interface SecureChannel {
   zeroKnowledgeProofEnabled: boolean;
   peerEndpoint?: string;
 }
+
+export interface SecureChannelMetrics {
+  channelId: string;
+  encryptionStrength: "standard" | "enhanced" | "maximum";
+  latencyMs: number;
+  messageDeliverySuccessRate: number;
+  keyRotationInterval: number;
+  lastKeyRotation: string;
+  compromiseAttempts: number;
+  anomalyDetected: boolean;
+  quantumResistanceVerified: boolean;
+}

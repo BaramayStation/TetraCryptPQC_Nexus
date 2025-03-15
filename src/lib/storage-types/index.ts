@@ -4,61 +4,34 @@
  */
 
 // Re-export all types from specific modules
-export type { AIModel, AIThreatDetection, AISecurityPolicy, SecurityRule, AISecuredCloudInstance, AISyncStatus } from './ai-types';
+export * from "./contacts";
+export * from "./security-types";
+export * from "./message-types";
+export * from "./user-types";
+export * from "./decentralized-storage";
+export * from "./threat-detection";
+export * from "./identity-verification";
+export * from "./secure-channel-types";
+export * from "./pqc-types";
+export * from "./hardware-types";
 
+// Type re-exports for backward compatibility
+export type { Contact } from "./contacts";
+export type { Message, Conversation } from "./message-types";
+export type { UserProfile, KeyPairs, DIDDocument, HSMInfo, QKDInfo } from "./user-types";
 export type { 
-  SecurityThreshold, 
-  HealthStatus, 
   SecurityHealthMetrics, 
-  AISecurityPolicy as SecurityPolicy, 
-  SecurityRule as SecurityPolicyRule,
-  AICloudConnectionStatus,
+  AICloudConnectionStatus, 
   PodmanContainerStatus,
-  ContainerSecurityProfile,
+  SecurityThreshold,
+  HealthStatus,
+  SecurityRule,
   InfrastructureNodeType,
-  AIThreatDetection as ThreatDetection,
-  WebRTCPeerStatus,
-  SecurityEvent,
-  SecurityEventType,
-  Threat
-} from './security-types';
-
-export type {
-  SecureContainerConfig,
-  SecureInfraNode,
-  SecureServiceMesh,
-  HSMDevice,
-  ContainerSecurityProfile as SecurityProfile,
-  DecentralizedStorageNode,
-  AirGappedBackup,
-  SatelliteConnection,
-  EMPHardenedSystem,
-  DeploymentEnvironment,
-  BackupJob,
-  UndergroundCommunicationNode,
-  MilitaryMeshNetwork,
-  QuantumSecureLink,
-  StarkNetID
-} from './hardware-types';
-
-// User profile and identity types
-export type { UserProfile, UserSettings, KeyPairs, BiometricData, DIDDocument } from './user-types';
-
-// Message types
-export type { 
-  Message,
-  SecureMessageOptions,
-  Conversation,
-  MessagePreview,
-  QuantumChannel,
-  SecureChannelMetrics
-} from './message-types';
-
-// Contact types
-export type { Contact } from './contacts';
-
-// Secure channel types
-export type { SecureChannel } from './secure-channel-types';
-
-// Export PQC types
-export type { PQSCIFEnvironment, SecureCommand } from './pqc-types';
+  Threat,
+  AIThreatDetection,
+  AISecurityPolicy
+} from "./security-types";
+export type { SecureContainerConfig, ContainerSecurityProfile } from "./security-types";
+export type { SecureChannel, SecureChannelMetrics } from "./secure-channel-types";
+export type { StarkNetID, PQSCIFEnvironment, SecureCommand } from "./pqc-types";
+export type { AISyncStatus } from "./sync-types";
