@@ -14,6 +14,8 @@ export interface PQCKey {
   algorithm: string;
   strength: string;
   standard: string;
+  hardwareProtected?: boolean;  // New: whether key is protected by hardware
+  hardwareType?: string;        // New: type of hardware protection
 }
 
 // Utility function for hex generation (used by simulation code)
@@ -70,6 +72,17 @@ export async function generateDID(publicKeyKem: string, publicKeySig: string): P
   return generateDIDImpl(publicKeyKem, publicKeySig);
 }
 
+// For enterprise authentication
+export async function checkHardwareSecurity(): Promise<{
+  available: boolean;
+  type: string;
+  features: string[];
+}> {
+  console.log("🔹 Core crypto checkHardwareSecurity called - Forwarding to tetracrypt-ffi module");
+  const { checkHardwareSecurity: checkHardwareSecurityImpl } = await import('./tetracrypt-ffi');
+  return checkHardwareSecurityImpl();
+}
+
 // Re-export key generation functions from pqcrypto for backwards compatibility
 export { 
   generateMLKEMKeypair,
@@ -79,3 +92,16 @@ export {
   generateKyberKeypair,
   generateDilithiumKeypair
 } from './pqcrypto';
+
+// New secure, hardware-backed key generation methods
+export async function generateSecureMLKEMKeypair(): Promise<PQCKey> {
+  console.log("🔹 Core crypto generateSecureMLKEMKeypair called - Forwarding to tetracrypt-ffi module");
+  const { generateSecureMLKEMKeypair: generateSecureMLKEMKeypairImpl } = await import('./tetracrypt-ffi');
+  return generateSecureMLKEMKeypairImpl();
+}
+
+export async function generateSecureSLHDSAKeypair(): Promise<PQCKey> {
+  console.log("🔹 Core crypto generateSecureSLHDSAKeypair called - Forwarding to tetracrypt-ffi module");
+  const { generateSecureSLHDSAKeypair: generateSecureSLHDSAKeypairImpl } = await import('./tetracrypt-ffi');
+  return generateSecureSLHDSAKeypairImpl();
+}
