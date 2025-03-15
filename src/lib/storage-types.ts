@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Storage Types
  */
@@ -147,6 +146,16 @@ export interface Message {
   verified?: boolean;
   encrypted?: boolean;
   encryptionType?: string;
+  // New quantum-secure properties
+  zkProofVerified?: boolean;
+  didVerified?: boolean;
+  pqSignatureType?: "Falcon-1024" | "SLH-DSA-Dilithium5";
+  kemType?: "ML-KEM-1024" | "Classic-RSA" | "Hybrid";
+  integrityHash?: string;
+  selfHealingStatus?: "verified" | "healing" | "compromised";
+  webrtcSecured?: boolean;
+  starkNetValidated?: boolean;
+  qubicEncryption?: boolean;
 }
 
 // Conversation structure

@@ -2,7 +2,18 @@
 import React from "react";
 import { Message } from "@/lib/storage-types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CheckCheck, Check, Lock, AlertTriangle, Shield, Database, FileCheck } from "lucide-react";
+import { 
+  CheckCheck, 
+  Check, 
+  Lock, 
+  AlertTriangle, 
+  Shield, 
+  Database, 
+  FileCheck, 
+  RefreshCw, 
+  Zap, 
+  Key
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -45,6 +56,8 @@ const MessageList: React.FC<MessageListProps> = ({
         return "bg-purple-500/20 text-purple-600";
       case "Falcon-1024":
         return "bg-blue-500/20 text-blue-600";
+      case "Classic-RSA":
+        return "bg-amber-500/20 text-amber-600";
       default:
         return "bg-accent/20";
     }
@@ -53,16 +66,58 @@ const MessageList: React.FC<MessageListProps> = ({
   const getSecurityBadge = (message: Message) => {
     if (!message.encrypted) return null;
     
+    // Show encryption type with PQ-KEM indicator
+    const encType = message.kemType || message.encryptionType || "Encrypted";
+    const isPQC = encType.includes("ML-KEM") || encType.includes("Falcon");
+    
     return (
       <Badge 
         variant="outline" 
         className={cn(
           "flex items-center gap-1 mt-1.5 text-xs py-0.5 h-5",
-          getEncryptionTypeColor(message.encryptionType)
+          getEncryptionTypeColor(encType)
         )}
       >
         <Lock className="h-3 w-3" />
-        <span>{message.encryptionType || "Encrypted"}</span>
+        <span>{encType}{isPQC && " PQC"}</span>
+      </Badge>
+    );
+  };
+
+  const getSignatureBadge = (message: Message) => {
+    if (!message.pqSignatureType) return null;
+    
+    return (
+      <Badge 
+        variant="outline" 
+        className="flex items-center gap-1 mt-1.5 text-xs py-0.5 h-5 bg-cyan-500/20 text-cyan-600"
+      >
+        <Key className="h-3 w-3" />
+        <span>{message.pqSignatureType}</span>
+      </Badge>
+    );
+  };
+  
+  const getSelfHealingBadge = (message: Message) => {
+    if (!message.selfHealingStatus) return null;
+    
+    let badgeStyle = "bg-green-500/20 text-green-600";
+    let icon = <RefreshCw className="h-3 w-3" />;
+    
+    if (message.selfHealingStatus === "healing") {
+      badgeStyle = "bg-amber-500/20 text-amber-600 animate-pulse";
+    } else if (message.selfHealingStatus === "compromised") {
+      badgeStyle = "bg-red-500/20 text-red-600";
+      icon = <AlertTriangle className="h-3 w-3" />;
+    }
+    
+    return (
+      <Badge 
+        variant="outline" 
+        className={cn("flex items-center gap-1 mt-1.5 text-xs py-0.5 h-5", badgeStyle)}
+      >
+        {icon}
+        <span>AI Self-Healing {message.selfHealingStatus}</span>
       </Badge>
     );
   };
@@ -95,7 +150,7 @@ const MessageList: React.FC<MessageListProps> = ({
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              <p className="text-xs">Message verified with PQC signature</p>
+              <p className="text-xs">Message verified with {message.pqSignatureType || "PQC signature"}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -103,6 +158,26 @@ const MessageList: React.FC<MessageListProps> = ({
     }
     
     return null;
+  };
+
+  // New function for WebRTC zk-STARK security indicator
+  const getWebRTCSecurityIcon = (message: Message) => {
+    if (!message.webrtcSecured) return null;
+    
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="inline-flex bg-indigo-500/20 text-indigo-600 p-1 rounded-full ml-1">
+              <Zap className="h-3 w-3" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <p className="text-xs">Secured with P2P WebRTC + zk-STARK</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   };
 
   return (
@@ -129,12 +204,16 @@ const MessageList: React.FC<MessageListProps> = ({
                 "rounded-lg p-3",
                 isCurrentUser 
                   ? "bg-primary text-primary-foreground" 
-                  : "bg-muted"
+                  : "bg-muted",
+                message.selfHealingStatus === "healing" && "border-2 border-amber-400 border-opacity-50",
+                message.selfHealingStatus === "compromised" && "border-2 border-red-500 border-opacity-50"
               )}>
                 <p className="text-sm">{message.content}</p>
                 
                 <div className="flex flex-wrap gap-2 mt-1">
                   {getSecurityBadge(message)}
+                  {getSignatureBadge(message)}
+                  {getSelfHealingBadge(message)}
                   
                   {message.zkProofVerified && (
                     <Badge variant="outline" className="flex items-center gap-1 h-5 py-0.5 bg-indigo-500/20 text-indigo-600">
@@ -149,6 +228,13 @@ const MessageList: React.FC<MessageListProps> = ({
                       <span>DID Verified</span>
                     </Badge>
                   )}
+                  
+                  {message.starkNetValidated && (
+                    <Badge variant="outline" className="flex items-center gap-1 h-5 py-0.5 bg-purple-500/20 text-purple-600">
+                      <Shield className="h-3 w-3" />
+                      <span>StarkNet Validated</span>
+                    </Badge>
+                  )}
                 </div>
               </div>
               
@@ -161,6 +247,7 @@ const MessageList: React.FC<MessageListProps> = ({
                 </span>
                 
                 {getVerificationIcon(message)}
+                {getWebRTCSecurityIcon(message)}
                 
                 {isCurrentUser && (
                   <>
