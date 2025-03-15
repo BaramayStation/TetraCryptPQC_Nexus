@@ -60,8 +60,9 @@ const securityMetricsConfig = {
   },
 };
 
-const getBarFill = (entry: any) => {
-  return entry.standard === "Post-Quantum" ? "#0ea5e9" : "#94a3b8";
+const barColors = {
+  "Post-Quantum": "#0ea5e9",
+  "Classical": "#94a3b8"
 };
 
 const SecurityDashboard: React.FC = () => {
@@ -252,7 +253,22 @@ const SecurityDashboard: React.FC = () => {
                     <XAxis dataKey="name" />
                     <YAxis label={{ value: 'Security Bits', angle: -90, position: 'insideLeft' }} />
                     <Tooltip />
-                    <Bar dataKey="value" fill={getBarFill} />
+                    <Bar 
+                      dataKey="value" 
+                      fill="#0ea5e9"
+                      name="Security Bits"
+                    >
+                      {keyStrengths.map((entry, index) => (
+                        <rect
+                          key={`rect-${index}`}
+                          x={0}
+                          y={0}
+                          width={0}
+                          height={0}
+                          fill={entry.standard === "Post-Quantum" ? "#0ea5e9" : "#94a3b8"}
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>

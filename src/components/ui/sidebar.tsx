@@ -1,7 +1,7 @@
 
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { HomeIcon, MessageSquare, Settings, ShieldAlert, Menu, Lock } from "lucide-react";
+import { HomeIcon, MessageSquare, Settings, ShieldAlert, Menu, Lock, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -18,6 +18,11 @@ const navLinks = [
     to: "/dashboard",
     icon: <ShieldAlert className="h-5 w-5" />,
     label: "Security Dashboard",
+  },
+  {
+    to: "/key-management",
+    icon: <Key className="h-5 w-5" />,
+    label: "Key Management",
   },
   {
     to: "/secure-communication",
