@@ -6,172 +6,19 @@
  * MOCK IMPLEMENTATION - For demonstration purposes only
  */
 
-import { encryptAES, decryptAES } from './pqcrypto';
-import { validateZKProof, verifyStarkNetIdentity } from './ai-security';
+import { createSecureP2P, PeerId } from './p2p-node';
+import { generatePQCKeyPair, encryptAES, decryptAES } from './pqcrypto';
+import { validateZKProof, verifyStarkNetIdentity } from './security-utils';
 import { generateRandomId } from '@/utils/crypto-utils';
 
-// Mock PeerId class
-class PeerId {
-  id: string;
-  
-  constructor(id?: string) {
-    this.id = id || generateRandomId();
-  }
-  
-  toString() {
-    return this.id;
-  }
-}
-
-// Mock Stream class
-class Stream {
-  private messages: Uint8Array[] = [];
-  private closed = false;
-  
-  getReader() {
-    let index = 0;
-    return {
-      read: async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        if (index >= this.messages.length) {
-          return { done: true, value: undefined };
-        }
-        return { done: false, value: this.messages[index++] };
-      },
-      releaseLock: () => {}
-    };
-  }
-  
-  getWriter() {
-    return {
-      write: async (data: Uint8Array) => {
-        this.messages.push(data);
-        return true;
-      },
-      close: () => {
-        this.closed = true;
-      },
-      releaseLock: () => {}
-    };
-  }
-}
-
-// Mock LibP2P Node
-class MockLibp2pNode {
-  peerId: PeerId;
-  started: boolean = false;
-  handlers: Map<string, (params: any) => void> = new Map();
-  streams: Map<string, Stream> = new Map();
-  
-  constructor() {
-    this.peerId = new PeerId();
-  }
-  
-  async start() {
-    console.log("🔹 Starting mock P2P node...");
-    this.started = true;
-    return true;
-  }
-  
-  async stop() {
-    this.started = false;
-    return true;
-  }
-  
-  handle(protocol: string, handler: (params: any) => void) {
-    this.handlers.set(protocol, handler);
-  }
-  
-  async dialProtocol(peerId: string, protocol: string) {
-    console.log(`🔹 Dialing peer ${peerId} with protocol ${protocol}`);
-    if (!this.streams.has(`${peerId}:${protocol}`)) {
-      this.streams.set(`${peerId}:${protocol}`, new Stream());
-    }
-    return { stream: this.streams.get(`${peerId}:${protocol}`) };
-  }
-}
-
-// Mock libp2p factory function
-export function createLibp2p() {
-  console.log("🔹 Creating mock libp2p node");
-  return new MockLibp2pNode();
-}
-
-// Mock WebSockets, Mplex, and Bootstrap exports
-export const webSockets = () => ({});
-export const mplex = () => ({});
-export const bootstrap = () => ({});
-
-// ✅ liboqs PQC Interface
-interface PQCInstance {
-  OQS_KEM_keypair: (kem: string) => { publicKey: Uint8Array; privateKey: Uint8Array };
-  OQS_KEM_encaps: (kem: string, publicKey: Uint8Array) => { ciphertext: Uint8Array; sharedSecret: Uint8Array };
-  OQS_KEM_decaps: (kem: string, privateKey: Uint8Array, ciphertext: Uint8Array) => Uint8Array;
-}
-
-// Mock liboqs WASM interface
-let pqc: PQCInstance | null = null;
-
-// ✅ Initialize liboqs WASM for offline PQC (mock implementation)
-async function initPQC(): Promise<void> {
-  pqc = {
-    OQS_KEM_keypair: (kem: string) => {
-      console.log(`🔹 Generating ${kem} keypair`);
-      return {
-        publicKey: new Uint8Array(32),
-        privateKey: new Uint8Array(32)
-      };
-    },
-    OQS_KEM_encaps: (kem: string, publicKey: Uint8Array) => {
-      console.log(`🔹 Encapsulating with ${kem}`);
-      return {
-        ciphertext: new Uint8Array(32),
-        sharedSecret: new Uint8Array(32)
-      };
-    },
-    OQS_KEM_decaps: (kem: string, privateKey: Uint8Array, ciphertext: Uint8Array) => {
-      console.log(`🔹 Decapsulating with ${kem}`);
-      return new Uint8Array(32);
-    }
-  };
-  console.log("🔹 Mock liboqs WebAssembly Initialized for Offline PQC");
-}
-
-// ✅ Generate PQC Keypair (Kyber-1024 for 2060+ resistance)
-async function generatePQCKeys() {
-  if (!pqc) await initPQC();
-  const { publicKey, privateKey } = pqc!.OQS_KEM_keypair('Kyber1024');
-  console.log("🔹 Post-Quantum Keypair Generated (Kyber1024)");
-  return { publicKey, privateKey };
-}
-
-// ✅ Encrypt message with PQC (Kyber + AES-GCM)
-async function encryptMessage(message: string, publicKey: Uint8Array): Promise<{ ciphertext: Uint8Array; encryptedData: string }> {
-  if (!pqc) await initPQC();
-  const { ciphertext, sharedSecret } = pqc!.OQS_KEM_encaps('Kyber1024', publicKey);
-
-  // Mock AES-GCM encryption using the shared secret
-  const encryptedData = await encryptAES(message, sharedSecret);
-  return { ciphertext, encryptedData };
-}
-
-// ✅ Decrypt message with PQC (Kyber + AES-GCM)
-async function decryptMessage(ciphertext: Uint8Array, encryptedData: string, privateKey: Uint8Array): Promise<string> {
-  if (!pqc) await initPQC();
-  const sharedSecret = pqc!.OQS_KEM_decaps('Kyber1024', privateKey, ciphertext);
-
-  return decryptAES(encryptedData, sharedSecret);
-}
-
 // ✅ Initialize PQC and Keypair
-const pqcPromise = initPQC();
-const keysPromise = pqcPromise.then(generatePQCKeys);
+const pqcKeysPromise = generatePQCKeyPair();
 
 // ✅ Create Secure Chat Node
 async function createChatNode() {
-  const node = await createLibp2p();
+  const node = await createSecureP2P();
   
-  const keys = await keysPromise;
+  const keys = await pqcKeysPromise;
   await node.start();
   console.log("🔹 Secure P2P Chat Node Started:", node.peerId.toString());
 
@@ -191,6 +38,21 @@ async function createChatNode() {
   return { node, keys };
 }
 
+// ✅ Encrypt message with PQC (Kyber + AES-GCM)
+async function encryptMessage(message: string, publicKey: Uint8Array): Promise<{ ciphertext: Uint8Array; encryptedData: string }> {
+  // Mock encryption process
+  const ciphertext = new Uint8Array(32);
+  crypto.getRandomValues(ciphertext);
+  
+  const encryptedData = await encryptAES(message, publicKey);
+  return { ciphertext, encryptedData };
+}
+
+// ✅ Decrypt message with PQC (Kyber + AES-GCM)
+async function decryptMessage(ciphertext: Uint8Array, encryptedData: string, privateKey: Uint8Array): Promise<string> {
+  return decryptAES(encryptedData, privateKey);
+}
+
 // ✅ Secure Message Transmission with zk-SNARK Verification
 async function sendMessage(node: any, peerId: string, message: string, keys: { publicKey: Uint8Array; privateKey: Uint8Array }) {
   const { stream } = await node.dialProtocol(peerId, '/secure-chat');
@@ -201,6 +63,70 @@ async function sendMessage(node: any, peerId: string, message: string, keys: { p
   await writer.write(combinedData);
 
   console.log(`✅ Secure Message Sent: ${message}`);
+}
+
+// Initialize TetraCrypt P2P
+export async function initTetraCryptP2P(): Promise<boolean> {
+  try {
+    console.log("🔹 Initializing TetraCrypt P2P system");
+    // In a real implementation, this would set up the P2P network
+    return true;
+  } catch (error) {
+    console.error("❌ Error initializing P2P system:", error);
+    return false;
+  }
+}
+
+// Get the status of the P2P node
+export function getP2PNodeStatus(): { 
+  state: 'connected' | 'disconnected' | 'error';
+  peerId: string;
+  peerCount: number;
+} {
+  // Mock status for demonstration
+  return {
+    state: 'connected',
+    peerId: generateRandomId(),
+    peerCount: Math.floor(Math.random() * 10) + 1
+  };
+}
+
+// Connect to the P2P network
+export async function connectToP2PNetwork(): Promise<boolean> {
+  try {
+    console.log("🔹 Connecting to TetraCrypt P2P network");
+    // In a real implementation, this would connect to the network
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return true;
+  } catch (error) {
+    console.error("❌ Error connecting to P2P network:", error);
+    return false;
+  }
+}
+
+// Register a P2P node
+export async function registerP2PNode(): Promise<{
+  success: boolean;
+  nodeId?: string;
+  error?: string;
+}> {
+  try {
+    console.log("🔹 Registering node with TetraCrypt P2P network");
+    // In a real implementation, this would register the node
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const nodeId = generateRandomId();
+    
+    return {
+      success: true,
+      nodeId
+    };
+  } catch (error) {
+    console.error("❌ Error registering P2P node:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
 }
 
 // ✅ Start Secure Chat with AI-Based Monitoring

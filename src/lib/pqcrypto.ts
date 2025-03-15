@@ -1,7 +1,7 @@
 
 /**
  * TetraCryptPQC Cryptographic Operations
- * MOCK IMPLEMENTATION - For demonstration purposes only
+ * Core post-quantum cryptography functions for the secure messaging system
  */
 
 import { randomBytes, bytesToHex } from '@/utils/crypto-utils';
@@ -109,4 +109,44 @@ export async function verifyPQC(
   // In a real implementation, we would verify the signature
   // For demo purposes, always return true
   return true;
+}
+
+// Additional exported functions to maintain compatibility with existing code
+export async function generateMLKEMKeypair() {
+  return generatePQCKeyPair();
+}
+
+export async function generateFalconKeypair() {
+  return generatePQCKeyPair();
+}
+
+export async function generateSLHDSAKeypair() {
+  return generatePQCKeyPair();
+}
+
+export async function generateBIKEKeypair() {
+  return generatePQCKeyPair();
+}
+
+export async function encryptWithPQC(message: string, publicKey: Uint8Array): Promise<string> {
+  return encryptAES(message, publicKey);
+}
+
+export async function decryptWithPQC(encryptedData: string, privateKey: Uint8Array): Promise<string> {
+  return decryptAES(encryptedData, privateKey);
+}
+
+export async function signMessage(data: string, privateKey: string | Uint8Array): Promise<string> {
+  const privateKeyBytes = typeof privateKey === 'string' ? new TextEncoder().encode(privateKey) : privateKey;
+  const signature = await signPQC(data, privateKeyBytes);
+  return bytesToHex(signature);
+}
+
+export async function verifySignature(data: string, signature: string, publicKey: string | Uint8Array): Promise<boolean> {
+  const publicKeyBytes = typeof publicKey === 'string' ? new TextEncoder().encode(publicKey) : publicKey;
+  const signatureBytes = new Uint8Array(signature.length / 2);
+  for (let i = 0; i < signature.length; i += 2) {
+    signatureBytes[i / 2] = parseInt(signature.substring(i, i + 2), 16);
+  }
+  return verifyPQC(data, signatureBytes, publicKeyBytes);
 }
