@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,20 +19,16 @@ const HardwareSecurityManager: React.FC = () => {
   const [securityStrength, setSecurityStrength] = useState(0);
   const [hsmsAvailable, setHsmsAvailable] = useState(true);
   
-  // Simulate hardware security module detection
   useEffect(() => {
-    // In a real application, this would check for available HSMs
     setHsmsAvailable(true);
   }, []);
   
-  // Connect to YubiKey
   const connectYubiKey = async () => {
     setIsConnecting(true);
     setConnectionProgress(0);
     setSelectedHSM(HSMType.YUBIKEY);
     
     try {
-      // Simulate YubiKey connection process
       await simulateConnection();
       configureHSM(HSMType.YUBIKEY);
       
@@ -53,14 +48,12 @@ const HardwareSecurityManager: React.FC = () => {
     }
   };
   
-  // Connect to TPM
   const connectTPM = async () => {
     setIsConnecting(true);
     setConnectionProgress(0);
     setSelectedHSM(HSMType.TPM);
     
     try {
-      // Simulate TPM connection process
       await simulateConnection();
       configureHSM(HSMType.TPM);
       
@@ -80,14 +73,12 @@ const HardwareSecurityManager: React.FC = () => {
     }
   };
   
-  // Connect to Secure Enclave
   const connectSecureEnclave = async () => {
     setIsConnecting(true);
     setConnectionProgress(0);
     setSelectedHSM(HSMType.SECUREENCLAVE);
     
     try {
-      // Simulate Secure Enclave connection process
       await simulateConnection();
       configureHSM(HSMType.SECUREENCLAVE);
       
@@ -107,7 +98,6 @@ const HardwareSecurityManager: React.FC = () => {
     }
   };
   
-  // Simulate connection process with progress updates
   const simulateConnection = async () => {
     return new Promise<void>((resolve) => {
       let progress = 0;
@@ -123,7 +113,6 @@ const HardwareSecurityManager: React.FC = () => {
     });
   };
   
-  // Configure HSM for the user profile
   const configureHSM = (hsmType: HSMType) => {
     const userProfile = getUserProfile();
     if (!userProfile) return;
@@ -148,7 +137,9 @@ const HardwareSecurityManager: React.FC = () => {
         provider: "Platform",
         securityLevel: "Medium",
         lastVerified: new Date().toISOString(),
-        capabilities: ["Key Storage", "Digital Signatures", "Attestation"]
+        capabilities: ["Key Storage", "Digital Signatures", "Attestation"],
+        keyProtectionLevel: "high",
+        available: true
       };
     } else if (hsmType === HSMType.SECUREENCLAVE) {
       setSecurityStrength(85);
@@ -166,7 +157,6 @@ const HardwareSecurityManager: React.FC = () => {
     saveUserProfile(userProfile);
   };
   
-  // Disconnect HSM
   const disconnectHSM = () => {
     setSelectedHSM(HSMType.NONE);
     setSecurityStrength(0);

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +24,10 @@ import {
   InfrastructureNodeType 
 } from '@/lib/storage-types';
 import { Progress } from "@/components/ui/progress";
+import { 
+  ContainerSecurityProfile as SecurityProfileType,
+  InfrastructureNodeType as NodeType
+} from '@/lib/storage-types/security-types';
 
 const SecureInfrastructurePanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("containers");
@@ -380,12 +383,17 @@ const SecureInfrastructurePanel: React.FC = () => {
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Vulnerabilities</span>
                         <span className="flex items-center gap-1">
-                          {container.vulnerabilities === 0 ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          {container.vulnerabilities.high + 
+                           container.vulnerabilities.medium + 
+                           container.vulnerabilities.low > 0 ? (
+                            <>
+                              High: {container.vulnerabilities.high}, 
+                              Med: {container.vulnerabilities.medium}, 
+                              Low: {container.vulnerabilities.low}
+                            </>
                           ) : (
-                            <AlertTriangle className="h-4 w-4 text-amber-600" />
+                            "None"
                           )}
-                          {container.vulnerabilities || 0}
                         </span>
                       </div>
                     </CardContent>
@@ -445,8 +453,8 @@ const SecureInfrastructurePanel: React.FC = () => {
                     </div>
                     
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Containers</p>
-                      <p>{serviceMesh.containers.length}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Endpoints</p>
+                      <p>{serviceMesh.endpoints.join(", ")}</p>
                     </div>
                     
                     <div>
@@ -550,9 +558,13 @@ const SecureInfrastructurePanel: React.FC = () => {
                       <Badge 
                         variant="outline" 
                         className={
-                          node.trustLevel === 'high' ? 'bg-green-500/10 text-green-600' :
-                          node.trustLevel === 'medium' ? 'bg-amber-500/10 text-amber-600' :
-                          'bg-red-500/10 text-red-600'
+                          parseFloat(String(node.trustLevel)) > 80 ? (
+                            <Badge className="bg-green-500">High</Badge>
+                          ) : parseFloat(String(node.trustLevel)) > 50 ? (
+                            <Badge className="bg-yellow-500">Medium</Badge>
+                          ) : (
+                            <Badge className="bg-red-500">Low</Badge>
+                          )
                         }
                       >
                         {node.trustLevel}

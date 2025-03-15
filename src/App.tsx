@@ -34,6 +34,7 @@ import BattlefieldEncryption from './pages/wiki/military/BattlefieldEncryption';
 import ZeroTrustArchitecture from './pages/wiki/military/ZeroTrustArchitecture';
 import CyberWarfare from './pages/wiki/military/CyberWarfare';
 import TetraCrypt2025Vision from './pages/wiki/roadmap/TetraCrypt2025Vision';
+import PostQuantumSecurityImpl from './pages/PostQuantumSecurityImpl';
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
           <Route path="/decentralized-id" element={<DecentralizedID />} />
           <Route path="/secure-execution" element={<SecureExecution />} />
           <Route path="/p2p-ai-messaging" element={<P2PAIMessaging />} />
+          <Route path="/pqc-implementation" element={<PostQuantumSecurityImpl />} />
           
           {/* Wiki Routes */}
           <Route path="/wiki" element={<Wiki />} />

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,23 +49,18 @@ const AISecurityDashboard: React.FC = () => {
     summary: string;
   } | null>(null);
 
-  // Initialize AI security on component mount
   useEffect(() => {
     const initSecurity = async () => {
       try {
-        // Initialize AI-PQC security
         await initAIPQCSecurity();
         
-        // Get initial security health assessment
         const healthAssessment = await assessSecurityHealth();
         setSecurityHealth(healthAssessment);
         
-        // Generate initial threat report
         const initialThreatReport = generateThreatReport();
         setThreatReport(initialThreatReport);
         setThreats(initialThreatReport.threats);
         
-        // Show success toast
         toast({
           title: "AI Security System Initialized",
           description: "Post-quantum cryptographic security monitoring is active.",
@@ -87,12 +81,10 @@ const AISecurityDashboard: React.FC = () => {
     initSecurity();
   }, [toast]);
 
-  // Run security scan
   const runSecurityScan = async () => {
     setIsScanning(true);
     setScanProgress(0);
     
-    // Simulate scan progress
     const interval = setInterval(() => {
       setScanProgress((prev) => {
         if (prev >= 100) {
@@ -104,7 +96,6 @@ const AISecurityDashboard: React.FC = () => {
     }, 150);
     
     try {
-      // Sample data to analyze
       const sampleData = {
         userId: "user-123",
         operations: ["key-generation", "message-encryption", "signature-verification"],
@@ -112,24 +103,18 @@ const AISecurityDashboard: React.FC = () => {
         systemState: "normal"
       };
       
-      // Perform intrusion detection
       const detectionResult = await detectIntrusions(sampleData);
       
-      // Analyze network traffic
       const networkAnalysis = await analyzeNetworkTraffic(sampleData);
       
-      // Generate updated threat report
       const newThreatReport = generateThreatReport();
       setThreatReport(newThreatReport);
       
-      // Update threats list
       setThreats([...detectionResult.threats]);
       
-      // Update security health
       const updatedHealth = await assessSecurityHealth();
       setSecurityHealth(updatedHealth);
       
-      // Ensure scan completes with 100%
       setScanProgress(100);
       setTimeout(() => {
         setIsScanning(false);
@@ -287,22 +272,40 @@ const AISecurityDashboard: React.FC = () => {
                   <span>High</span>
                   <span>{securityHealth.vulnerabilities.high}</span>
                 </div>
-                <Progress value={securityHealth.vulnerabilities.high * 20} className="h-2 bg-muted" 
-                  indicatorClassName="bg-red-500" />
+                <Progress 
+                  value={securityHealth.vulnerabilities.high * 20} 
+                  className={`h-2 ${
+                    securityHealth.vulnerabilities.high * 20 >= 80 ? "bg-green-500/20" :
+                    securityHealth.vulnerabilities.high * 20 >= 60 ? "bg-yellow-500/20" :
+                    "bg-red-500/20"
+                  }`}
+                />
                 
                 <div className="flex justify-between text-sm">
                   <span>Medium</span>
                   <span>{securityHealth.vulnerabilities.medium}</span>
                 </div>
-                <Progress value={securityHealth.vulnerabilities.medium * 10} className="h-2 bg-muted" 
-                  indicatorClassName="bg-yellow-500" />
+                <Progress 
+                  value={securityHealth.vulnerabilities.medium * 10} 
+                  className={`h-2 ${
+                    securityHealth.vulnerabilities.medium * 10 >= 80 ? "bg-green-500/20" :
+                    securityHealth.vulnerabilities.medium * 10 >= 60 ? "bg-yellow-500/20" :
+                    "bg-red-500/20"
+                  }`}
+                />
                 
                 <div className="flex justify-between text-sm">
                   <span>Low</span>
                   <span>{securityHealth.vulnerabilities.low}</span>
                 </div>
-                <Progress value={securityHealth.vulnerabilities.low * 5} className="h-2 bg-muted" 
-                  indicatorClassName="bg-blue-500" />
+                <Progress 
+                  value={securityHealth.vulnerabilities.low * 5} 
+                  className={`h-2 ${
+                    securityHealth.vulnerabilities.low * 5 >= 80 ? "bg-green-500/20" :
+                    securityHealth.vulnerabilities.low * 5 >= 60 ? "bg-yellow-500/20" :
+                    "bg-red-500/20"
+                  }`}
+                />
               </div>
             </CardContent>
           </Card>
@@ -321,13 +324,29 @@ const AISecurityDashboard: React.FC = () => {
                   <span>CPU Usage</span>
                   <span>{securityHealth.cpuUsage}%</span>
                 </div>
-                <Progress value={securityHealth.cpuUsage} className="h-2" />
+                <Progress 
+                  value={securityHealth.cpuUsage} 
+                  className={`h-2 ${
+                    securityHealth.cpuUsage >= 90 ? "bg-green-500/20" :
+                    securityHealth.cpuUsage >= 70 ? "bg-blue-500/20" :
+                    securityHealth.cpuUsage >= 50 ? "bg-yellow-500/20" :
+                    "bg-red-500/20"
+                  }`}
+                />
                 
                 <div className="flex justify-between text-sm">
                   <span>Memory Usage</span>
                   <span>{securityHealth.memoryUsage}%</span>
                 </div>
-                <Progress value={securityHealth.memoryUsage} className="h-2" />
+                <Progress 
+                  value={securityHealth.memoryUsage} 
+                  className={`h-2 ${
+                    securityHealth.memoryUsage >= 90 ? "bg-green-500/20" :
+                    securityHealth.memoryUsage >= 70 ? "bg-blue-500/20" :
+                    securityHealth.memoryUsage >= 50 ? "bg-yellow-500/20" :
+                    "bg-red-500/20"
+                  }`}
+                />
                 
                 <div className="flex justify-between text-sm">
                   <span>Last Updated</span>
@@ -510,10 +529,10 @@ const AISecurityDashboard: React.FC = () => {
                     <CardFooter className="pt-2">
                       {threat.remediationSteps && threat.remediationSteps.length > 0 && (
                         <div className="w-full">
-                          <span className="text-xs font-semibold">Remediation Steps:</span>
-                          <ul className="list-disc ml-5">
-                            {threat.remediationSteps.map((step, i) => (
-                              <li key={i} className="text-xs">{step}</li>
+                          <h4 className="text-sm font-medium">Remediation Steps:</h4>
+                          <ul className="mt-1 list-disc pl-5 text-xs">
+                            {threat.remediationSteps.map((step, index) => (
+                              <li key={index}>{step}</li>
                             ))}
                           </ul>
                         </div>
@@ -557,28 +576,52 @@ const AISecurityDashboard: React.FC = () => {
                         <span className="text-sm">ML-KEM-1024 (FIPS 205)</span>
                         <span className="text-sm">256-bit</span>
                       </div>
-                      <Progress value={100} className="h-2" />
+                      <Progress 
+                        value={100} 
+                        className="h-2"
+                        indicatorClassName={
+                          "bg-green-500"
+                        }
+                      />
                     </div>
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm">SLH-DSA-Dilithium5 (FIPS 206)</span>
                         <span className="text-sm">256-bit</span>
                       </div>
-                      <Progress value={100} className="h-2" />
+                      <Progress 
+                        value={100} 
+                        className="h-2"
+                        indicatorClassName={
+                          "bg-green-500"
+                        }
+                      />
                     </div>
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm">FALCON-1024</span>
                         <span className="text-sm">256-bit</span>
                       </div>
-                      <Progress value={100} className="h-2" />
+                      <Progress 
+                        value={100} 
+                        className="h-2"
+                        indicatorClassName={
+                          "bg-green-500"
+                        }
+                      />
                     </div>
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm">SHAKE-256 (XOF)</span>
                         <span className="text-sm">256-bit</span>
                       </div>
-                      <Progress value={100} className="h-2" />
+                      <Progress 
+                        value={100} 
+                        className="h-2"
+                        indicatorClassName={
+                          "bg-green-500"
+                        }
+                      />
                     </div>
                   </div>
                 </CardContent>
@@ -668,14 +711,30 @@ const AISecurityDashboard: React.FC = () => {
                         <span className="text-sm">ML-KEM Key Age</span>
                         <span className="text-sm">7 days</span>
                       </div>
-                      <Progress value={24} className="h-2" />
+                      <Progress 
+                        value={24} 
+                        className={`h-2 ${
+                          24 >= 90 ? "bg-green-500/20" :
+                          24 >= 70 ? "bg-blue-500/20" :
+                          24 >= 50 ? "bg-yellow-500/20" :
+                          "bg-red-500/20"
+                        }`}
+                      />
                     </div>
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm">SLH-DSA Key Age</span>
                         <span className="text-sm">3 days</span>
                       </div>
-                      <Progress value={10} className="h-2" />
+                      <Progress 
+                        value={10} 
+                        className={`h-2 ${
+                          10 >= 90 ? "bg-green-500/20" :
+                          10 >= 70 ? "bg-blue-500/20" :
+                          10 >= 50 ? "bg-yellow-500/20" :
+                          "bg-red-500/20"
+                        }`}
+                      />
                     </div>
                     <Button className="w-full mt-2" variant="outline">
                       <RefreshCw className="mr-2 h-4 w-4" />

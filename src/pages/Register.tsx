@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -45,13 +44,11 @@ const Register: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
-    // Update password strength when password changes
     if (name === 'password') {
       calculatePasswordStrength(value);
     }
   };
 
-  // Calculate password strength
   const calculatePasswordStrength = (password: string) => {
     let strength = 0;
     
@@ -65,14 +62,12 @@ const Register: React.FC = () => {
     setPasswordStrength(strength);
   };
 
-  // Get strength color
   const getStrengthColor = () => {
     if (passwordStrength < 40) return 'bg-red-500';
     if (passwordStrength < 70) return 'bg-yellow-500';
     return 'bg-green-500';
   };
 
-  // Check hardware security capabilities
   useEffect(() => {
     const checkHardwareSecurity = async () => {
       try {
@@ -105,7 +100,6 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Form validation
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -126,22 +120,17 @@ const Register: React.FC = () => {
     
     setLoading(true);
     
-    // Simulate key generation progress
     const progressInterval = simulateKeyGeneration();
     
     try {
-      // Generate post-quantum cryptographic keypairs
-      console.log("Generating post-quantum cryptographic keypairs...");
       const pqkemKeyPair = await generateMLKEMKeypair();
       const signatureKeyPair = await generateSLHDSAKeypair();
       
-      // Generate decentralized identity (DID)
       const didDocument = await generateDID(
         pqkemKeyPair.publicKey,
         signatureKeyPair.publicKey
       );
       
-      // Create new user profile
       const newUser = {
         id: crypto.randomUUID(),
         userId: crypto.randomUUID(),
@@ -154,18 +143,22 @@ const Register: React.FC = () => {
             publicKey: pqkemKeyPair.publicKey,
             privateKey: pqkemKeyPair.privateKey,
             created: pqkemKeyPair.created,
-            algorithm: pqkemKeyPair.algorithm
+            algorithm: pqkemKeyPair.algorithm,
+            strength: "256-bit quantum security",
+            standard: "NIST FIPS 205"
           },
           signature: {
             publicKey: signatureKeyPair.publicKey,
             privateKey: signatureKeyPair.privateKey,
             created: signatureKeyPair.created,
-            algorithm: signatureKeyPair.algorithm
+            algorithm: signatureKeyPair.algorithm,
+            strength: "256-bit quantum security",
+            standard: "NIST FIPS 206"
           }
         },
         didDocument,
-        publicKey: pqkemKeyPair.publicKey, // For backwards compatibility
-        signatureKey: signatureKeyPair.publicKey, // For backwards compatibility
+        publicKey: pqkemKeyPair.publicKey,
+        signatureKey: signatureKeyPair.publicKey,
         settings: {
           theme: 'dark',
           notifications: true,
@@ -179,12 +172,10 @@ const Register: React.FC = () => {
         lastLogin: new Date().toISOString()
       };
       
-      // Ensure key generation animation completes
       await new Promise(resolve => setTimeout(resolve, 1500));
       clearInterval(progressInterval);
       setKeyGenProgress(100);
       
-      // Save the new user profile
       saveUserProfile(newUser);
       
       toast({
@@ -192,7 +183,6 @@ const Register: React.FC = () => {
         description: "Your quantum-secure cryptographic identity has been established",
       });
       
-      // Wait for toast to be shown before redirecting
       setTimeout(() => {
         setLoading(false);
         navigate('/dashboard');
@@ -347,9 +337,10 @@ const Register: React.FC = () => {
         </CardContent>
         <CardFooter className="flex flex-col">
           <Button 
-            className="w-full" 
-            onClick={handleSubmit}
+            type="submit" 
+            variant="default"
             disabled={loading}
+            className="w-full"
           >
             {loading ? (
               <>
@@ -357,7 +348,7 @@ const Register: React.FC = () => {
                 Creating Secure Account...
               </>
             ) : (
-              "Create Quantum-Secure Account"
+              "Register"
             )}
           </Button>
           
