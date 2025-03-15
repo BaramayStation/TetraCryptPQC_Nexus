@@ -1,126 +1,148 @@
 
-import React, { useState, useEffect } from "react";
-import { UserProfile } from "@/lib/storage-types";
-import { Progress } from "@/components/ui/progress";
-import { Shield, Key } from "lucide-react";
-import { saveUserProfile } from "@/lib/storage";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { 
-  generateSecureMLKEMKeypair, 
-  generateSecureSLHDSAKeypair,
-  checkHardwareSecurity
-} from "@/lib/tetracrypt-ffi";
+  generateMLKEMKeypair,
+  generateSLHDSAKeypair,
+  generateFalconKeypair,
+  generateBIKEKeypair 
+} from "@/lib/pqcrypto";
+import { PQCKey } from '@/lib/crypto';
+import { toast } from "@/components/ui/use-toast";
+import { Shield, Key } from "lucide-react";
 
-export interface KeyGenerationServiceProps {
-  username: string;
-  onComplete: (profile: UserProfile) => void;
-  authType: "standard" | "advanced";
-}
+// KeyGenerationService Component
+const KeyGenerationService: React.FC = () => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [algorithm, setAlgorithm] = useState('ml-kem');
+  const [generatedKeys, setGeneratedKeys] = useState<PQCKey | null>(null);
 
-const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({ 
-  username, 
-  onComplete,
-  authType
-}) => {
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("Initializing secure key generation...");
-  
-  useEffect(() => {
-    let mounted = true;
-    
-    const generateKeys = async () => {
-      try {
-        if (!mounted) return;
-        
-        // Step 1: Check for hardware security modules
-        setStatus("Detecting hardware security modules...");
-        setProgress(10);
-        const hardwareSecurity = await checkHardwareSecurity();
-        
-        // Step 2: Generate ML-KEM keys (using hardware if available)
-        setStatus("Generating ML-KEM post-quantum keys...");
-        setProgress(30);
-        const kemKeyStrength = authType === "advanced" ? "ML-KEM-1024" : "ML-KEM-768";
-        const kemKey = await generateSecureMLKEMKeypair(hardwareSecurity.available);
-        
-        // Step 3: Generate SLH-DSA signature keys
-        setStatus("Generating SLH-DSA signature keys...");
-        setProgress(60);
-        const signatureKey = await generateSecureSLHDSAKeypair(hardwareSecurity.available);
-        
-        // Step 4: Create user profile
-        setStatus("Creating secure user profile...");
-        setProgress(80);
-        const userId = crypto.randomUUID();
-        
-        const profile: UserProfile = {
-          userId,
-          id: userId, // Add id to match UserProfile type
-          name: username, // Add name to match UserProfile type
-          username,
-          encryptionKey: kemKey.publicKey.substring(0, 32), // Simplified for demo
-          authType,
-          hardwareSecurityEnabled: hardwareSecurity.available,
-          hardwareType: hardwareSecurity.type as "YubiKey" | "TPM" | "SecureEnclave" | "None",
-          keyPairs: {
-            pqkem: kemKey,
-            signature: signatureKey
-          },
-          securitySettings: {
-            perfectForwardSecrecy: true,
-            fipsCompliance: true,
-            hybridEncryption: authType === "advanced",
-            federatedMode: false
-          },
-          createdAt: new Date().toISOString() // Add createdAt to match UserProfile type
-        };
-        
-        // Step 5: Generate secure storage
-        setStatus("Setting up secure storage...");
-        setProgress(90);
-        
-        // Save user profile
-        saveUserProfile(profile);
-        
-        // Complete
-        setProgress(100);
-        setStatus("Setup complete!");
-        
-        // Notify parent component
-        if (mounted) {
-          setTimeout(() => {
-            onComplete(profile);
-          }, 500);
-        }
-      } catch (error) {
-        console.error("Error during key generation:", error);
-        setStatus("Error during setup. Please try again.");
+  const handleGenerateKeys = async () => {
+    setIsGenerating(true);
+    try {
+      let keyPair: PQCKey;
+      
+      switch (algorithm) {
+        case 'ml-kem':
+          keyPair = await generateMLKEMKeypair();
+          break;
+        case 'slh-dsa':
+          keyPair = await generateSLHDSAKeypair();
+          break;
+        case 'falcon':
+          keyPair = await generateFalconKeypair();
+          break;
+        case 'bike':
+          keyPair = await generateBIKEKeypair();
+          break;
+        default:
+          throw new Error('Invalid algorithm selected');
       }
-    };
-    
-    generateKeys();
-    
-    return () => {
-      mounted = false;
-    };
-  }, [username, onComplete, authType]);
-  
+      
+      setGeneratedKeys(keyPair);
+      
+      toast({
+        title: "Keys Generated Successfully",
+        description: `Generated ${keyPair.algorithm} key pair with ${keyPair.strength} security level.`,
+      });
+    } catch (error) {
+      console.error("Error generating keys:", error);
+      toast({
+        title: "Key Generation Failed",
+        description: "There was an error generating your keys. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <div className="w-full space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        {progress < 100 ? (
-          <Shield className="h-5 w-5 text-accent animate-pulse" />
-        ) : (
-          <Key className="h-5 w-5 text-accent" />
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5 text-primary" />
+          Post-Quantum Key Generation
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <h3 className="text-sm font-medium mb-3">Select Algorithm Type</h3>
+          <RadioGroup value={algorithm} onValueChange={setAlgorithm} className="flex flex-col space-y-2">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="ml-kem" id="ml-kem" />
+              <Label htmlFor="ml-kem" className="flex items-center gap-2">
+                <span className="font-medium">ML-KEM (Kyber)</span>
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">FIPS 205</span>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="slh-dsa" id="slh-dsa" />
+              <Label htmlFor="slh-dsa" className="flex items-center gap-2">
+                <span className="font-medium">SLH-DSA (Dilithium)</span>
+                <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">FIPS 206</span>
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="falcon" id="falcon" />
+              <Label htmlFor="falcon">Falcon (Alternate)</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="bike" id="bike" />
+              <Label htmlFor="bike">BIKE (Alternate)</Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        <Button 
+          onClick={handleGenerateKeys} 
+          disabled={isGenerating} 
+          className="w-full"
+        >
+          {isGenerating ? (
+            <>Generating Keys...</>
+          ) : (
+            <>
+              <Key className="mr-2 h-4 w-4" />
+              Generate Post-Quantum Keys
+            </>
+          )}
+        </Button>
+
+        {generatedKeys && (
+          <div className="mt-4 space-y-4 border-t pt-4">
+            <div>
+              <h3 className="text-sm font-medium">Generated Keys Info</h3>
+              <div className="grid grid-cols-2 gap-y-2 text-sm mt-2">
+                <span className="text-muted-foreground">Algorithm:</span>
+                <span>{generatedKeys.algorithm}</span>
+                <span className="text-muted-foreground">Security Level:</span>
+                <span>{generatedKeys.strength}</span>
+                <span className="text-muted-foreground">Standard:</span>
+                <span>{generatedKeys.standard}</span>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium">Public Key (truncated)</h3>
+              <div className="p-2 bg-muted rounded-md mt-1 font-mono text-xs">
+                {generatedKeys.publicKey.substring(0, 40)}...
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium">Private Key (truncated)</h3>
+              <div className="p-2 bg-muted rounded-md mt-1 font-mono text-xs">
+                {generatedKeys.privateKey.substring(0, 40)}...
+              </div>
+            </div>
+          </div>
         )}
-        <span>{status}</span>
-      </div>
-      <Progress value={progress} className="w-full" />
-      <div className="text-xs text-muted-foreground">
-        {authType === "advanced" ? 
-          "Generating NIST FIPS 205/206 compliant keys with ML-KEM-1024 and SLH-DSA-Dilithium5" : 
-          "Generating post-quantum keys with ML-KEM-768 and SLH-DSA-Dilithium3"}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

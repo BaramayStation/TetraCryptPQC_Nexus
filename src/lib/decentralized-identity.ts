@@ -1,4 +1,3 @@
-
 /**
  * TetraCryptPQC Decentralized Identity Module
  * 
@@ -7,24 +6,10 @@
  */
 
 import { connectToStarkNet, signMessageWithStarkNet } from "@/services/StarkNetService";
-import { UserProfile } from "./storage-types";
+import { UserProfile, StarkNetID } from "./storage-types";
 import { generateDID } from "./pqcrypto";
 import { saveUserProfile } from "./storage";
 import { toast } from "@/components/ui/use-toast";
-
-// Export StarkNetID type correctly for TypeScript's isolatedModules
-export type { StarkNetID } from './storage-types';
-
-// Fix the createStarkNetId function to use the correct StarkNetID properties
-function createStarkNetId(address: string, starkKey: string): StarkNetID {
-  return {
-    id: crypto.randomUUID(),
-    type: "StarkNet",  // Required field
-    address,
-    starkKey,
-    created: new Date().toISOString()
-  };
-}
 
 /**
  * Generate a StarkNet ID for a user
@@ -39,7 +24,13 @@ export async function generateStarkNetId(userProfile: UserProfile): Promise<User
     }
     
     // Create StarkNet ID
-    const starkNetId = createStarkNetId(starkNetAuth.address!, starkNetAuth.publicKey!);
+    const starkNetId: StarkNetID = {
+      id: crypto.randomUUID(),
+      type: "StarkNet",  // Required field
+      address: starkNetAuth.address!,
+      starkKey: starkNetAuth.publicKey!,
+      created: new Date().toISOString()
+    };
     
     // Update user profile
     userProfile.starkNetId = starkNetId;
@@ -223,4 +214,3 @@ export async function verifyDIDOwnership(
     };
   }
 }
-

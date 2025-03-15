@@ -1,118 +1,59 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from 'react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Key, Shield, RefreshCw, Loader2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { UserProfile } from "@/lib/storage-types";
-import { generateSecureMLKEMKeypair, generateSecureSLHDSAKeypair, checkHardwareSecurity } from "@/lib/tetracrypt-ffi";
-import { PQCKey } from "@/lib/crypto";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { 
+  generateMLKEMKeypair,
+  generateSLHDSAKeypair,
+  generateFalconKeypair,
+  generateBIKEKeypair 
+} from "@/lib/pqcrypto";
+import { shield } from 'lucide-react';
+import { PQCKey } from '@/lib/crypto';
+import { toast } from "@/components/ui/use-toast";
 
-export interface KeyGenerationServiceProps {
-  username: string;
-  onComplete: (profile: UserProfile) => void;
-  authType?: "standard" | "advanced";
-}
-
-const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
-  username,
-  onComplete,
-  authType = "standard"
-}) => {
-  const { toast } = useToast();
-  const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<string>("");
+const KeyGenerationService: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [hardwareSecurity, setHardwareSecurity] = useState<{
-    available: boolean;
-    type: string;
-  }>({
-    available: false,
-    type: "None"
-  });
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState<'ml-kem' | 'slh-dsa' | 'falcon' | 'bike'>('ml-kem');
+  const [generatedKey, setGeneratedKey] = useState<PQCKey | null>(null);
 
-  // Check for hardware security modules
-  useEffect(() => {
-    const checkHardware = async () => {
-      try {
-        const result = await checkHardwareSecurity();
-        setHardwareSecurity({
-          available: result.available,
-          type: result.type
-        });
-      } catch (error) {
-        console.error("Error checking hardware security:", error);
-      }
-    };
+  const handleGenerateKey = async () => {
+    setIsGenerating(true);
+    setGeneratedKey(null);
     
-    checkHardware();
-  }, []);
-
-  const generateKeys = async () => {
     try {
-      setIsGenerating(true);
-      setStatus("Initializing post-quantum cryptography...");
-      setProgress(10);
+      let keyPair: PQCKey;
       
-      // Generate NIST FIPS 205 ML-KEM-1024 key pair
-      setStatus("Generating ML-KEM-1024 encryption key (NIST FIPS 205)...");
-      setProgress(30);
+      switch (selectedAlgorithm) {
+        case 'ml-kem':
+          keyPair = await generateMLKEMKeypair();
+          break;
+        case 'slh-dsa':
+          keyPair = await generateSLHDSAKeypair();
+          break;
+        case 'falcon':
+          keyPair = await generateFalconKeypair();
+          break;
+        case 'bike':
+          keyPair = await generateBIKEKeypair();
+          break;
+        default:
+          throw new Error('Invalid algorithm selected');
+      }
       
-      const pqkemKeyPair = await generateSecureMLKEMKeypair(hardwareSecurity.available);
-      
-      // Generate NIST FIPS 206 SLH-DSA signature key pair
-      setStatus("Generating SLH-DSA signature key (NIST FIPS 206)...");
-      setProgress(60);
-      
-      const signatureKeyPair = await generateSecureSLHDSAKeypair(hardwareSecurity.available);
-      
-      // Create session key for symmetric encryption
-      setStatus("Finalizing secure cryptographic setup...");
-      setProgress(90);
-      
-      const encryptionKey = crypto.randomUUID().replace(/-/g, '');
-      
-      // Create user profile
-      const userId = crypto.randomUUID();
-      const newProfile: UserProfile = {
-        userId: userId,
-        id: userId,
-        name: username,
-        username: username,
-        encryptionKey: encryptionKey,
-        authType: authType,
-        hardwareSecurityEnabled: hardwareSecurity.available,
-        hardwareType: hardwareSecurity.available ? hardwareSecurity.type as any : "None",
-        keyPairs: {
-          pqkem: pqkemKeyPair,
-          signature: signatureKeyPair
-        },
-        securitySettings: {
-          perfectForwardSecrecy: true,
-          fipsCompliance: true,
-          hybridEncryption: true,
-          federatedMode: false
-        },
-        createdAt: new Date().toISOString()
-      };
-      
-      // Success
-      setProgress(100);
-      setStatus("Key generation complete");
+      setGeneratedKey(keyPair);
       
       toast({
-        title: "Post-Quantum Keys Generated",
-        description: `Successfully generated ML-KEM and SLH-DSA keys using ${hardwareSecurity.available ? hardwareSecurity.type : 'software'} security.`,
+        title: "PQC Key Generated",
+        description: `Successfully generated ${keyPair.algorithm} keypair`,
       });
-      
-      onComplete(newProfile);
     } catch (error) {
-      console.error("Error generating keys:", error);
-      
+      console.error('Error generating key:', error);
       toast({
-        title: "Key Generation Error",
-        description: error instanceof Error ? error.message : "Unknown error occurred during key generation",
+        title: "Key Generation Failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
         variant: "destructive",
       });
     } finally {
@@ -121,43 +62,132 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">{status || "Ready to generate keys"}</span>
-          <span className="text-sm">{progress}%</span>
-        </div>
-        <Progress value={progress} className="h-2" />
-      </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-xl flex items-center gap-2">
+          <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+            <path d={shield} />
+          </svg>
+          Post-Quantum Key Generation
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs 
+          value={selectedAlgorithm} 
+          onValueChange={(value) => setSelectedAlgorithm(value as any)}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-4 mb-4">
+            <TabsTrigger value="ml-kem">ML-KEM</TabsTrigger>
+            <TabsTrigger value="slh-dsa">SLH-DSA</TabsTrigger>
+            <TabsTrigger value="falcon">Falcon</TabsTrigger>
+            <TabsTrigger value="bike">BIKE</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="ml-kem" className="space-y-4">
+            <div>
+              <h3 className="font-medium">ML-KEM (Kyber)</h3>
+              <p className="text-sm text-muted-foreground">
+                NIST FIPS 205 approved lattice-based key encapsulation mechanism.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge>FIPS 205</Badge>
+                <Badge>256-bit security</Badge>
+                <Badge>Lattice-based</Badge>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="slh-dsa" className="space-y-4">
+            <div>
+              <h3 className="font-medium">SLH-DSA (Dilithium)</h3>
+              <p className="text-sm text-muted-foreground">
+                NIST FIPS 206 approved lattice-based digital signature algorithm.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge>FIPS 206</Badge>
+                <Badge>256-bit security</Badge>
+                <Badge>Lattice-based</Badge>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="falcon" className="space-y-4">
+            <div>
+              <h3 className="font-medium">Falcon</h3>
+              <p className="text-sm text-muted-foreground">
+                Fast-Fourier lattice-based compact signatures.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge>NIST Round 4</Badge>
+                <Badge>128-bit security</Badge>
+                <Badge>Alternate</Badge>
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="bike" className="space-y-4">
+            <div>
+              <h3 className="font-medium">BIKE</h3>
+              <p className="text-sm text-muted-foreground">
+                Bit Flipping Key Encapsulation based on QC-MDPC codes.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge>NIST Round 4</Badge>
+                <Badge>192-bit security</Badge>
+                <Badge>Code-based</Badge>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button 
+          onClick={handleGenerateKey} 
+          disabled={isGenerating}
+          className="w-full"
+        >
+          {isGenerating ? "Generating..." : "Generate Key Pair"}
+        </Button>
+      </CardFooter>
       
-      {hardwareSecurity.available && (
-        <Alert>
-          <Shield className="h-4 w-4" />
-          <AlertDescription>
-            Hardware security module detected: {hardwareSecurity.type}. 
-            Your keys will be generated with hardware protection.
-          </AlertDescription>
-        </Alert>
+      {generatedKey && (
+        <CardContent className="border-t pt-4 mt-4">
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium">Generated Key Details</h3>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                <div className="font-medium">Algorithm:</div>
+                <div>{generatedKey.algorithm}</div>
+                
+                <div className="font-medium">Security Strength:</div>
+                <div>{generatedKey.strength}</div>
+                
+                <div className="font-medium">Standard:</div>
+                <div>{generatedKey.standard}</div>
+                
+                <div className="font-medium">Created:</div>
+                <div>{new Date(generatedKey.created).toLocaleString()}</div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-medium">Public Key (first 24 chars)</h3>
+              <div className="mt-1 p-2 bg-muted rounded font-mono text-xs overflow-hidden text-ellipsis">
+                {generatedKey.publicKey.substring(0, 24)}...
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-medium">Private Key (first 20 chars)</h3>
+              <div className="mt-1 p-2 bg-muted rounded font-mono text-xs overflow-hidden text-ellipsis">
+                {generatedKey.privateKey.substring(0, 20)}...
+              </div>
+            </div>
+          </div>
+        </CardContent>
       )}
-      
-      <Button 
-        className="w-full" 
-        onClick={generateKeys}
-        disabled={isGenerating}
-      >
-        {isGenerating ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Generating Secure Keys...
-          </>
-        ) : (
-          <>
-            <Key className="mr-2 h-4 w-4" />
-            Generate Post-Quantum Keys
-          </>
-        )}
-      </Button>
-    </div>
+    </Card>
   );
 };
 
