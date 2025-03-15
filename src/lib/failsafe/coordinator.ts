@@ -154,4 +154,19 @@ export class FailsafeCoordinatorImpl implements FailsafeCoordinator {
     const nextImplId = this.fallbackChain[currentIndex + 1];
     return await this.switchToImplementation(nextImplId);
   }
+  
+  // Add methods for registering message callbacks (for communication failsafe)
+  registerMessageCallback(callback: (from: string, message: string) => void): void {
+    if (this.componentType !== FailsafeComponentType.COMMUNICATION) {
+      console.error("Message callbacks can only be registered with the communication failsafe");
+      return;
+    }
+
+    if (this.activeImplementation && this.implementations[this.activeImplementation]) {
+      const impl = this.implementations[this.activeImplementation];
+      if (impl.implementation && typeof impl.implementation.onMessage === 'function') {
+        impl.implementation.onMessage(callback);
+      }
+    }
+  }
 }

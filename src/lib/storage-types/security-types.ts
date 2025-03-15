@@ -26,6 +26,9 @@ export interface SecurityHealthMetrics {
   memoryUsage?: number;
   storageUsage?: number;
   networkUsage?: number;
+  detectionRate?: number;
+  mitigationRate?: number;
+  remediationSteps?: string[];
 }
 
 export interface AISecurityPolicy {
@@ -89,7 +92,6 @@ export interface PodmanContainerStatus {
   rootless?: boolean;
 }
 
-// Adding container security types
 export interface ContainerSecurityProfile {
   immutableRootfs: boolean;
   seccomp: boolean;
@@ -99,14 +101,6 @@ export interface ContainerSecurityProfile {
   privileged: boolean;
   capabilities: string[];
   securityScore?: number;
-}
-
-export enum ContainerType {
-  APPLICATION = "application",
-  DATABASE = "database",
-  CACHE = "cache",
-  PROXY = "proxy",
-  SECURITY = "security"
 }
 
 export enum InfrastructureNodeType {
@@ -121,22 +115,20 @@ export enum InfrastructureNodeType {
   DOCKER = "docker"
 }
 
-// AI Threat Detection type
 export interface AIThreatDetection {
   id: string;
   severity: "high" | "medium" | "low";
   description: string;
+  affectedComponents: string[];
   timestamp: string;
   mitigated: boolean;
-  affectedComponents: string[];
-  mitigation?: string;
+  status: "active" | "mitigated" | "resolved";
   score: number;
   detailedAnalysis?: string;
   remediationSteps?: string[];
-  status: "active" | "mitigated" | "resolved";
+  mitigation?: string;
 }
 
-// Add WebRTC status types
 export interface WebRTCPeerStatus {
   id: string;
   status: "active" | "healing" | "healed" | "verified";

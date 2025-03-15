@@ -1,51 +1,40 @@
 
-// Fix the duplicate exports
+/**
+ * TetraCryptPQC Storage Types
+ */
 
-// Export security types with explicit names to avoid conflicts
-import { 
-  SecurityThreshold,
-  HealthStatus,
-  SecurityHealthMetrics,
-  AISecurityPolicy,
-  SecurityRule,
+// Re-export all types from specific modules
+export type { AIModel, AIThreatDetection, AISecurityPolicy, SecurityRule, AISecuredCloudInstance, AISyncStatus } from './ai-types';
+
+export type { 
+  SecurityThreshold, 
+  HealthStatus, 
+  SecurityHealthMetrics, 
+  AISecurityPolicy as SecurityPolicy, 
+  SecurityRule as SecurityPolicyRule,
   AICloudConnectionStatus,
   PodmanContainerStatus,
   ContainerSecurityProfile,
-  ContainerType,
   InfrastructureNodeType,
-  AIThreatDetection,
+  AIThreatDetection as ThreatDetection,
   WebRTCPeerStatus,
   SecurityEvent,
-  SecurityEventType,
-  AISyncStatus
+  SecurityEventType
 } from './security-types';
 
-export {
-  SecurityThreshold,
-  HealthStatus,
-  SecurityHealthMetrics,
-  AISecurityPolicy,
-  SecurityRule,
-  AICloudConnectionStatus,
-  PodmanContainerStatus,
-  ContainerSecurityProfile,
-  ContainerType,
-  InfrastructureNodeType,
-  AIThreatDetection,
-  WebRTCPeerStatus,
-  SecurityEvent,
-  SecurityEventType,
-  AISyncStatus
-};
+export type {
+  SecureContainerConfig,
+  SecureInfraNode,
+  SecureServiceMesh,
+  HSMDevice,
+  ContainerSecurityProfile as SecurityProfile,
+  DecentralizedStorageNode,
+  AirGappedBackup,
+  SatelliteConnection,
+  EMPHardenedSystem,
+  DeploymentEnvironment,
+  BackupJob
+} from './hardware-types';
 
-// Export hardware types
-export * from './hardware-types';
-
-// Export AI types
-export * from './ai-types';
-
-// Export message types
-export * from './message-types';
-
-// Export user types
-export * from './user-types';
+// User profile and identity types
+export type { UserProfile, UserSettings, UserKeyPairs, UserBiometrics } from './user-types';

@@ -22,6 +22,16 @@ export async function encryptWithPQC(message: string, recipientPublicKey: string
 }
 
 /**
+ * Decrypt a message using post-quantum algorithms
+ */
+export async function decryptWithPQC(encryptedMessage: string, privateKey: string): Promise<string> {
+  console.log("🔹 Decrypting with ML-KEM-1024 (Kyber)");
+  
+  // In a simulation implementation
+  return encryptedMessage.replace("PQC-ENCRYPTED[", "").replace("]", "");
+}
+
+/**
  * Sign a message using post-quantum signature algorithm
  */
 export async function signMessage(message: string, privateKey: string): Promise<string> {
@@ -114,4 +124,15 @@ export async function encryptAES(data: string, key: string): Promise<string> {
   console.log("⚠️ Warning: Using legacy encryptAES function. Consider migrating to encryptWithPQC");
   // For simulation, return a simple encoded string
   return `encrypted_${data}_with_${key.substring(0, 3)}`;
+}
+
+/**
+ * Legacy compatibility function for AES decryption
+ * This is maintained only for backward compatibility and will be removed.
+ * Use decryptWithPQC() instead.
+ */
+export async function decryptAES(data: string, key: string): Promise<string> {
+  console.log("⚠️ Warning: Using legacy decryptAES function. Consider migrating to decryptWithPQC");
+  // For simulation, return a simple decoded string
+  return data.replace(`encrypted_`, '').replace(`_with_${key.substring(0, 3)}`, '');
 }
