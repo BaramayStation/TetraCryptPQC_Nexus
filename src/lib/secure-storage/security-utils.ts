@@ -6,13 +6,7 @@
  * a secure and auditable cryptographic environment.
  */
 
-export interface SecurityEvent {
-  eventType: 'storage' | 'crypto' | 'key-management' | 'identity' | 'authentication' | 'network' | 'application';
-  operation: string;
-  status: 'success' | 'failure' | 'warning';
-  timestamp: string;
-  metadata?: Record<string, any>;
-}
+import { SecurityEvent } from "@/lib/storage-types/security-types";
 
 // In-memory security event log for development/testing
 // In production, this would be securely persisted and encrypted
@@ -81,6 +75,53 @@ export function getSecurityEvents(
   }
   
   return filteredEvents;
+}
+
+/**
+ * Get security event statistics
+ */
+export function getSecurityStats(): {
+  totalEvents: number;
+  successCount: number;
+  warningCount: number;
+  failureCount: number;
+  byEventType: Record<string, number>;
+} {
+  const stats = {
+    totalEvents: securityEventLog.length,
+    successCount: securityEventLog.filter(e => e.status === 'success').length,
+    warningCount: securityEventLog.filter(e => e.status === 'warning').length,
+    failureCount: securityEventLog.filter(e => e.status === 'failure').length,
+    byEventType: {} as Record<string, number>
+  };
+  
+  // Count events by type
+  securityEventLog.forEach(event => {
+    if (!stats.byEventType[event.eventType]) {
+      stats.byEventType[event.eventType] = 0;
+    }
+    stats.byEventType[event.eventType]++;
+  });
+  
+  return stats;
+}
+
+/**
+ * Clear security events
+ * Note: In a production system, this would require high-level authorization
+ */
+export function clearSecurityEvents(): void {
+  securityEventLog.length = 0;
+  
+  logSecurityEvent({
+    eventType: 'storage',
+    operation: 'clear-security-log',
+    status: 'success',
+    timestamp: new Date().toISOString(),
+    metadata: {
+      action: 'Security log cleared'
+    }
+  });
 }
 
 /**

@@ -1,15 +1,21 @@
 
+/**
+ * TetraCryptPQC Message Type Definitions
+ * 
+ * Type definitions for secure messaging system with quantum-resistant cryptography
+ */
+
 export interface Message {
   id: string;
   senderId: string;
   recipientId?: string;
-  receiverId: string; // Making this required to match the interface
+  receiverId: string;
   content: string;
   timestamp: string;
   encrypted: boolean;
   signature?: string;
   verified?: boolean;
-  encryptionType?: string;
+  encryptionType: string;
   status: "sent" | "delivered" | "read" | "failed";
   kemType?: string;
   pqSignatureType?: string;
@@ -48,4 +54,29 @@ export interface MessagePreview {
   content: string;
   timestamp: string;
   status: "sent" | "delivered" | "read" | "failed";
+}
+
+export interface QuantumChannel {
+  id: string;
+  participants: string[];
+  encryptionType: "ML-KEM-768" | "ML-KEM-1024" | "Hybrid";
+  signatureType: "ML-DSA-65" | "ML-DSA-87" | "Falcon-512" | "Falcon-1024";
+  status: "active" | "inactive" | "compromised";
+  establishedAt: string;
+  lastActivityAt: string;
+  messageCount: number;
+  forwardSecrecy: boolean;
+  pqcVersion: string;
+}
+
+export interface SecureChannelMetrics {
+  channelId: string;
+  encryptionStrength: "standard" | "enhanced" | "maximum";
+  latencyMs: number;
+  messageDeliverySuccessRate: number;
+  keyRotationInterval: number;
+  lastKeyRotation: string;
+  compromiseAttempts: number;
+  anomalyDetected: boolean;
+  quantumResistanceVerified: boolean;
 }

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Message } from "@/lib/storage-types";
+import { Message } from "@/lib/storage-types/message-types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { 
@@ -8,7 +8,6 @@ import {
   Check, 
   Lock, 
   Shield, 
-  Clock,
   Key
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
