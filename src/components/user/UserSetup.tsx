@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassContainer } from "@/components/ui/glass-container";
 import { UserRound, Shield, ArrowRight, Info, Check, Database, Fingerprint, Lock } from "lucide-react";
-import KeyGenerationService from "@/components/security/KeyGenerationService";
-import { UserProfile } from "@/lib/storage";
+import KeyGenerationService from "@/components/services/KeyGenerationService";
+import { UserProfile } from "@/lib/storage-types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 

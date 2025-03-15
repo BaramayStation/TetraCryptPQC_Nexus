@@ -4,94 +4,28 @@
  * Provides secure storage mechanisms for cryptographic keys and messages
  */
 
-// User profile type definition
-export interface UserProfile {
-  id: string;
-  name: string;
-  starknetAddress?: string;
-  sessionKey?: string;
-  keyPairs: {
-    pqkem: {
-      algorithm: string;
-      publicKey: string;
-      privateKey: string;
-      strength: string;
-      standard: string;
-      created: string;
-    };
-    signature: {
-      algorithm: string;
-      publicKey: string;
-      privateKey: string;
-      strength: string;
-      standard: string;
-      created: string;
-    };
-    kyber?: {
-      publicKey: string;
-      privateKey: string;
-    };
-    falcon?: {
-      publicKey: string;
-      privateKey: string;
-    };
-  };
-  didDocument?: any;
-  starkNetId?: any;  // Add starkNetId property to fix errors
-  qkdInfo?: any;
-  hsmInfo?: any;
-  createdAt: string;
-}
-
-// Contact type definition
-export interface Contact {
-  id: string;
-  name: string;
-  publicKey: string;
-  publicKeys?: {
-    kyber?: string;
-    falcon?: string;
-  };
-  unreadCount?: number;
-  didDocument?: any;
-  lastMessage?: string;
-  lastMessageTime?: string;
-}
-
-// Message type definition
-export interface Message {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  encryptedContent?: string;
-  encrypted: boolean;
-  signature?: string;
-  status?: 'sent' | 'delivered' | 'read';
-  timestamp: string;
-  sessionKey?: string;
-}
+import { UserProfile as UserProfileType, Contact as ContactType, Message as MessageType } from "./storage-types";
 
 // In-memory storage
 const storage = {
-  currentUser: null as UserProfile | null,
-  contacts: [] as Contact[],
-  messages: [] as Message[],
+  currentUser: null as UserProfileType | null,
+  contacts: [] as ContactType[],
+  messages: [] as MessageType[],
 };
 
 /**
  * Save user profile to storage
  */
-export function saveUserProfile(profile: UserProfile): void {
+export function saveUserProfile(profile: UserProfileType): void {
   storage.currentUser = profile;
   localStorage.setItem('userProfile', JSON.stringify(profile));
-  console.log("User profile saved:", profile.id);
+  console.log("User profile saved:", profile.userId);
 }
 
 /**
  * Get current user profile
  */
-export function getUserProfile(): UserProfile | null {
+export function getUserProfile(): UserProfileType | null {
   if (!storage.currentUser) {
     const storedProfile = localStorage.getItem('userProfile');
     if (storedProfile) {
@@ -104,7 +38,7 @@ export function getUserProfile(): UserProfile | null {
 /**
  * Save a contact
  */
-export function saveContact(contact: Contact): void {
+export function saveContact(contact: ContactType): void {
   const existingIndex = storage.contacts.findIndex(c => c.id === contact.id);
   if (existingIndex >= 0) {
     storage.contacts[existingIndex] = contact;
@@ -118,27 +52,39 @@ export function saveContact(contact: Contact): void {
 /**
  * Get all contacts
  */
-export function getContacts(): Contact[] {
+export function getContacts(): ContactType[] {
   if (storage.contacts.length === 0) {
     const storedContacts = localStorage.getItem('contacts');
     if (storedContacts) {
       storage.contacts = JSON.parse(storedContacts);
     }
   }
+  
+  // Ensure all contacts have the required signatureKey property
+  storage.contacts = storage.contacts.map(contact => {
+    if (!contact.signatureKey) {
+      return {
+        ...contact,
+        signatureKey: contact.publicKey || "" // Fallback to publicKey if signatureKey is missing
+      };
+    }
+    return contact;
+  });
+  
   return storage.contacts;
 }
 
 /**
  * Get a contact by ID
  */
-export function getContactById(id: string): Contact | undefined {
+export function getContactById(id: string): ContactType | undefined {
   return getContacts().find(contact => contact.id === id);
 }
 
 /**
  * Add a message
  */
-export function addMessage(message: Message): void {
+export function addMessage(message: MessageType): void {
   storage.messages.push(message);
   localStorage.setItem('messages', JSON.stringify(storage.messages));
   console.log("Message added:", message.id);
@@ -147,7 +93,7 @@ export function addMessage(message: Message): void {
 /**
  * Get messages between two users
  */
-export function getMessages(userId1: string, userId2: string): Message[] {
+export function getMessages(userId1: string, userId2: string): MessageType[] {
   if (storage.messages.length === 0) {
     const storedMessages = localStorage.getItem('messages');
     if (storedMessages) {
@@ -156,19 +102,19 @@ export function getMessages(userId1: string, userId2: string): Message[] {
   }
   
   return storage.messages.filter(message => 
-    (message.senderId === userId1 && message.receiverId === userId2) ||
-    (message.senderId === userId2 && message.receiverId === userId1)
+    (message.sender === userId1 && message.receiver === userId2) ||
+    (message.sender === userId2 && message.receiver === userId1)
   );
 }
 
 /**
  * Get messages for a contact
  */
-export function getMessagesForContact(contactId: string): Message[] {
+export function getMessagesForContact(contactId: string): MessageType[] {
   const user = getUserProfile();
   if (!user) return [];
   
-  return getMessages(user.id, contactId);
+  return getMessages(user.userId, contactId);
 }
 
 /**
@@ -179,7 +125,7 @@ export function markMessagesAsRead(contactId: string): void {
   if (!user) return;
   
   storage.messages.forEach(message => {
-    if (message.senderId === contactId && message.receiverId === user.id) {
+    if (message.sender === contactId && message.receiver === user.userId) {
       message.status = 'read';
     }
   });
@@ -206,3 +152,8 @@ export function clearAllData(): void {
 export function clearStorage(): void {
   clearAllData();
 }
+
+// Re-export the types from storage-types.ts
+export type UserProfile = UserProfileType;
+export type Contact = ContactType;
+export type Message = MessageType;

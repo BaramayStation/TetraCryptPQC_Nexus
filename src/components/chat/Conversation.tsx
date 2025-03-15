@@ -20,9 +20,9 @@ import {
 } from "lucide-react";
 import { Contact, Message, Conversation as ConversationType } from "@/lib/storage-types";
 import { formatDistanceToNow } from "date-fns";
-import { EncryptionSelector } from "./EncryptionSelector";
-import { MessageList } from "./MessageList";
-import { MessageInput } from "./MessageInput";
+import EncryptionSelector from "./EncryptionSelector";
+import MessageList from "./MessageList";
+import MessageInput from "./MessageInput";
 import { encryptAES, signMessage } from "@/lib/crypto";
 import { getUserProfile } from "@/lib/storage";
 
@@ -175,18 +175,22 @@ const Conversation: React.FC<ConversationProps> = ({ contact, onBack }) => {
       </ScrollArea>
       
       {/* Encryption selector */}
-      <EncryptionSelector 
-        value={encryptionType} 
-        onChange={setEncryptionType} 
-      />
+      <div className="p-2 border-t">
+        <EncryptionSelector 
+          value={encryptionType} 
+          onChange={(value) => setEncryptionType(value as any)} 
+        />
+      </div>
       
       {/* Message input */}
-      <MessageInput
-        value={inputValue}
-        onChange={setInputValue}
-        onSend={handleSend}
-        isEncrypting={isEncrypting}
-      />
+      <div className="p-4 border-t">
+        <MessageInput
+          value={inputValue}
+          onChange={setInputValue}
+          onSend={handleSend}
+          isEncrypting={isEncrypting}
+        />
+      </div>
     </div>
   );
 };
