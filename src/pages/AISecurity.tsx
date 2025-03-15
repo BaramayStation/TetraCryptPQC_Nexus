@@ -1,557 +1,888 @@
 
-import React, { useState } from 'react';
-import { MainLayout } from "@/layout/MainLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import React, { useState, useEffect } from 'react';
+import { toast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
+  ShieldCheck, 
+  ShieldAlert, 
   Shield, 
   Brain, 
   Lock, 
-  Activity, 
-  CircuitBoard, 
-  Server, 
-  Cpu, 
-  AlertTriangle,
   Database, 
-  CloudOff,
-  Network
+  Server, 
+  Zap, 
+  Search, 
+  FileText, 
+  Wifi, 
+  WifiOff,
+  ScrollText,
+  Fingerprint,
+  Key
 } from 'lucide-react';
-import { detectThreats, encryptForAIProcessing, generateSecurityReport } from '@/lib/ai-security';
+import { detectThreats } from '@/lib/ai-security';
+import { encryptForAIProcessing, generateSecurityReport } from '@/lib/ai-security';
+import { AISecurityDashboard } from '@/components/security/AISecurityDashboard';
+import { StarkNetAuth } from '@/components/security/StarkNetAuth';
 
 const AISecurity: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("overview");
-  const [analysisRunning, setAnalysisRunning] = useState(false);
-  const [securityScore, setSecurityScore] = useState(87);
-  const [threatReport, setThreatReport] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  const [threatAnalysisRunning, setThreatAnalysisRunning] = useState(false);
+  const [threatResults, setThreatResults] = useState<any>(null);
+  const [securityReport, setSecurityReport] = useState<any>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [isEncrypting, setIsEncrypting] = useState(false);
+  const [encryptionResults, setEncryptionResults] = useState<any>(null);
+  const [offlineMode, setOfflineMode] = useState(false);
+  
+  // Security metrics
+  const [securityMetrics, setSecurityMetrics] = useState({
+    quantumResistanceScore: 92,
+    aiSecurityScore: 87,
+    dataPrivacyScore: 95,
+    offlineResilienceScore: 83,
+    overallSecurityScore: 89
+  });
 
-  const runThreatAnalysis = async () => {
-    setAnalysisRunning(true);
+  useEffect(() => {
+    // Check if we're in offline mode
+    const checkConnectivity = () => {
+      setOfflineMode(!navigator.onLine);
+    };
+
+    window.addEventListener('online', checkConnectivity);
+    window.addEventListener('offline', checkConnectivity);
+    checkConnectivity();
+
+    return () => {
+      window.removeEventListener('online', checkConnectivity);
+      window.removeEventListener('offline', checkConnectivity);
+    };
+  }, []);
+
+  const runThreatDetection = async () => {
+    setThreatAnalysisRunning(true);
+    setThreatResults(null);
+    
     try {
-      // Sample data to analyze (in a real app, this would be actual system data)
+      // Sample data for threat detection
       const sampleData = JSON.stringify({
-        networkTraffic: "Encrypted P2P communication via TetraCryptPQC",
-        systemStatus: "Online, quantum-resistant encryption active",
-        userActions: "Admin login from authorized device",
-        apiCalls: [
-          { endpoint: "/api/secure-data", method: "GET", timestamp: new Date().toISOString() },
-          { endpoint: "/api/quantum-keys", method: "POST", timestamp: new Date().toISOString() }
-        ]
+        operation: "file_access",
+        timestamp: new Date().toISOString(),
+        userId: "user123",
+        resourceId: "sensitive_doc_456",
+        accessPattern: "multiple_sequential_reads",
+        metadata: {
+          ipAddress: "192.168.1.100",
+          userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ...",
+          location: "New York, USA",
+          previousAccesses: ["2023-05-10T14:55:22Z", "2023-05-10T14:57:01Z"]
+        }
       });
-
-      // Run AI-powered threat detection
-      const result = await detectThreats(sampleData, 'anomaly-detection');
-      setThreatReport(result);
       
-      // Update security score based on threats
-      if (result.threats.length > 0) {
-        setSecurityScore(Math.max(60, 100 - result.threats.length * 10));
+      // Run AI-powered threat detection
+      const results = await detectThreats(sampleData);
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setThreatResults(results);
+      
+      if (results.detected) {
+        toast({
+          title: "Security Threats Detected",
+          description: `${results.threats.length} potential security ${results.threats.length === 1 ? 'threat' : 'threats'} found`,
+          variant: "destructive",
+        });
       } else {
-        setSecurityScore(95);
+        toast({
+          title: "No Threats Detected",
+          description: "The AI analysis found no security threats in the provided data",
+        });
       }
     } catch (error) {
-      console.error("Error running threat analysis:", error);
+      console.error("Error during threat detection:", error);
+      toast({
+        title: "Error",
+        description: "Failed to perform AI threat detection",
+        variant: "destructive",
+      });
     } finally {
-      setAnalysisRunning(false);
+      setThreatAnalysisRunning(false);
+    }
+  };
+
+  const generateAISecurityReport = async () => {
+    setIsGeneratingReport(true);
+    setSecurityReport(null);
+    
+    try {
+      // Generate a security compliance report
+      const report = await generateSecurityReport();
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setSecurityReport(report);
+      
+      toast({
+        title: "Security Report Generated",
+        description: "AI-enhanced security compliance report is ready",
+      });
+    } catch (error) {
+      console.error("Error generating security report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate security report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
+  const runHomomorphicEncryption = async () => {
+    setIsEncrypting(true);
+    setEncryptionResults(null);
+    
+    try {
+      // Sample data for homomorphic encryption
+      const sampleData = {
+        sensitiveField1: "Personal Identifier XYZ-123-456",
+        sensitiveField2: "Financial Data: Account Balance $12,345.67",
+        sensitiveField3: "Medical Record: Patient #98765, Diagnosis Code ICD-10"
+      };
+      
+      // Run homomorphic encryption for AI processing
+      const results = await encryptForAIProcessing(sampleData, 'classification');
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      setEncryptionResults(results);
+      
+      toast({
+        title: "Homomorphic Encryption Applied",
+        description: "Data is now encrypted for secure AI processing",
+      });
+    } catch (error) {
+      console.error("Error during homomorphic encryption:", error);
+      toast({
+        title: "Encryption Error",
+        description: "Failed to apply homomorphic encryption",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEncrypting(false);
     }
   };
 
   return (
-    <MainLayout>
-      <div className="container py-8 space-y-6">
-        <div className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold">AI-Powered Quantum Security</h1>
-        </div>
-        
-        <p className="text-muted-foreground max-w-3xl">
-          TetraCryptPQC integrates advanced AI capabilities with post-quantum cryptography to create
-          a self-healing, resilient security infrastructure that can detect and mitigate threats in real-time.
-        </p>
-        
-        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              <span>Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="threat-detection" className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" />
-              <span>Threat Detection</span>
-            </TabsTrigger>
-            <TabsTrigger value="homomorphic" className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              <span>Secure AI Processing</span>
-            </TabsTrigger>
-            <TabsTrigger value="decentralized" className="flex items-center gap-2">
-              <Network className="h-4 w-4" />
-              <span>Decentralized Security</span>
-            </TabsTrigger>
-            <TabsTrigger value="offline" className="flex items-center gap-2">
-              <CloudOff className="h-4 w-4" />
-              <span>Offline Resilience</span>
-            </TabsTrigger>
-          </TabsList>
+    <div className="container mx-auto py-8">
+      {offlineMode && (
+        <Alert variant="destructive" className="mb-6">
+          <WifiOff className="h-4 w-4" />
+          <AlertTitle>Offline Mode</AlertTitle>
+          <AlertDescription>
+            You are currently in offline mode. TetraCryptPQC is providing local AI security with limited functionality.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="flex flex-col md:flex-row items-start gap-6">
+        <div className="w-full md:w-3/4">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">AI Security</h1>
+            <div className="flex items-center space-x-2">
+              <Shield className="h-5 w-5 text-primary" />
+              <span className="text-sm">TetraCryptPQC Secured</span>
+            </div>
+          </div>
           
-          <TabsContent value="overview" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary" />
-                  System Security Status
-                </CardTitle>
-                <CardDescription>
-                  Real-time security posture of your TetraCryptPQC system
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Quantum Security Level</span>
-                      <span className="text-sm font-medium">{securityScore}%</span>
-                    </div>
-                    <Progress value={securityScore} className="h-2" />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center">
-                          <Lock className="h-5 w-5 text-green-500 mr-2" />
-                          <h3 className="font-medium">Encryption Status</h3>
-                        </div>
-                        <Badge variant="outline" className="bg-green-500/10 text-green-600">Active</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        ML-KEM-1024 & SLH-DSA quantum-resistant cryptography active
-                      </p>
-                    </div>
-                    
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center">
-                          <Brain className="h-5 w-5 text-blue-500 mr-2" />
-                          <h3 className="font-medium">AI Status</h3>
-                        </div>
-                        <Badge variant="outline" className="bg-blue-500/10 text-blue-600">Monitoring</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        AI-powered threat detection and anomaly analysis running
-                      </p>
-                    </div>
-                    
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center">
-                          <Server className="h-5 w-5 text-purple-500 mr-2" />
-                          <h3 className="font-medium">Backup Status</h3>
-                        </div>
-                        <Badge variant="outline" className="bg-purple-500/10 text-purple-600">Synced</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Decentralized IPFS backups & Podman containers ready
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-muted/50 p-4 rounded-lg space-y-4">
-                    <h3 className="font-medium flex items-center">
-                      <Activity className="h-5 w-5 text-primary mr-2" />
-                      System Architecture
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-start gap-3">
-                        <CircuitBoard className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="text-sm font-medium">Quantum-Resistant Frontend</h4>
-                          <p className="text-xs text-muted-foreground">
-                            React + WASM-powered TetraCryptPQC implementation for client-side encryption
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <Server className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="text-sm font-medium">Self-Healing Backend</h4>
-                          <p className="text-xs text-muted-foreground">
-                            Rust-powered APIs with auto-failover and redundant Podman containers
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <Database className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="text-sm font-medium">Decentralized Storage</h4>
-                          <p className="text-xs text-muted-foreground">
-                            Supabase with StarkNet-synced transaction verification and IPFS backups
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <Cpu className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h4 className="text-sm font-medium">Edge AI Processing</h4>
-                          <p className="text-xs text-muted-foreground">
-                            Local AI models for offline threat detection and cryptographic operations
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  onClick={runThreatAnalysis} 
-                  disabled={analysisRunning}
-                  className="w-full"
-                >
-                  {analysisRunning ? "Running Security Scan..." : "Run AI Security Analysis"}
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="threat-detection" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-primary" />
-                  AI Threat Detection
-                </CardTitle>
-                <CardDescription>
-                  Post-quantum AI-powered threat analysis and anomaly detection
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {threatReport ? (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
+          <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-5">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="threats">Threat Detection</TabsTrigger>
+              <TabsTrigger value="privacy">AI Privacy</TabsTrigger>
+              <TabsTrigger value="decentralized">Decentralized Security</TabsTrigger>
+              <TabsTrigger value="offline">Offline Resilience</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="overview" className="space-y-4 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl flex items-center">
+                      <Lock className="h-5 w-5 mr-2 text-primary" />
+                      Post-Quantum Security
+                    </CardTitle>
+                    <CardDescription>
+                      TetraCryptPQC employs NIST-approved quantum-resistant algorithms
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
                       <div>
-                        <h3 className="font-medium">Security Assessment</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Based on AI analysis of system activity
-                        </p>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>ML-KEM-1024 (Key Encapsulation)</span>
+                          <span>Active</span>
+                        </div>
+                        <Progress value={100} className="h-2 bg-primary/20" />
                       </div>
-                      <Badge 
-                        variant="outline" 
-                        className={`${
-                          threatReport.detected 
-                            ? "bg-red-500/10 text-red-600" 
-                            : "bg-green-500/10 text-green-600"
-                        }`}
-                      >
-                        {threatReport.detected ? "Threats Detected" : "System Secure"}
-                      </Badge>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>SLH-DSA (Digital Signatures)</span>
+                          <span>Active</span>
+                        </div>
+                        <Progress value={100} className="h-2 bg-primary/20" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Falcon (Alternate Signatures)</span>
+                          <span>Ready</span>
+                        </div>
+                        <Progress value={85} className="h-2 bg-primary/20" />
+                      </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Overall Security Score</span>
-                        <span className="text-sm font-medium">{threatReport.score}/100</span>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-xl flex items-center">
+                      <Brain className="h-5 w-5 mr-2 text-primary" />
+                      AI-Powered Security
+                    </CardTitle>
+                    <CardDescription>
+                      TetraCryptPQC leverages AI for enhanced threat detection
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>AI Anomaly Detection</span>
+                          <span>Active</span>
+                        </div>
+                        <Progress value={92} className="h-2 bg-primary/20" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Self-Healing Security</span>
+                          <span>Active</span>
+                        </div>
+                        <Progress value={85} className="h-2 bg-primary/20" />
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Homomorphic AI Privacy</span>
+                          <span>Ready</span>
+                        </div>
+                        <Progress value={78} className="h-2 bg-primary/20" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle>TetraCryptPQC Security Metrics</CardTitle>
+                  <CardDescription>Real-time security assessment of your environment</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Quantum Resistance</span>
+                        <span className="text-sm">{securityMetrics.quantumResistanceScore}%</span>
                       </div>
                       <Progress 
-                        value={threatReport.score} 
-                        className="h-2"
-                        indicator={threatReport.score > 70 ? "bg-green-500" : "bg-yellow-500"}
+                        value={securityMetrics.quantumResistanceScore} 
+                        className="h-2" 
+                        indicator="Exceptional" 
                       />
                     </div>
                     
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <h3 className="font-medium mb-2">AI Recommendation</h3>
-                      <p className="text-sm">{threatReport.recommendation}</p>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">AI Security Integration</span>
+                        <span className="text-sm">{securityMetrics.aiSecurityScore}%</span>
+                      </div>
+                      <Progress 
+                        value={securityMetrics.aiSecurityScore} 
+                        className="h-2" 
+                        indicator="Good" 
+                      />
                     </div>
                     
-                    {threatReport.threats.length > 0 ? (
-                      <div className="space-y-4">
-                        <h3 className="font-medium">Detected Threats</h3>
-                        {threatReport.threats.map((threat: any, index: number) => (
-                          <div key={index} className="border rounded-lg p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium">{threat.description}</h4>
-                              <Badge 
-                                variant="outline" 
-                                className={`
-                                  ${threat.severity === 'critical' ? 'bg-red-500/10 text-red-600' : ''}
-                                  ${threat.severity === 'high' ? 'bg-orange-500/10 text-orange-600' : ''}
-                                  ${threat.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-600' : ''}
-                                  ${threat.severity === 'low' ? 'bg-blue-500/10 text-blue-600' : ''}
-                                `}
-                              >
-                                {threat.severity}
-                              </Badge>
-                            </div>
-                            <div className="space-y-2">
-                              <div>
-                                <h5 className="text-sm font-medium">Indicators</h5>
-                                <ul className="text-sm text-muted-foreground list-disc pl-5">
-                                  {threat.indicators.map((indicator: string, i: number) => (
-                                    <li key={i}>{indicator}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                              <div>
-                                <h5 className="text-sm font-medium">Mitigation Steps</h5>
-                                <ul className="text-sm text-muted-foreground list-disc pl-5">
-                                  {threat.mitigationSteps.map((step: string, i: number) => (
-                                    <li key={i}>{step}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Data Privacy Protection</span>
+                        <span className="text-sm">{securityMetrics.dataPrivacyScore}%</span>
                       </div>
-                    ) : (
-                      <div className="bg-green-500/10 p-4 rounded-lg border border-green-500/20">
-                        <h3 className="font-medium text-green-600 flex items-center gap-2">
-                          <Shield className="h-4 w-4" />
-                          No threats detected
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Your system is currently secure with quantum-resistant encryption active.
+                      <Progress 
+                        value={securityMetrics.dataPrivacyScore} 
+                        className="h-2" 
+                        indicator="Exceptional" 
+                      />
+                    </div>
+                    
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Offline Resilience</span>
+                        <span className="text-sm">{securityMetrics.offlineResilienceScore}%</span>
+                      </div>
+                      <Progress 
+                        value={securityMetrics.offlineResilienceScore} 
+                        className="h-2" 
+                        indicator="Good" 
+                      />
+                    </div>
+                    
+                    <div className="mt-8">
+                      <div className="flex justify-between mb-1">
+                        <span className="text-sm font-medium">Overall Security Rating</span>
+                        <span className="text-sm">{securityMetrics.overallSecurityScore}%</span>
+                      </div>
+                      <Progress 
+                        value={securityMetrics.overallSecurityScore} 
+                        className="h-3" 
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="threats" className="space-y-4 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <ShieldAlert className="h-5 w-5 mr-2 text-primary" />
+                    AI-Powered Threat Detection
+                  </CardTitle>
+                  <CardDescription>
+                    TetraCryptPQC uses advanced AI to detect and mitigate security threats
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      Our AI security model can analyze patterns and detect anomalies that may indicate security threats, even in quantum-resistant systems.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+                      <div className="p-4 border rounded-md flex flex-col items-center text-center">
+                        <Search className="h-8 w-8 mb-2 text-primary" />
+                        <h3 className="font-medium">Anomaly Detection</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Identifies unusual access patterns
                         </p>
+                      </div>
+                      
+                      <div className="p-4 border rounded-md flex flex-col items-center text-center">
+                        <Zap className="h-8 w-8 mb-2 text-primary" />
+                        <h3 className="font-medium">Real-Time Response</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Takes immediate action on threats
+                        </p>
+                      </div>
+                      
+                      <div className="p-4 border rounded-md flex flex-col items-center text-center">
+                        <Brain className="h-8 w-8 mb-2 text-primary" />
+                        <h3 className="font-medium">Self-Learning</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Improves detection over time
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      variant="default" 
+                      className="w-full"
+                      onClick={runThreatDetection}
+                      disabled={threatAnalysisRunning}
+                    >
+                      {threatAnalysisRunning ? (
+                        <>
+                          <Shield className="h-4 w-4 mr-2 animate-pulse" />
+                          Analyzing Threats...
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="h-4 w-4 mr-2" />
+                          Run AI Threat Detection
+                        </>
+                      )}
+                    </Button>
+                    
+                    {threatResults && (
+                      <div className="mt-4 p-4 border rounded-md">
+                        <h3 className="font-medium mb-2">Threat Analysis Results</h3>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div className={`w-3 h-3 rounded-full ${threatResults.detected ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                          <span className="text-sm">
+                            {threatResults.detected ? 'Threats Detected' : 'No Threats Detected'}
+                          </span>
+                        </div>
+                        
+                        {threatResults.detected && (
+                          <div className="space-y-3 mt-3">
+                            <p className="text-sm">Detected {threatResults.threats.length} potential {threatResults.threats.length === 1 ? 'threat' : 'threats'}:</p>
+                            
+                            {threatResults.threats.map((threat: any, index: number) => (
+                              <div key={index} className="bg-muted p-2 rounded-md text-sm">
+                                <div className="font-medium">{threat.description}</div>
+                                <div className="text-xs mt-1">
+                                  Severity: <span className={
+                                    threat.severity === 'critical' ? 'text-red-500' :
+                                    threat.severity === 'high' ? 'text-orange-500' :
+                                    threat.severity === 'medium' ? 'text-yellow-500' :
+                                    'text-blue-500'
+                                  }>{threat.severity}</span>
+                                </div>
+                                <div className="text-xs mt-1">
+                                  Recommendation: {threatResults.recommendation}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="mt-3">
+                          <div className="text-xs font-medium">Threat Score</div>
+                          <Progress value={threatResults.score} className="h-2 mt-1" />
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {threatResults.score}% risk level
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No Security Analysis Run</h3>
-                    <p className="text-muted-foreground mb-6">
-                      Run a security analysis to detect potential threats and vulnerabilities
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-primary" />
+                    AI Security Compliance Report
+                  </CardTitle>
+                  <CardDescription>
+                    Generate a comprehensive security assessment report
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      The AI-enhanced security report provides detailed insights into your system's quantum resistance, compliance with security standards, and recommendations for improvement.
                     </p>
-                    <Button onClick={runThreatAnalysis} disabled={analysisRunning}>
-                      {analysisRunning ? "Running Security Scan..." : "Run Security Analysis"}
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={generateAISecurityReport}
+                      disabled={isGeneratingReport}
+                    >
+                      {isGeneratingReport ? (
+                        <>
+                          <ScrollText className="h-4 w-4 mr-2 animate-pulse" />
+                          Generating Report...
+                        </>
+                      ) : (
+                        <>
+                          <ScrollText className="h-4 w-4 mr-2" />
+                          Generate Security Report
+                        </>
+                      )}
+                    </Button>
+                    
+                    {securityReport && (
+                      <div className="mt-4 p-4 border rounded-md space-y-4">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">Security Compliance Report</h3>
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                            Report #{securityReport.id}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-xs text-muted-foreground">Generated:</span>
+                            <div>{new Date(securityReport.timestamp).toLocaleString()}</div>
+                          </div>
+                          <div>
+                            <span className="text-xs text-muted-foreground">Valid Until:</span>
+                            <div>{new Date(securityReport.validUntil).toLocaleString()}</div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <span className="text-xs text-muted-foreground">Compliance Standards:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {securityReport.standards.map((standard: string, index: number) => (
+                              <span 
+                                key={index} 
+                                className="text-xs bg-muted px-2 py-1 rounded-full"
+                              >
+                                {standard}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <span className="text-xs text-muted-foreground">Overall Compliance Score:</span>
+                          <div className="flex items-center mt-1">
+                            <Progress value={securityReport.overallScore} className="flex-1 h-2" />
+                            <span className="ml-2 text-sm font-medium">{securityReport.overallScore}%</span>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <span className="text-xs text-muted-foreground">Key Findings:</span>
+                          <div className="space-y-2 mt-1">
+                            {securityReport.findings.map((finding: any, index: number) => (
+                              <div key={index} className="bg-muted p-2 rounded-md text-xs">
+                                <div className="font-medium">{finding.requirement} - {finding.description}</div>
+                                <div className="mt-1 flex justify-between">
+                                  <span>Status: <span className={
+                                    finding.status === 'compliant' ? 'text-green-500' : 'text-red-500'
+                                  }>{finding.status}</span></span>
+                                  <span>{finding.standard}</span>
+                                </div>
+                                {finding.recommendation && (
+                                  <div className="mt-1 text-muted-foreground">{finding.recommendation}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="privacy" className="space-y-4 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Database className="h-5 w-5 mr-2 text-primary" />
+                    Homomorphic Encryption for AI
+                  </CardTitle>
+                  <CardDescription>
+                    Process data with AI while keeping it fully encrypted
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      TetraCryptPQC uses homomorphic encryption to allow AI processing on encrypted data, ensuring privacy even during analysis.
+                    </p>
+                    
+                    <div className="flex items-center p-4 bg-muted rounded-md my-4">
+                      <Lock className="h-10 w-10 mr-4 text-primary" />
+                      <div>
+                        <h3 className="font-medium">Privacy-Preserving AI</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Your data remains encrypted during the entire AI processing pipeline, ensuring complete privacy and confidentiality.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      variant="default" 
+                      className="w-full"
+                      onClick={runHomomorphicEncryption}
+                      disabled={isEncrypting}
+                    >
+                      {isEncrypting ? (
+                        <>
+                          <Lock className="h-4 w-4 mr-2 animate-pulse" />
+                          Encrypting Data for AI...
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-4 w-4 mr-2" />
+                          Demo Homomorphic Encryption
+                        </>
+                      )}
+                    </Button>
+                    
+                    {encryptionResults && (
+                      <div className="mt-4 p-4 border rounded-md">
+                        <h3 className="font-medium mb-2">Homomorphic Encryption Results</h3>
+                        
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-xs text-muted-foreground">Encrypted Data:</span>
+                            <div className="bg-muted p-2 rounded-md mt-1 font-mono text-xs overflow-x-auto">
+                              {encryptionResults.encryptedData}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <span className="text-xs text-muted-foreground">Operation Type:</span>
+                            <div className="text-sm mt-1">
+                              {encryptionResults.operationType} (can process while encrypted)
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center mt-2">
+                            <ShieldCheck className="h-4 w-4 text-green-500 mr-2" />
+                            <span className="text-sm">
+                              {encryptionResults.canProcessHomomorphically 
+                                ? "AI can process this data while it remains encrypted" 
+                                : "This data requires decryption before processing"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Fingerprint className="h-5 w-5 mr-2 text-primary" />
+                    Zero-Knowledge Authentication
+                  </CardTitle>
+                  <CardDescription>
+                    Prove identity without revealing sensitive information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      TetraCryptPQC implements zero-knowledge proofs for authentication, allowing users to prove their identity without revealing their actual credentials or personal data.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-4">
+                      <div className="p-4 border rounded-md flex flex-col items-center text-center">
+                        <Key className="h-8 w-8 mb-2 text-primary" />
+                        <h3 className="font-medium">No Credential Sharing</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Prove identity without sending passwords
+                        </p>
+                      </div>
+                      
+                      <div className="p-4 border rounded-md flex flex-col items-center text-center">
+                        <ShieldCheck className="h-8 w-8 mb-2 text-primary" />
+                        <h3 className="font-medium">Quantum-Resistant ZKPs</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Future-proof against quantum attacks
+                        </p>
+                      </div>
+                      
+                      <div className="p-4 border rounded-md flex flex-col items-center text-center">
+                        <Brain className="h-8 w-8 mb-2 text-primary" />
+                        <h3 className="font-medium">AI Verification</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          AI models validate proof correctness
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <Button variant="outline">
+                        <Fingerprint className="h-4 w-4 mr-2" />
+                        Try Zero-Knowledge Authentication
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="decentralized" className="space-y-4 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>StarkNet Integration</CardTitle>
+                  <CardDescription>
+                    Decentralized quantum-resistant security using StarkNet
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      TetraCryptPQC leverages StarkNet's zero-knowledge proofs and decentralized infrastructure to enhance security. This integration provides quantum-resistant verification and secure key management.
+                    </p>
+                    
+                    <StarkNetAuth />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Server className="h-5 w-5 mr-2 text-primary" />
+                    Decentralized AI Security
+                  </CardTitle>
+                  <CardDescription>
+                    Distributed AI security nodes protect against centralized vulnerabilities
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      TetraCryptPQC employs a network of decentralized AI security nodes to detect and respond to threats, ensuring no single point of failure exists.
+                    </p>
+                    
+                    <div className="p-4 bg-muted rounded-md">
+                      <h3 className="font-medium">Decentralized Security Features</h3>
+                      <ul className="mt-2 space-y-2 text-sm">
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          P2P security threat detection network
+                        </li>
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          Distributed key management
+                        </li>
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          Self-sovereign identity verification
+                        </li>
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          AI-powered consensus for security decisions
+                        </li>
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          StarkNet verification of security events
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <Button variant="outline" className="w-full">
+                      <Server className="h-4 w-4 mr-2" />
+                      View Network Status
                     </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="homomorphic" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Brain className="h-5 w-5 text-primary" />
-                  Homomorphic AI Processing
-                </CardTitle>
-                <CardDescription>
-                  Secure AI operations on encrypted data without decryption
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">How It Works</h3>
-                    <p className="text-sm text-muted-foreground">
-                      TetraCryptPQC uses homomorphic encryption to allow AI models to process encrypted data without ever decrypting it. 
-                      This ensures data remains private and secure even during analysis and machine learning operations.
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="offline" className="space-y-4 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <WifiOff className="h-5 w-5 mr-2 text-primary" />
+                    Offline-Resilient Security
+                  </CardTitle>
+                  <CardDescription>
+                    Continue operations securely even without internet connectivity
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm">
+                      TetraCryptPQC features offline resilience, allowing critical security functions to operate without an internet connection using local AI models and cached cryptographic materials.
                     </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-2 flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-primary" />
-                        Encrypted AI Analysis
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        AI models can analyze encrypted data, detecting patterns and anomalies without seeing the raw information.
-                      </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                      <div className="p-4 border rounded-md">
+                        <h3 className="font-medium flex items-center">
+                          <Brain className="h-5 w-5 mr-2 text-primary" />
+                          Local AI Models
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Compressed AI security models run locally on your device when offline, ensuring continuous threat protection.
+                        </p>
+                        <div className="mt-3">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span>Local AI Model Status</span>
+                            <span>Active</span>
+                          </div>
+                          <Progress value={100} className="h-2" />
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 border rounded-md">
+                        <h3 className="font-medium flex items-center">
+                          <Lock className="h-5 w-5 mr-2 text-primary" />
+                          Offline Cryptography
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Post-quantum cryptographic operations continue to function offline using securely cached keys and algorithms.
+                        </p>
+                        <div className="mt-3">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span>Cached Crypto Materials</span>
+                            <span>Secure</span>
+                          </div>
+                          <Progress value={90} className="h-2" />
+                        </div>
+                      </div>
                     </div>
                     
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-2 flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-primary" />
-                        Privacy-Preserving ML
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Machine learning models train on encrypted data sets, maintaining data privacy while improving security capabilities.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20">
-                    <h3 className="font-medium text-blue-600 mb-2">Technical Implementation</h3>
-                    <p className="text-sm text-muted-foreground">
-                      TetraCryptPQC implements TFHE (Fully Homomorphic Encryption over the Torus) and CKKS schemes 
-                      for efficient encrypted computations, with optimizations for both CPU and WebGPU acceleration.
-                    </p>
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      const data = { userId: "user123", activityData: "Sensitive user activity log" };
-                      const result = await encryptForAIProcessing(data);
-                      console.log("Data encrypted for AI processing:", result);
-                    }}
-                  >
-                    Demo: Encrypt Data for AI Processing
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="decentralized" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Network className="h-5 w-5 text-primary" />
-                  Decentralized Security Architecture
-                </CardTitle>
-                <CardDescription>
-                  Distributed security mechanisms with no single point of failure
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">Decentralized Security Components</h3>
-                    <p className="text-sm text-muted-foreground">
-                      TetraCryptPQC implements a decentralized security architecture that distributes security 
-                      functions across multiple nodes, eliminating single points of failure and increasing resilience.
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-2 flex items-center gap-2">
-                        <Database className="h-4 w-4 text-primary" />
-                        StarkNet Integration
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Security policies and cryptographic proofs stored on StarkNet for tamper-proof verification.
-                      </p>
+                    <div className="p-4 bg-muted rounded-md">
+                      <h3 className="font-medium">Offline Capabilities</h3>
+                      <ul className="mt-2 space-y-2 text-sm">
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          Local threat detection and response
+                        </li>
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          Offline authentication with cached credentials
+                        </li>
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          Secure data access with offline key management
+                        </li>
+                        <li className="flex items-center">
+                          <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                          Synchronization when connectivity returns
+                        </li>
+                      </ul>
                     </div>
                     
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-2 flex items-center gap-2">
-                        <Server className="h-4 w-4 text-primary" />
-                        Podman Security Mesh
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Secure containers running redundant security services that automatically fail over.
-                      </p>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-2 flex items-center gap-2">
-                        <CircuitBoard className="h-4 w-4 text-primary" />
-                        P2P Security Network
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Peer-to-peer threat intelligence sharing with quantum-resistant encryption.
-                      </p>
-                    </div>
+                    <Button 
+                      variant={offlineMode ? "default" : "outline"} 
+                      className="w-full"
+                      onClick={() => {
+                        toast({
+                          title: offlineMode ? "Already in Offline Mode" : "Testing Offline Mode",
+                          description: offlineMode 
+                            ? "Your device is currently offline. TetraCryptPQC is running in resilient mode." 
+                            : "Simulating offline capabilities while maintaining connectivity",
+                        });
+                      }}
+                    >
+                      {offlineMode ? (
+                        <>
+                          <WifiOff className="h-4 w-4 mr-2" />
+                          Currently in Offline Mode
+                        </>
+                      ) : (
+                        <>
+                          <WifiOff className="h-4 w-4 mr-2" />
+                          Test Offline Capabilities
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  
-                  <div className="bg-purple-500/10 p-4 rounded-lg border border-purple-500/20">
-                    <h3 className="font-medium text-purple-600 mb-2">Zero-Knowledge Authentication</h3>
-                    <p className="text-sm text-muted-foreground">
-                      TetraCryptPQC uses zero-knowledge proofs to authenticate users and services without 
-                      exposing credentials, providing quantum-resistant identity verification with minimal data exposure.
-                    </p>
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      const report = await generateSecurityReport();
-                      console.log("Generated security report:", report);
-                    }}
-                  >
-                    Generate Decentralized Security Report
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="offline" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CloudOff className="h-5 w-5 text-primary" />
-                  Offline Resilience
-                </CardTitle>
-                <CardDescription>
-                  Continue operations even when disconnected from the network
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <h3 className="font-medium mb-2">Offline-Capable Architecture</h3>
-                    <p className="text-sm text-muted-foreground">
-                      TetraCryptPQC is designed to function fully even when disconnected from the internet,
-                      maintaining security and operational capabilities through local processing and storage.
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-2 flex items-center gap-2">
-                        <Lock className="h-4 w-4 text-primary" />
-                        Local Cryptographic Operations
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        All cryptographic functions run locally through WASM, ensuring security even offline.
-                      </p>
-                    </div>
-                    
-                    <div className="border rounded-lg p-4">
-                      <h3 className="font-medium mb-2 flex items-center gap-2">
-                        <Brain className="h-4 w-4 text-primary" />
-                        Offline AI Models
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Compressed AI models for threat detection run locally through TensorFlow.js/ONNX Runtime.
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="border rounded-lg p-4">
-                    <h3 className="font-medium mb-2 flex items-center gap-2">
-                      <CircuitBoard className="h-4 w-4 text-primary" />
-                      Service Worker Architecture
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Service Workers cache the application and critical data, allowing full functionality without connectivity:
-                    </p>
-                    <ul className="text-sm text-muted-foreground list-disc pl-5 mt-2 space-y-1">
-                      <li>Application shell and UI components cached locally</li>
-                      <li>Encryption/decryption operations run in WebWorkers for performance</li>
-                      <li>IndexedDB stores encrypted data pendingZ synchronization</li>
-                      <li>Background sync when connectivity is restored</li>
-                    </ul>
-                  </div>
-                  
-                  <div className="bg-green-500/10 p-4 rounded-lg border border-green-500/20">
-                    <h3 className="font-medium text-green-600 mb-2">IPFS Integration</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Critical application components and security definitions are stored on IPFS, 
-                      allowing decentralized access even when primary servers are unreachable.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">
-                  Test Offline Capability
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+        
+        <div className="w-full md:w-1/4 mt-6 md:mt-0">
+          <AISecurityDashboard />
+        </div>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

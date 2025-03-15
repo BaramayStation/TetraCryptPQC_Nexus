@@ -11,6 +11,7 @@ export interface Contact {
     signature: string;
   };
   name: string;
+  displayName?: string; // Added for Chat.tsx component
   lastMessage?: string;
   lastMessageTime?: string;
   unreadCount?: number;
@@ -18,18 +19,30 @@ export interface Contact {
   verified?: boolean;
   trustLevel?: 'low' | 'medium' | 'high';
   signatureKey?: string; // For backwards compatibility
+  publicKey?: string; // For backwards compatibility
 }
 
 export interface Message {
   id: string;
   senderId: string;
-  receiverId: string;
+  receiverId: string; // Added for compatibility with components
+  recipientId?: string; // Added for backwards compatibility
   content: string;
   timestamp: string;
   status: 'sent' | 'delivered' | 'read';
   encryptionType: string;
   signature?: string;
   verified?: boolean;
+  encrypted?: boolean; // Added for MessageList.tsx
+  kemType?: string; // Added for MessageList.tsx
+  pqSignatureType?: string; // Added for MessageList.tsx
+  selfHealingStatus?: 'active' | 'healing' | 'healed'; // Added for MessageList.tsx
+  zkProofVerified?: boolean; // Added for MessageList.tsx
+  didVerified?: boolean; // Added for MessageList.tsx
+  starkNetValidated?: boolean; // Added for MessageList.tsx
+  webrtcSecured?: boolean; // Added for MessageList.tsx
+  encryptedContent?: string; // Added for p2p-ai-messaging.ts
+  encryptionAlgorithm?: string; // Added for p2p-ai-messaging.ts
 }
 
 export interface Conversation {
@@ -43,7 +56,9 @@ export interface Conversation {
 
 export interface UserProfile {
   id: string;
+  userId?: string; // Added for compatibility with components
   username: string;
+  name?: string; // Added for storage.ts
   displayName?: string;
   keyPairs?: {
     pqkem: {
@@ -58,12 +73,33 @@ export interface UserProfile {
       created: string;
       algorithm: string;
     };
+    encryption?: { // Added for pq-scif.ts
+      publicKey: string;
+      privateKey: string;
+      created: string;
+      algorithm: string;
+    };
   };
   starkNetId?: StarkNetID;
   didDocument?: any;
   settings?: UserSettings;
   created: string;
   lastLogin?: string;
+  securityLevel?: 'standard' | 'high' | 'maximum'; // Added for UserSetup.tsx
+  publicKey?: string; // For backwards compatibility
+  signatureKey?: string; // For backwards compatibility
+  hsmInfo?: {
+    available: boolean;
+    type: string;
+    keyProtectionLevel: string;
+    lastVerified: string;
+  }; // Added for SecurityDashboard.tsx
+  qkdInfo?: {
+    available: boolean;
+    lastExchange: string;
+    keySize: number;
+    securityLevel: string;
+  }; // Added for SecurityDashboard.tsx
 }
 
 export interface UserSettings {
@@ -91,6 +127,10 @@ export interface SecurityHealthMetrics {
     low: number;
   };
   recommendedActions?: string[];
+  cpuUsage?: number; // Added for AISecureCloudInfrastructure.tsx
+  memoryUsage?: number; // Added for AISecureCloudInfrastructure.tsx
+  storageUsage?: number; // Added for AISecureCloudInfrastructure.tsx
+  networkUsage?: number; // Added for AISecureCloudInfrastructure.tsx
 }
 
 export interface Threat {
@@ -115,6 +155,7 @@ export interface AISecurityPolicy {
   rules: SecurityRule[];
   created: string;
   updated: string;
+  threatDetectionLevel?: 'standard' | 'enhanced' | 'maximum'; // Added for ai-cloud-security.ts
 }
 
 export interface SecurityRule {
@@ -143,15 +184,19 @@ export interface AISecuredCloudInstance {
     encryption: {
       algorithm: string;
       created: string;
+      publicKey?: string; // Added for ai-cloud-security.ts
     };
     signature: {
       algorithm: string;
       created: string;
+      publicKey?: string; // Added for ai-cloud-security.ts
     };
   };
   created: string;
   updated: string;
   lastUpdated?: string;
+  createdAt?: string; // Added for AISecureCloudInfrastructure.tsx
+  region?: string; // Added for AISecureCloudInfrastructure.tsx
 }
 
 // Infrastructure Types
@@ -169,6 +214,10 @@ export interface SecureContainerConfig {
       triggerOnAnomaly: boolean;
     };
   };
+  status?: string; // Added for SecureInfrastructurePanel.tsx compatibility
+  containerType?: string; // Added for SecureInfrastructurePanel.tsx compatibility
+  startedAt?: string; // Added for SecureInfrastructurePanel.tsx compatibility
+  createdAt?: string; // Added for SecureInfrastructurePanel.tsx compatibility
 }
 
 export interface SecureContainer {
@@ -179,6 +228,8 @@ export interface SecureContainer {
   createdAt: string;
   startedAt?: string;
   stoppedAt?: string;
+  type?: 'general' | 'compute' | 'storage' | 'network' | 'ai'; // Added for SecureInfrastructurePanel.tsx
+  securityProfile?: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave'; // Added for SecureInfrastructurePanel.tsx
 }
 
 export interface SecureInfraNode {
@@ -207,7 +258,7 @@ export interface SecurityOptions {
 export interface SecureNode {
   nodeId: string;
   name: string;
-  status: string;
+  status: 'online' | 'offline' | 'degraded'; // Changed from string to match SecureInfraNode
   type: string;
   lastVerified: string;
 }
@@ -246,6 +297,8 @@ export interface AISyncStatus {
   zkProofsVerified?: boolean;
   selfHealingAttempts?: number;
   lastSelfHealingAction?: string;
+  lastLocalSync?: string; // Added for local-ai-backup.ts
+  syncErrors?: any[]; // Added for local-ai-backup.ts
 }
 
 export interface AICloudConnectionStatus {
@@ -254,6 +307,7 @@ export interface AICloudConnectionStatus {
   lastConnection: string;
   provider: string;
   encryptionStatus: 'encrypted' | 'unencrypted';
+  connected?: boolean; // Added for local-ai-backup.ts
 }
 
 export interface WebRTCPeerStatus {
@@ -263,6 +317,7 @@ export interface WebRTCPeerStatus {
   encryptionType: string;
   lastMessageTimestamp?: string;
   dataTransferred?: number;
+  encryptionEnabled?: boolean; // Added for p2p-ai-messaging.ts
 }
 
 export interface PodmanContainerStatus {
@@ -276,6 +331,7 @@ export interface PodmanContainerStatus {
   cpuUsagePercent?: number;
   restartCount?: number;
   lastRestart?: string;
+  containerName?: string; // Added for local-ai-backup.ts
 }
 
 export interface LocalAIBackupConfig {
@@ -291,4 +347,54 @@ export interface LocalAIBackupConfig {
     syncOnWifi: boolean;
     maxSyncSize: number;
   };
+  tpmProtection?: boolean; // Added for local-ai-backup.ts
+  backupSchedule?: string; // Added for local-ai-backup.ts
+  starkNetVerification?: boolean; // Added for backward compatibility
+  lastBackup?: string; // Added for local-ai-backup.ts
+  lastRestore?: string; // Added for local-ai-backup.ts
+  backups?: any[]; // Added for local-ai-backup.ts
+  syncStatus?: AISyncStatus; // Added for local-ai-backup.ts
 }
+
+// Additional types for PQ-SCIF implementation
+export interface PQSCIFEnvironment {
+  id: string;
+  name: string;
+  operationalMode: 'tactical' | 'strategic' | 'enterprise';
+  securityLevel: 'default' | 'sensitive' | 'ts-sci';
+  aiCapabilities: string[];
+  hardwareSecured: boolean;
+  createdAt: string;
+}
+
+export interface SecureChannel {
+  id: string;
+  peerEndpoint: string;
+  encryptionAlgorithm: string;
+  signatureAlgorithm: string;
+  established: string;
+  lastActivity: string;
+  status: 'active' | 'inactive' | 'failed';
+}
+
+export interface SecureCommand {
+  id: string;
+  commandPayload: string;
+  issuedAt: string;
+  status: 'pending' | 'executed' | 'failed' | 'rejected';
+  authorization: string[];
+  verification: {
+    starkNetValidated: boolean;
+    zkProofVerified: boolean;
+    signatureValid: boolean;
+  };
+}
+
+// Security Event Type for AI Security
+export type SecurityEventType = 
+  | 'authentication' 
+  | 'key-usage' 
+  | 'data-access' 
+  | 'system-change'
+  | 'network-access'
+  | 'cryptographic-operation';

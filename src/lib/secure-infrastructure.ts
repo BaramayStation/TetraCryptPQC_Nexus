@@ -59,6 +59,8 @@ export async function createSecureContainer(
       name: name,
       status: "created",
       containerType: securityProfile,
+      type: 'compute', // Added for compatibility
+      securityProfile: securityProfile, // Added for compatibility
       createdAt: new Date().toISOString()
     };
   } catch (error) {
@@ -147,7 +149,7 @@ export async function createSecureNode(config: SecureNodeConfig): Promise<Secure
     return {
       nodeId: config.nodeId || crypto.randomUUID(),
       name: config.name,
-      status: "initializing",
+      status: "online", // Changed from string to valid enum value
       type: config.type,
       lastVerified: new Date().toISOString()
     };
@@ -329,6 +331,8 @@ export async function rotateContainer(containerId: string): Promise<SecureContai
       name: "Rotated Container",
       status: "running",
       containerType: "hardened",
+      type: 'compute', // Added for compatibility
+      securityProfile: 'hardened', // Added for compatibility
       createdAt: new Date().toISOString(),
       startedAt: new Date().toISOString()
     };
@@ -336,6 +340,30 @@ export async function rotateContainer(containerId: string): Promise<SecureContai
     console.error(`❌ Error rotating container keys: ${containerId}`, error);
     throw error;
   }
+}
+
+/**
+ * Create a SecureContainerConfig object (to fix SecureInfrastructurePanel.tsx)
+ */
+export function createSecureContainerConfig(
+  name: string,
+  type: 'general' | 'compute' | 'storage' | 'network' | 'ai',
+  securityProfile: 'standard' | 'hardened' | 'tpm-protected' | 'sgx-enclave',
+  options?: {
+    immutableRootfs?: boolean;
+    seccompProfile?: string;
+  }
+): SecureContainerConfig {
+  return {
+    id: crypto.randomUUID(),
+    name,
+    type,
+    securityProfile,
+    options: options ? {
+      immutableRootfs: options.immutableRootfs,
+      seccompProfile: options.seccompProfile
+    } : undefined
+  };
 }
 
 // Function for backwards compatibility with SecureInfrastructurePanel.tsx
