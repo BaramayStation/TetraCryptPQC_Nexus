@@ -1,8 +1,7 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { 
   Wifi, 
   WifiOff, 
@@ -17,70 +16,45 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getTetraCryptMessaging, ConnectionState, P2PMessage } from "@/lib/p2p-messaging";
 import { getUserProfile } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
-const P2PMessagingPanel: React.FC<{ recipientId?: string }> = ({ recipientId }) => {
+// Define the P2PMessage type if it's not already imported
+interface P2PMessage {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  content: string;
+  timestamp: number;
+  signature?: string;
+}
+
+interface P2PMessagingPanelProps {
+  recipientId?: string;
+  // Added new props to match what's being passed in Chat.tsx
+  messages?: P2PMessage[];
+  sendMessage?: (content: string, recipient?: string) => Promise<boolean>;
+  isLoading?: boolean;
+}
+
+const P2PMessagingPanel: React.FC<P2PMessagingPanelProps> = ({ 
+  recipientId,
+  messages = [],
+  sendMessage,
+  isLoading = false
+}) => {
   const { toast } = useToast();
-  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
-  const [peerCount, setPeerCount] = useState(0);
-  const [messages, setMessages] = useState<P2PMessage[]>([]);
   const [messageText, setMessageText] = useState("");
-  const [sending, setSending] = useState(false);
   const [recipient, setRecipient] = useState(recipientId || "");
   const user = getUserProfile();
   
-  useEffect(() => {
-    const messagingClient = getTetraCryptMessaging();
-    
-    // Update initial state
-    setConnectionState(messagingClient.getConnectionState());
-    setPeerCount(messagingClient.getPeerCount());
-    
-    // Listen for connection state changes
-    const unsubscribeConnection = messagingClient.onConnectionStateChange((state) => {
-      setConnectionState(state);
-      setPeerCount(messagingClient.getPeerCount());
-      
-      if (state === 'connected') {
-        toast({
-          title: "Network Connected",
-          description: `Connected to ${messagingClient.getPeerCount()} peers in the TetraCrypt network.`,
-        });
-      } else if (state === 'error') {
-        toast({
-          title: "Connection Error",
-          description: "Failed to connect to the TetraCrypt P2P network.",
-          variant: "destructive",
-        });
-      }
-    });
-    
-    // Listen for incoming messages
-    const unsubscribeMessages = messagingClient.onMessage((message) => {
-      setMessages(prev => [...prev, message].sort((a, b) => a.timestamp - b.timestamp));
-    });
-    
-    return () => {
-      unsubscribeConnection();
-      unsubscribeMessages();
-    };
-  }, [toast]);
-  
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !recipient.trim() || sending) return;
+    if (!messageText.trim() || !recipient.trim() || isLoading || !sendMessage) return;
     
-    setSending(true);
     try {
-      const messagingClient = getTetraCryptMessaging();
-      await messagingClient.sendMessage(recipient, messageText);
+      await sendMessage(messageText, recipient);
       setMessageText("");
-      toast({
-        title: "Message Sent",
-        description: "Your secure message has been sent.",
-      });
     } catch (error) {
       console.error('Failed to send message:', error);
       toast({
@@ -88,37 +62,6 @@ const P2PMessagingPanel: React.FC<{ recipientId?: string }> = ({ recipientId }) 
         description: "Failed to send your message. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setSending(false);
-    }
-  };
-  
-  const handleReconnect = () => {
-    const messagingClient = getTetraCryptMessaging();
-    messagingClient.reconnect();
-    toast({
-      title: "Reconnecting",
-      description: "Attempting to reconnect to the TetraCrypt P2P network...",
-    });
-  };
-  
-  const getConnectionStatusColor = () => {
-    switch (connectionState) {
-      case 'connected': return "text-green-500";
-      case 'connecting': return "text-yellow-500";
-      case 'disconnected': return "text-gray-500";
-      case 'error': return "text-red-500";
-      default: return "text-gray-500";
-    }
-  };
-  
-  const getConnectionIcon = () => {
-    switch (connectionState) {
-      case 'connected': return <Wifi className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
-      case 'connecting': return <Wifi className={`h-5 w-5 ${getConnectionStatusColor()} animate-pulse`} />;
-      case 'disconnected': return <WifiOff className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
-      case 'error': return <AlertCircle className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
-      default: return <WifiOff className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
     }
   };
   
@@ -135,17 +78,15 @@ const P2PMessagingPanel: React.FC<{ recipientId?: string }> = ({ recipientId }) 
   }
   
   return (
-    <Card className="shadow-lg border overflow-hidden">
+    <Card className="shadow-lg border overflow-hidden h-full flex flex-col">
       {/* Network Status Header */}
       <div className="p-3 bg-muted/50 border-b flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          {getConnectionIcon()}
+          <Wifi className="h-5 w-5 text-green-500" />
           <div>
             <div className="font-medium">TetraCrypt P2P Network</div>
             <div className="text-xs text-muted-foreground">
-              {connectionState === 'connected' 
-                ? `Connected to ${peerCount} peers` 
-                : connectionState.charAt(0).toUpperCase() + connectionState.slice(1)}
+              Secure Post-Quantum Messaging
             </div>
           </div>
         </div>
@@ -153,24 +94,21 @@ const P2PMessagingPanel: React.FC<{ recipientId?: string }> = ({ recipientId }) 
         <div className="flex items-center space-x-2">
           <Badge variant="outline" className="gap-1 px-2 py-1">
             <Shield className="h-3 w-3" />
-            <span>Post-Quantum Secure</span>
+            <span>ML-KEM-1024</span>
           </Badge>
-          <Button size="icon" variant="ghost" onClick={handleReconnect}>
-            <RefreshCw className="h-4 w-4" />
-          </Button>
         </div>
       </div>
       
       {/* Message Area */}
-      <div className="bg-background p-4 h-[400px] flex flex-col">
+      <div className="bg-background p-4 flex-1 flex flex-col">
         {/* Recipient Input */}
         {!recipientId && (
           <div className="mb-4">
-            <Input
+            <input
+              className="w-full px-3 py-2 border rounded-md"
               placeholder="Recipient ID"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className="mb-2"
             />
           </div>
         )}
@@ -199,12 +137,7 @@ const P2PMessagingPanel: React.FC<{ recipientId?: string }> = ({ recipientId }) 
                         : 'bg-muted'
                     }`}
                   >
-                    {/* Since the real message would be encrypted, we're showing a placeholder */}
-                    <p>
-                      {message.senderId === user.id 
-                        ? "[Encrypted message you sent]" 
-                        : "[Encrypted message from sender]"}
-                    </p>
+                    <p>{message.content}</p>
                     <div className="flex items-center justify-end gap-1 mt-1 text-xs opacity-70">
                       <Clock className="h-3 w-3" />
                       <span>{formatDistanceToNow(message.timestamp, { addSuffix: true })}</span>
@@ -226,12 +159,12 @@ const P2PMessagingPanel: React.FC<{ recipientId?: string }> = ({ recipientId }) 
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             className="pr-14 min-h-[80px] resize-none"
-            disabled={connectionState !== 'connected' || sending}
+            disabled={isLoading}
           />
           <Button 
             size="icon" 
             className="absolute bottom-2 right-2" 
-            disabled={!messageText.trim() || !recipient.trim() || connectionState !== 'connected' || sending}
+            disabled={!messageText.trim() || !recipient.trim() || isLoading}
             onClick={handleSendMessage}
           >
             <Send className="h-4 w-4" />

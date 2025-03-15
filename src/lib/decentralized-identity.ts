@@ -9,6 +9,7 @@
 import { PQCKey } from './crypto';
 import { signMessageSecure } from './tetracrypt-ffi';
 import { getUserProfile, saveUserProfile } from './storage';
+import { StarkNetID, DIDDocument as DIDDocumentType } from './storage-types';
 
 // DID Document Type
 export interface DIDDocument {
@@ -33,16 +34,6 @@ export interface DIDDocument {
   }[];
   created: string;
   updated: string;
-}
-
-// StarkNet ID Type
-export interface StarkNetID {
-  id: string;
-  address: string;
-  name?: string;
-  domain?: string;
-  starkKey: string;
-  created: string;
 }
 
 /**
@@ -110,7 +101,8 @@ export async function generateStarkNetID(publicKeyHex: string, name?: string): P
     address: `0x${starkId.substring(0, 40)}`,
     name: name || undefined,
     starkKey: publicKeyHex,
-    created: new Date().toISOString()
+    created: new Date().toISOString(),
+    type: "StarkNet" // Required field for the type
   };
 }
 

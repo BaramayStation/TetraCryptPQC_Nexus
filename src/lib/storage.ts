@@ -85,6 +85,21 @@ export function saveContact(contact: ContactType): void {
 }
 
 /**
+ * Add a new contact 
+ */
+export function addContact(contact: ContactType): void {
+  // Ensure the contact has a signatureKey
+  if (!contact.signatureKey) {
+    throw new Error("Contact must have a signatureKey");
+  }
+  
+  // Add the contact
+  storage.contacts.push(contact);
+  localStorage.setItem('contacts', JSON.stringify(storage.contacts));
+  console.log("Contact added:", contact.id);
+}
+
+/**
  * Get all contacts
  */
 export function getContacts(): ContactType[] {

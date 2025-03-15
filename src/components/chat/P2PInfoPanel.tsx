@@ -1,145 +1,123 @@
 
 import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { 
+  Wifi, 
+  WifiOff, 
+  Users, 
+  Shield, 
+  RefreshCw, 
+  Info,
+  AlertCircle
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, Wifi, Lock, Activity, Server, Fingerprint, Database, SatelliteDish } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ConnectionState } from "@/lib/p2p-messaging";
 
-const P2PInfoPanel = ({ isP2PEnabled, peerCount = 0, connectionState = 'disconnected' }) => {
+interface P2PInfoPanelProps {
+  isP2PEnabled?: any;
+  peerCount?: number;
+  connectionState?: string;
+  onReconnect?: () => void; // Added to fix type error
+}
+
+const P2PInfoPanel: React.FC<P2PInfoPanelProps> = ({ 
+  isP2PEnabled = true,
+  peerCount = 0, 
+  connectionState = 'disconnected',
+  onReconnect
+}) => {
+  // Get connection status color
+  const getConnectionStatusColor = () => {
+    switch (connectionState) {
+      case 'connected': return "text-green-500";
+      case 'connecting': return "text-yellow-500";
+      case 'disconnected': return "text-gray-500";
+      case 'error': return "text-red-500";
+      default: return "text-gray-500";
+    }
+  };
+  
+  // Get connection icon
+  const getConnectionIcon = () => {
+    switch (connectionState) {
+      case 'connected': return <Wifi className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
+      case 'connecting': return <Wifi className={`h-5 w-5 ${getConnectionStatusColor()} animate-pulse`} />;
+      case 'disconnected': return <WifiOff className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
+      case 'error': return <AlertCircle className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
+      default: return <WifiOff className={`h-5 w-5 ${getConnectionStatusColor()}`} />;
+    }
+  };
+  
   return (
-    <Card className="border-accent/20 shadow-sm">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-1">
-            <Wifi className="h-4 w-4 text-accent" />
-            Quantum-Secure Network
-          </CardTitle>
-          <Badge variant={isP2PEnabled ? "default" : "outline"}>
-            {isP2PEnabled ? "Active" : "Inactive"}
-          </Badge>
-        </div>
-        <CardDescription className="text-xs">
-          TetraCryptPQC decentralized end-to-end messaging
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pb-3">
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1">
-              <Server className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs">Connected Peers:</span>
+    <div className="p-4">
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              {getConnectionIcon()}
+              <div>
+                <h3 className="font-semibold text-base">P2P Network Status</h3>
+                <p className="text-xs text-muted-foreground">
+                  {connectionState === 'connected' 
+                    ? `Connected to ${peerCount} peers` 
+                    : connectionState === 'connecting'
+                      ? 'Connecting to network...'
+                      : connectionState === 'error'
+                        ? 'Connection error'
+                        : 'Disconnected'}
+                </p>
+              </div>
             </div>
-            <Badge variant="outline" className="text-xs">
-              {peerCount}
-            </Badge>
+            
+            {onReconnect && (
+              <Button variant="outline" size="sm" onClick={onReconnect}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reconnect
+              </Button>
+            )}
           </div>
           
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1">
-              <Activity className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs">Connection Status:</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Post-Quantum Secure</span>
+              </div>
+              <Badge variant={isP2PEnabled ? "default" : "outline"}>
+                {isP2PEnabled ? "Enabled" : "Disabled"}
+              </Badge>
             </div>
-            <Badge 
-              variant="outline" 
-              className={`text-xs ${
-                connectionState === 'connected' 
-                  ? 'bg-green-500/10 text-green-600' 
-                  : connectionState === 'connecting' 
-                    ? 'bg-amber-500/10 text-amber-600'
-                    : 'bg-red-500/10 text-red-600'
-              }`}
-            >
-              {connectionState === 'connected' 
-                ? 'Connected' 
-                : connectionState === 'connecting'
-                  ? 'Connecting...'
-                  : 'Disconnected'
-              }
-            </Badge>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1">
-              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs">Encryption:</span>
+            
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Connected Peers</span>
+              </div>
+              <Badge variant="outline">{peerCount}</Badge>
             </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600">
-                    ML-KEM-1024
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs max-w-[200px]">
-                    Module Lattice-based Key Encapsulation Mechanism (ML-KEM-1024/Kyber), NIST FIPS 205 standardized quantum-resistant encryption.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            
+            {connectionState === 'disconnected' && (
+              <div className="mt-4 p-3 border border-yellow-200 bg-yellow-50 dark:border-yellow-900 dark:bg-yellow-950/50 rounded-md flex items-start gap-2">
+                <Info className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                <div className="text-xs text-yellow-700 dark:text-yellow-300">
+                  Your P2P connection is currently disconnected. Click "Reconnect" to join the TetraCrypt network.
+                </div>
+              </div>
+            )}
+            
+            {connectionState === 'error' && (
+              <div className="mt-4 p-3 border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/50 rounded-md flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400 mt-0.5" />
+                <div className="text-xs text-red-700 dark:text-red-300">
+                  There was an error connecting to the P2P network. Please check your internet connection and try again.
+                </div>
+              </div>
+            )}
           </div>
-          
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1">
-              <Fingerprint className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs">Authentication:</span>
-            </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600">
-                    SLH-DSA
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs max-w-[200px]">
-                    Stateless Hash-based Digital Signature Algorithm (SLH-DSA/Dilithium), NIST FIPS 206 standardized quantum-resistant signatures.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1">
-              <Database className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs">Storage:</span>
-            </div>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600">
-                    IPFS/StarkNet
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs max-w-[200px]">
-                    Decentralized storage using IPFS with StarkNet zk-STARK verification for message integrity.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1">
-              <SatelliteDish className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs">Interstellar Ready:</span>
-            </div>
-            <Badge variant="outline" className="text-xs bg-indigo-500/10 text-indigo-600">
-              Enabled
-            </Badge>
-          </div>
-          
-          <div className="mt-3 text-xs text-muted-foreground text-center">
-            <div className="flex items-center justify-center gap-1">
-              <ShieldCheck className="h-3 w-3 text-accent" />
-              <span>AI-enhanced quantum-resistant security</span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import ContactList from "@/components/chat/ContactList"; 
 import Conversation from "@/components/chat/Conversation";
 import { Contact, Message } from "@/lib/storage-types"; 
-import { getContacts, addContact, getUserProfile } from "@/lib/storage";
+import { getContacts, getUserProfile, saveContact } from "@/lib/storage";
 import { useToast } from "@/components/ui/use-toast";
 import P2PMessagingPanel from "@/components/chat/P2PMessagingPanel";
 import P2PInfoPanel from "@/components/chat/P2PInfoPanel";
@@ -87,7 +87,8 @@ const Chat: React.FC = () => {
         status: "offline"
       };
       
-      addContact(newContact);
+      // Use saveContact instead of addContact
+      saveContact(newContact);
       
       setContacts(prev => [...prev, newContact]);
       setSelectedContactId(newContact.id);
@@ -193,6 +194,7 @@ const Chat: React.FC = () => {
           
           <TabsContent value="p2p" className="flex-1 flex flex-col mt-0 p-0 pt-4">
             <P2PInfoPanel
+              isP2PEnabled={true}
               connectionState={connectionState}
               peerCount={peerCount}
               onReconnect={reconnectP2P}

@@ -1,3 +1,4 @@
+
 export type UserProfile = {
   userId: string;
   id: string; // Added for compatibility
@@ -38,13 +39,7 @@ export type UserProfile = {
     federatedMode: boolean;
   };
   didDocument?: any;
-  starkNetId?: {
-    id: string;
-    type: string;
-    address?: string;
-    starkKey?: string;
-    created?: string;
-  };
+  starkNetId?: StarkNetID;
   hsmInfo?: {
     type: string;
     serialNumber?: string;
@@ -118,7 +113,7 @@ export type HSMType = "YubiKey" | "TPM" | "SecureEnclave" | "CloudHSM" | "None";
 // Define the StarkNet ID type
 export type StarkNetID = {
   id: string;
-  type: string;
+  type: string; // Required by UserProfile
   address?: string;
   starkKey?: string;
   created?: string;
