@@ -8,7 +8,9 @@ import {
   FileText, 
   Shield, 
   Lock, 
-  AlertTriangle 
+  AlertTriangle,
+  Cpu,
+  Fingerprint
 } from "lucide-react";
 
 const HeroSection = () => {
@@ -24,22 +26,22 @@ const HeroSection = () => {
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-white text-balance leading-tight">
             <span className="relative inline-block">
               <span className="absolute -inset-1 bg-accent/30 blur-lg"></span>
-              <span className="relative text-gradient-primary">TetraCryptPQC</span>
+              <span className="relative text-gradient-primary">Baramay Station</span>
             </span>
-            <span className="block mt-2">Baramay Research Station</span>
+            <span className="block mt-2">Post-Quantum Research Nexus</span>
           </h1>
           
           <p className="text-xl mb-8 text-gray-400 max-w-2xl">
-            Advanced quantum-resistant cryptographic research facility. 
+            Beyond the Veil of Security—Into the Future of Intelligence
             <span className="block mt-2 font-mono text-accent text-sm">
-              [FIPS 205/206 COMPLIANT · QUANTUM SECURE · AI GOVERNED]
+              [FIPS 205/206 COMPLIANT · QUANTUM SECURE · UNIMETRIX1 GOVERNED]
             </span>
           </p>
           
           <div className="relative py-4 px-6 bg-black/50 border border-accent/30 rounded-md mb-8 backdrop-blur-sm">
             <p className="text-sm text-gray-400 font-mono">
-              <span className="text-accent">WARNING:</span> Unauthorized access to this system is prohibited. 
-              All activities are monitored and recorded. Breaches will be prosecuted.
+              <span className="text-accent">WARNING:</span> Access to this system is classified. 
+              All activities are monitored by Unimetrix1 (UM1) AI-DAO. Unauthorized access will trigger countermeasures.
             </p>
           </div>
           

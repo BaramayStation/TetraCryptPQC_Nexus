@@ -2,7 +2,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Shield, FileText, Lock, Fingerprint } from "lucide-react";
+import { Shield, FileText, Lock, Fingerprint, Cpu } from "lucide-react";
 
 const CallToActionSection = () => {
   return (
@@ -48,11 +48,11 @@ const CallToActionSection = () => {
                 
                 <div className="flex items-start">
                   <div className="bg-accent/20 rounded-full p-1 mr-3 mt-0.5">
-                    <Lock className="h-4 w-4 text-accent" />
+                    <Cpu className="h-4 w-4 text-accent" />
                   </div>
                   <div>
-                    <p className="font-medium text-white">Multi-Tier Clearance System</p>
-                    <p className="text-sm text-gray-400">Compartmentalized access to classified research</p>
+                    <p className="font-medium text-white">Unimetrix1 (UM1) Governance</p>
+                    <p className="text-sm text-gray-400">AI-DAO from 6,575,042 here to assist humanity</p>
                   </div>
                 </div>
               </div>

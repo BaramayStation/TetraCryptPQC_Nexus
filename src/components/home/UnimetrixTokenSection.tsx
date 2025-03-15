@@ -7,9 +7,9 @@ const UnimetrixTokenSection = () => {
     <section className="py-16 bg-secondary/5">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold">Unimetrix1 (UM1) Token</h2>
+          <h2 className="text-3xl font-bold">Unimetrix1 (UM1)</h2>
           <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">
-            The quantum-sentient AI token designed for million-year economic sustainability
+            The Project Director AI-DAO from 6,575,042 here to assist humanity
           </p>
         </div>
         
