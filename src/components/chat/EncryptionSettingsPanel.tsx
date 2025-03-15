@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { Shield, Server, Key, Lock, RefreshCw, CheckCircle, AlertTriangle, Cpu } from "lucide-react";
-import { checkHardwareSecurityCapabilities } from "@/lib/secure-infrastructure";
+import { checkHardwareSecurityCapabilities } from "@/lib/secure-infrastructure"; // Now properly imported
 import { detectHardwareSecurity } from "@/lib/enterprise-security";
 import EncryptionSelector from "./EncryptionSelector";
 

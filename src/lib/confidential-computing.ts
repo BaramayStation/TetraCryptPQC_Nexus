@@ -1,3 +1,4 @@
+
 /**
  * TetraCryptPQC Confidential Computing Module
  * 
@@ -6,7 +7,8 @@
  * and secure enclaves.
  */
 
-import { HSMType, SecureContainerConfig } from './secure-infrastructure';
+import { HSMType } from './secure-infrastructure';
+import { SecureContainerConfig } from './storage-types';
 import { logSecurityEvent } from './ai-security';
 import { encryptAES } from './crypto';
 import { getLocalStorage, setLocalStorage } from './secure-storage';
@@ -37,7 +39,9 @@ export interface ContainerSecurityPolicy {
 }
 
 // Confidential AI container configuration
-export interface ConfidentialAIContainer extends SecureContainerConfig {
+export interface ConfidentialAIContainer {
+  id: string;
+  name: string;
   confidentialEnvironment: ConfidentialEnvironmentType;
   securityPolicy: string; // ID of container security policy
   aiModel: string;
@@ -46,6 +50,14 @@ export interface ConfidentialAIContainer extends SecureContainerConfig {
   attestationReport?: string; // Remote attestation report
   encryptedStorage: boolean;
   hardwareBindings: string[]; // Hardware binding configurations
+  immutableRootfs?: boolean;
+  selinuxEnabled?: boolean;
+  hsmProtection?: boolean;
+  hsmType?: HSMType;
+  encryptedMemory?: boolean;
+  networkIsolation?: boolean;
+  securityPolicies?: string[];
+  created?: string;
 }
 
 /**
@@ -194,9 +206,9 @@ export async function createContainerSecurityPolicy(
     policies.push(securityPolicy);
     setLocalStorage("container_security_policies", policies);
     
-    // Log security event
+    // Log security event - using the correct type
     logSecurityEvent({
-      eventType: "system",
+      eventType: "audit",  // Changed from "system" to "audit"
       userId: "system",
       operation: "create_container_security_policy",
       status: "success",
@@ -207,9 +219,9 @@ export async function createContainerSecurityPolicy(
   } catch (error) {
     console.error("Error creating container security policy:", error);
     
-    // Log security event
+    // Log security event - using the correct type
     logSecurityEvent({
-      eventType: "system",
+      eventType: "audit",  // Changed from "system" to "audit"
       userId: "system",
       operation: "create_container_security_policy",
       status: "failure",
@@ -289,7 +301,7 @@ export async function createConfidentialAIContainer(
     
     // Log security event
     logSecurityEvent({
-      eventType: "system",
+      eventType: "audit",  // Changed from "system" to "audit"
       userId: "system",
       operation: "create_confidential_ai_container",
       status: "success",
@@ -303,7 +315,7 @@ export async function createConfidentialAIContainer(
     
     // Log security event
     logSecurityEvent({
-      eventType: "system",
+      eventType: "audit",  // Changed from "system" to "audit"
       userId: "system",
       operation: "create_confidential_ai_container",
       status: "failure",
@@ -356,7 +368,7 @@ export async function startConfidentialAIContainer(containerId: string): Promise
     
     // Log security event
     logSecurityEvent({
-      eventType: "system",
+      eventType: "audit",  // Changed from "system" to "audit"
       userId: "system",
       operation: "start_confidential_ai_container",
       status: "success",
@@ -375,7 +387,7 @@ export async function startConfidentialAIContainer(containerId: string): Promise
     
     // Log security event
     logSecurityEvent({
-      eventType: "system",
+      eventType: "audit",  // Changed from "system" to "audit"
       userId: "system",
       operation: "start_confidential_ai_container",
       status: "failure",
@@ -457,12 +469,11 @@ export async function initializeConfidentialComputing(): Promise<boolean> {
   }
 }
 
-// Add "system" to the SecurityEventType union
+// Update the SecurityEventType to include the "audit" type used above
 export type SecurityEventType = 
   | "attestation" 
   | "key_management" 
   | "confidential_computing" 
   | "infrastructure"
-  | "system" 
-  | "access_control" 
-  | "audit";
+  | "audit" 
+  | "access_control";
