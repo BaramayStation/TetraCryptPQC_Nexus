@@ -1,9 +1,27 @@
+
 /**
  * TetraCryptPQC Post-Quantum Cryptography Implementation
  * Implements NIST FIPS 205/206 compliant algorithms
+ * with Rust backend integration
  */
 
-import { detectSimdSupport } from "./wasm-detection";
+import { 
+  generateMLKEMKeypair,
+  generateSLHDSAKeypair,
+  generateFalconKeypair,
+  generateBIKEKeypair,
+  signMessage as rustSignMessage,
+  verifySignature as rustVerifySignature,
+  generateZKProof as rustGenerateZKProof,
+  encryptMessageChaCha as rustEncryptChaCha,
+  initRustPQCBridge,
+  scanForThreats as rustScanForThreats,
+  generateComplianceReport as rustGenerateComplianceReport
+} from "./rust-pqc-bridge";
+import { PQCKey } from "./crypto";
+
+// Initialize the Rust PQC bridge when this module is imported
+const rustBridgeInitPromise = initRustPQCBridge();
 
 // Utility function to generate hex strings
 const generateRandomHex = (length: number): string => {
@@ -12,120 +30,13 @@ const generateRandomHex = (length: number): string => {
   ).join('');
 };
 
-// Simulate WASM imports since we don't have actual WASM modules loaded
-const simulateWasmImport = async () => {
-  console.log("🔹 Initializing PQC WebAssembly modules (simulated)");
-  const simdSupported = await detectSimdSupport();
-  console.log(`🔹 WebAssembly SIMD support: ${simdSupported ? "Available" : "Not available"}`);
-  return true;
-};
-
-/**
- * Generate ML-KEM (Kyber) keypair for post-quantum key encapsulation
- * Compliant with NIST FIPS 205 standard
- */
-export async function generateMLKEMKeypair() {
-  await simulateWasmImport();
-  
-  console.log("🔹 Generating ML-KEM-1024 keypair");
-  
-  // Simulate key generation with appropriate key sizes
-  // ML-KEM-1024 public key is 1568 bytes, private key is 3168 bytes
-  const publicKey = generateRandomHex(32);
-  const privateKey = generateRandomHex(64);
-  
-  return {
-    algorithm: "ML-KEM-1024",
-    publicKey,
-    privateKey,
-    strength: "256-bit quantum security",
-    standard: "NIST FIPS 205",
-    created: new Date().toISOString(),
-  };
-}
-
-/**
- * Generate BIKE keypair for post-quantum key encapsulation
- * BIKE is a code-based alternate candidate from NIST PQC process
- */
-export async function generateBIKEKeypair() {
-  await simulateWasmImport();
-  
-  console.log("🔹 Generating BIKE-L3 keypair");
-  
-  // Simulate BIKE key generation
-  // BIKE-L3 keys are larger than ML-KEM
-  const publicKey = generateRandomHex(48);
-  const privateKey = generateRandomHex(96);
-  
-  return {
-    algorithm: "BIKE-L3",
-    publicKey,
-    privateKey,
-    strength: "192-bit quantum security",
-    standard: "NIST Round 4 Alternate",
-    created: new Date().toISOString(),
-  };
-}
-
-/**
- * Generate SLH-DSA (Dilithium) keypair for post-quantum signatures
- * Compliant with NIST FIPS 206 standard
- */
-export async function generateSLHDSAKeypair() {
-  await simulateWasmImport();
-  
-  console.log("🔹 Generating SLH-DSA (Dilithium) keypair");
-  
-  // Simulate Dilithium key generation
-  const publicKey = generateRandomHex(40);
-  const privateKey = generateRandomHex(80);
-  
-  return {
-    algorithm: "SLH-DSA-Dilithium5",
-    publicKey,
-    privateKey,
-    strength: "256-bit quantum security",
-    standard: "NIST FIPS 206",
-    created: new Date().toISOString(),
-  };
-}
-
-/**
- * Generate Falcon keypair for post-quantum signatures
- * An alternate candidate from NIST PQC process
- */
-export async function generateFalconKeypair() {
-  await simulateWasmImport();
-  
-  console.log("🔹 Generating Falcon-512 keypair");
-  
-  // Simulate Falcon key generation
-  const publicKey = generateRandomHex(44);
-  const privateKey = generateRandomHex(88);
-  
-  return {
-    algorithm: "Falcon-512",
-    publicKey,
-    privateKey,
-    strength: "128-bit quantum security",
-    standard: "NIST Round 4 Alternate",
-    created: new Date().toISOString(),
-  };
-}
-
-/**
- * Generate Dilithium keypair for post-quantum signatures
- * Specific implementation of SLH-DSA
- */
-export async function generateDilithiumKeypair() {
-  return generateSLHDSAKeypair(); // Same as SLH-DSA in our simulation
-}
-
 /**
  * Generate session key using post-quantum KEM
  */
 export async function generateSessionKey() {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
   // Generate random bytes for session key
   const keyBytes = crypto.getRandomValues(new Uint8Array(32));
   
@@ -138,50 +49,39 @@ export async function generateSessionKey() {
  * Sign a message using SLH-DSA post-quantum signature algorithm
  */
 export async function signMessage(message: string, privateKey: string) {
-  console.log("🔹 Signing message with SLH-DSA");
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
   
-  // Simulate signature creation
-  const signature = generateRandomHex(32);
-  
-  return signature;
+  return rustSignMessage(message, privateKey);
 }
 
 /**
  * Verify a message signature using SLH-DSA
  */
 export async function verifySignature(message: string, signature: string, publicKey: string) {
-  console.log("🔹 Verifying SLH-DSA signature");
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
   
-  // Simulate verification (random result for demo, but with 90% success rate)
-  return Math.random() > 0.1;
+  return rustVerifySignature(message, signature, publicKey);
 }
 
 /**
  * Generate zk-STARK proof for message integrity verification
  */
 export async function generateZKProof(message: string) {
-  console.log("🔹 Generating zk-STARK proof");
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
   
-  // Simulate zk-STARK proof generation
-  const proof = generateRandomHex(64);
-  
-  return proof;
-}
-
-/**
- * Verify zk-STARK proof
- */
-export async function verifyZKProof(proof: string) {
-  console.log("🔹 Verifying zk-STARK proof");
-  
-  // Simulate verification (random result but with 95% success rate)
-  return Math.random() > 0.05;
+  return rustGenerateZKProof(message);
 }
 
 /**
  * Encrypt a message using AES-256-GCM
  */
 export async function encryptMessage(message: string, key: string) {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
   console.log("🔹 Encrypting with AES-256-GCM");
   
   // In a real implementation, this would use Web Crypto API
@@ -193,16 +93,19 @@ export async function encryptMessage(message: string, key: string) {
  * Encrypt a message using ChaCha20-Poly1305
  */
 export async function encryptMessageChaCha(message: string, key: string) {
-  console.log("🔹 Encrypting with ChaCha20-Poly1305");
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
   
-  // Simulated encryption
-  return `ChaCha[${message.substring(0, 3)}...${message.substring(message.length-3)}]`;
+  return rustEncryptChaCha(message, key);
 }
 
 /**
  * Homomorphic encryption simulation
  */
 export async function homomorphicEncrypt(message: string) {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
   console.log("🔹 Applying homomorphic encryption");
   
   // Simulated homomorphic encryption
@@ -213,6 +116,9 @@ export async function homomorphicEncrypt(message: string) {
  * Verify a decentralized identity (DID)
  */
 export async function verifyDID(didDocument: any) {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
   console.log("🔹 Verifying decentralized identity");
   
   // Simulate DID verification
@@ -223,6 +129,9 @@ export async function verifyDID(didDocument: any) {
  * Simulate Quantum Key Distribution (QKD)
  */
 export async function simulateQKD(endpoint: string) {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
   console.log(`🔹 Simulating Quantum Key Distribution with ${endpoint}`);
   
   return {
@@ -238,6 +147,9 @@ export async function simulateQKD(endpoint: string) {
  * Simulate Hardware Security Module (HSM)
  */
 export async function simulateHSM(privateKey: string) {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
   console.log("🔹 Simulating HSM key storage");
   
   return {
@@ -252,6 +164,9 @@ export async function simulateHSM(privateKey: string) {
  * Generate a Decentralized Identifier (DID)
  */
 export async function generateDID(publicKeyKem: string, publicKeySig: string) {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
   console.log("🔹 Generating Decentralized Identity (DID)");
   
   const didId = `did:tetracrypt:${crypto.randomUUID()}`;
@@ -284,3 +199,35 @@ export async function generateDID(publicKeyKem: string, publicKeySig: string) {
     ]
   };
 }
+
+/**
+ * Security threat scanning 
+ */
+export async function scanForThreats(data: string): Promise<any[]> {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
+  return rustScanForThreats(data);
+}
+
+/**
+ * Generate compliance report
+ */
+export async function generateComplianceReport(): Promise<any> {
+  // Wait for Rust bridge to initialize
+  await rustBridgeInitPromise;
+  
+  return rustGenerateComplianceReport();
+}
+
+// Export Rust-backed cryptographic key generation functions
+export { 
+  generateMLKEMKeypair,
+  generateSLHDSAKeypair,
+  generateFalconKeypair,
+  generateBIKEKeypair 
+};
+
+// Aliases for compatibility
+export const generateKyberKeypair = generateMLKEMKeypair;
+export const generateDilithiumKeypair = generateSLHDSAKeypair;

@@ -1,16 +1,22 @@
 
+/**
+ * TetraCryptPQC Secure P2P Chat Implementation
+ * Now with Rust backend integration
+ */
+
 import { createLibp2p } from 'libp2p';
 import { WebSockets } from '@libp2p/websockets';
 import { Mplex } from '@libp2p/mplex';
 import { Bootstrap } from '@libp2p/bootstrap';
-import { encryptAES, decryptAES, generateKyberKeypair } from '../lib/crypto';
+import { encryptAES, decryptAES } from '../lib/pqcrypto';
+import { generateMLKEMKeypair } from '../lib/rust-pqc-bridge';
 
 // ✅ Peer Discovery Bootstrap Nodes
 const BOOTSTRAP_NODES = ["/dns4/bootstrap.libp2p.io/tcp/443/wss/p2p/12D3KooWEbGJ9jBz7bLX"];
 
 // ✅ Generate secure session key using ML-KEM
 const getKeys = async () => {
-  const keyPair = await generateKyberKeypair();
+  const keyPair = await generateMLKEMKeypair();
   console.log("🔹 Post-Quantum Keypair Ready");
   return keyPair;
 };
