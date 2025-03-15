@@ -1,114 +1,118 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { GlassContainer } from "@/components/ui/glass-container";
 import { Progress } from "@/components/ui/progress";
-import { Shield, Key } from "lucide-react";
-import { 
-  generateKyberKeypair, 
-  generateDilithiumKeypair,
-  generateDID,
-  PQCKey
-} from "@/lib/crypto";
-import { UserProfile, saveUserProfile } from "@/lib/storage";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Key, Shield, RefreshCw, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { UserProfile } from "@/lib/storage-types";
+import { generateSecureMLKEMKeypair, generateSecureSLHDSAKeypair, checkHardwareSecurity } from "@/lib/tetracrypt-ffi";
+import { PQCKey } from "@/lib/crypto";
 
-interface KeyGenerationServiceProps {
+export interface KeyGenerationServiceProps {
   username: string;
   onComplete: (profile: UserProfile) => void;
+  authType?: "standard" | "advanced";
 }
 
 const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
   username,
   onComplete,
+  authType = "standard"
 }) => {
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState<string>("idle");
+  const [status, setStatus] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [enableWeb3, setEnableWeb3] = useState(false);
-  const [selectedSignatureAlgo, setSelectedSignatureAlgo] = useState<"dilithium" | "falcon">("dilithium");
+  const [hardwareSecurity, setHardwareSecurity] = useState<{
+    available: boolean;
+    type: string;
+  }>({
+    available: false,
+    type: "None"
+  });
+
+  // Check for hardware security modules
+  useEffect(() => {
+    const checkHardware = async () => {
+      try {
+        const result = await checkHardwareSecurity();
+        setHardwareSecurity({
+          available: result.available,
+          type: result.type
+        });
+      } catch (error) {
+        console.error("Error checking hardware security:", error);
+      }
+    };
+    
+    checkHardware();
+  }, []);
 
   const generateKeys = async () => {
     try {
       setIsGenerating(true);
-      setStatus("Initializing Secure Post-Quantum Key Generation...");
+      setStatus("Initializing post-quantum cryptography...");
       setProgress(10);
-
-      // Step 1: Generate Kyber keys
-      setStatus("Generating ML-KEM-1024 keys (NIST FIPS 205)...");
-      const kyberKeys = await generateKyberKeypair();
+      
+      // Generate NIST FIPS 205 ML-KEM-1024 key pair
+      setStatus("Generating ML-KEM-1024 encryption key (NIST FIPS 205)...");
       setProgress(30);
-
-      // Step 2: Generate Digital Signature Keypair
-      let signatureKeys;
-      if (selectedSignatureAlgo === "dilithium") {
-        setStatus("Generating Dilithium (NIST FIPS 205)...");
-        signatureKeys = await generateDilithiumKeypair();
-      } else {
-        setStatus("Generating Falcon-512 (Lattice-Based)...");
-        signatureKeys = await generateDilithiumKeypair(); // Using dilithium as fallback
-      }
-      setProgress(50);
-
-      // Step 3: Decentralized Identity (DID) Integration
-      let didDocument = null;
-      if (enableWeb3) {
-        setStatus("Generating Web3 Decentralized Identity (DID)...");
-        didDocument = await generateDID(kyberKeys.publicKey, signatureKeys.publicKey);
-      }
+      
+      const pqkemKeyPair = await generateSecureMLKEMKeypair(hardwareSecurity.available);
+      
+      // Generate NIST FIPS 206 SLH-DSA signature key pair
+      setStatus("Generating SLH-DSA signature key (NIST FIPS 206)...");
+      setProgress(60);
+      
+      const signatureKeyPair = await generateSecureSLHDSAKeypair(hardwareSecurity.available);
+      
+      // Create session key for symmetric encryption
+      setStatus("Finalizing secure cryptographic setup...");
       setProgress(90);
-
-      // Step 4: Save Profile Securely
-      setStatus("Finalizing Secure Key Storage...");
+      
+      const encryptionKey = crypto.randomUUID().replace(/-/g, '');
+      
+      // Create user profile
       const userId = crypto.randomUUID();
-      
-      // Add creation timestamp to keys
-      const kyberKeysWithTimestamp: PQCKey = {
-        ...kyberKeys,
-        created: new Date().toISOString()
-      };
-      
-      const signatureKeysWithTimestamp: PQCKey = {
-        ...signatureKeys,
-        created: new Date().toISOString()
-      };
-      
-      const userProfile: UserProfile = {
+      const newProfile: UserProfile = {
+        userId: userId,
         id: userId,
         name: username,
+        username: username,
+        encryptionKey: encryptionKey,
+        authType: authType,
+        hardwareSecurityEnabled: hardwareSecurity.available,
+        hardwareType: hardwareSecurity.available ? hardwareSecurity.type as any : "None",
         keyPairs: {
-          pqkem: kyberKeysWithTimestamp,
-          signature: signatureKeysWithTimestamp,
-          kyber: kyberKeys,
-          falcon: signatureKeys,
+          pqkem: pqkemKeyPair,
+          signature: signatureKeyPair
         },
-        didDocument,
-        sessionKey: await generateKyberKeypair().then(keys => keys.privateKey.substring(0, 32)),
-        createdAt: new Date().toISOString(),
+        securitySettings: {
+          perfectForwardSecrecy: true,
+          fipsCompliance: true,
+          hybridEncryption: true,
+          federatedMode: false
+        },
+        createdAt: new Date().toISOString()
       };
-
-      saveUserProfile(userProfile);
+      
+      // Success
       setProgress(100);
-      setStatus("TetraCryptPQC Key Generation Complete!");
-
+      setStatus("Key generation complete");
+      
       toast({
-        title: "Secure Keys Generated!",
-        description: "Your quantum-resistant cryptographic keys have been created successfully.",
+        title: "Post-Quantum Keys Generated",
+        description: `Successfully generated ML-KEM and SLH-DSA keys using ${hardwareSecurity.available ? hardwareSecurity.type : 'software'} security.`,
       });
-
-      setTimeout(() => {
-        onComplete(userProfile);
-      }, 1000);
+      
+      onComplete(newProfile);
     } catch (error) {
-      console.error("Key generation failed:", error);
-      setStatus("Key generation failed. Please try again.");
+      console.error("Error generating keys:", error);
+      
       toast({
-        title: "Key Generation Failed",
-        description: "There was an error generating your secure keys. Please try again.",
+        title: "Key Generation Error",
+        description: error instanceof Error ? error.message : "Unknown error occurred during key generation",
         variant: "destructive",
       });
     } finally {
@@ -117,26 +121,43 @@ const KeyGenerationService: React.FC<KeyGenerationServiceProps> = ({
   };
 
   return (
-    <GlassContainer className="max-w-md mx-auto">
-      <div className="flex flex-col items-center text-center space-y-6">
-        <Shield className="h-8 w-8 text-accent" />
-        <h2 className="text-2xl font-semibold">TetraCryptPQC Key Generation</h2>
-        <p className="text-muted-foreground">
-          Generate your NIST-compliant post-quantum cryptographic keys.
-        </p>
-
-        {isGenerating ? (
-          <div className="w-full space-y-4">
-            <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground">{status}</p>
-          </div>
-        ) : (
-          <Button onClick={generateKeys} className="w-full" size="lg">
-            Generate Secure Keys
-          </Button>
-        )}
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">{status || "Ready to generate keys"}</span>
+          <span className="text-sm">{progress}%</span>
+        </div>
+        <Progress value={progress} className="h-2" />
       </div>
-    </GlassContainer>
+      
+      {hardwareSecurity.available && (
+        <Alert>
+          <Shield className="h-4 w-4" />
+          <AlertDescription>
+            Hardware security module detected: {hardwareSecurity.type}. 
+            Your keys will be generated with hardware protection.
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <Button 
+        className="w-full" 
+        onClick={generateKeys}
+        disabled={isGenerating}
+      >
+        {isGenerating ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Generating Secure Keys...
+          </>
+        ) : (
+          <>
+            <Key className="mr-2 h-4 w-4" />
+            Generate Post-Quantum Keys
+          </>
+        )}
+      </Button>
+    </div>
   );
 };
 

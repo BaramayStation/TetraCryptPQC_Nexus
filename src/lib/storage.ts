@@ -17,6 +17,23 @@ const storage = {
  * Save user profile to storage
  */
 export function saveUserProfile(profile: UserProfileType): void {
+  // Ensure compatibility with both id fields
+  if (profile.userId && !profile.id) {
+    profile.id = profile.userId;
+  }
+  if (profile.id && !profile.userId) {
+    profile.userId = profile.id;
+  }
+  
+  // Ensure name and createdAt exist
+  if (!profile.createdAt) {
+    profile.createdAt = new Date().toISOString();
+  }
+  
+  if (profile.username && !profile.name) {
+    profile.name = profile.username;
+  }
+  
   storage.currentUser = profile;
   localStorage.setItem('userProfile', JSON.stringify(profile));
   console.log("User profile saved:", profile.userId);
@@ -30,6 +47,19 @@ export function getUserProfile(): UserProfileType | null {
     const storedProfile = localStorage.getItem('userProfile');
     if (storedProfile) {
       storage.currentUser = JSON.parse(storedProfile);
+      
+      // Ensure compatibility with both id fields
+      if (storage.currentUser!.userId && !storage.currentUser!.id) {
+        storage.currentUser!.id = storage.currentUser!.userId;
+      }
+      if (storage.currentUser!.id && !storage.currentUser!.userId) {
+        storage.currentUser!.userId = storage.currentUser!.id;
+      }
+      
+      // Ensure name exists
+      if (storage.currentUser!.username && !storage.currentUser!.name) {
+        storage.currentUser!.name = storage.currentUser!.username;
+      }
     }
   }
   return storage.currentUser;
@@ -39,6 +69,11 @@ export function getUserProfile(): UserProfileType | null {
  * Save a contact
  */
 export function saveContact(contact: ContactType): void {
+  // Ensure signatureKey exists
+  if (!contact.signatureKey && contact.publicKey) {
+    contact.signatureKey = contact.publicKey;
+  }
+  
   const existingIndex = storage.contacts.findIndex(c => c.id === contact.id);
   if (existingIndex >= 0) {
     storage.contacts[existingIndex] = contact;
@@ -85,6 +120,11 @@ export function getContactById(id: string): ContactType | undefined {
  * Add a message
  */
 export function addMessage(message: MessageType): void {
+  // Ensure message has a status
+  if (!message.status) {
+    message.status = "sent";
+  }
+  
   storage.messages.push(message);
   localStorage.setItem('messages', JSON.stringify(storage.messages));
   console.log("Message added:", message.id);

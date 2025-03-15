@@ -1,6 +1,8 @@
 
 export type UserProfile = {
   userId: string;
+  id: string; // Added for compatibility
+  name: string; // Added for compatibility
   username: string;
   encryptionKey: string;
   authType: "standard" | "advanced";
@@ -40,14 +42,32 @@ export type UserProfile = {
   starkNetId?: {
     id: string;
     type: string;
+    address?: string;
+    starkKey?: string;
+    created?: string;
   };
+  hsmInfo?: {
+    type: string;
+    serialNumber?: string;
+    firmware?: string;
+    features: string[];
+    lastVerified: string;
+  };
+  qkdInfo?: {
+    enabled: boolean;
+    nodes: number;
+    keyRate: number;
+    protocol: string;
+    lastExchange: string;
+  };
+  createdAt?: string; // Added for compatibility
 };
 
 export type Contact = {
   id: string;
   name: string;
   publicKey: string;
-  signatureKey: string;
+  signatureKey: string; // Required field
   lastMessage?: string;
   lastMessageTime?: string;
   status?: "online" | "offline" | "away";
@@ -63,6 +83,7 @@ export type Message = {
   encrypted: boolean;
   signature?: string;
   verified?: boolean;
+  status?: "sent" | "delivered" | "read"; // Added for compatibility
   encryptionType?: "ML-KEM-1024" | "Hybrid" | "ChaCha20-Poly1305";
 };
 
@@ -94,3 +115,36 @@ export type PQCAlgorithm =
 
 // Define the hardware security modules
 export type HSMType = "YubiKey" | "TPM" | "SecureEnclave" | "CloudHSM" | "None";
+
+// Define the StarkNet ID type
+export type StarkNetID = {
+  id: string;
+  type: string;
+  address: string;
+  starkKey: string;
+  created: string;
+};
+
+// Define the DID Document type
+export type DIDDocument = {
+  "@context": string;
+  id: string;
+  verificationMethod: Array<{
+    id: string;
+    type: string;
+    controller: string;
+    publicKeyHex: string;
+  }>;
+  authentication: string[];
+  assertionMethod: string[];
+  keyAgreement: string[];
+};
+
+// Define the storage provider types
+export type StorageProvider = "IPFS" | "Filecoin" | "Arweave" | "Local";
+
+// Define the zero-knowledge proof types
+export type ZKProofType = "zk-STARK" | "zk-SNARK" | "Bulletproofs";
+
+// Define the homomorphic encryption types
+export type HomomorphicEncryptionType = "BFV" | "CKKS" | "BGV";
