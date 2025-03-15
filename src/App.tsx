@@ -42,6 +42,7 @@ import AccountSettings from '@/pages/AccountSettings'
 import NotFound from '@/pages/NotFound'
 import React from 'react'
 import TetraCryptWallet from '@/pages/TetraCryptWallet'
+import TetraCryptNexus from '@/pages/TetraCryptNexus'
 
 // Create a client
 const queryClient = new QueryClient()
@@ -83,6 +84,7 @@ function App() {
                   </React.Suspense>
                 } />
                 <Route path="tetracrypt-wallet" element={<TetraCryptWallet />} />
+                <Route path="tetracrypt-nexus" element={<TetraCryptNexus />} />
                 
                 {/* Wiki Routes */}
                 <Route path="wiki/*" element={<Wiki />} />
