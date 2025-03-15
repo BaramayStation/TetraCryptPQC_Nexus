@@ -521,3 +521,171 @@ export interface SecurityHealthMetrics {
     low: number;
   };
 }
+
+// Extended SecurityEventType to include more event types for enterprise security
+export type SecurityEventType = 
+  | 'authentication' 
+  | 'key-usage' 
+  | 'data-access' 
+  | 'system-change'
+  | 'network-access'
+  | 'cryptographic-operation'
+  | 'audit'
+  | 'compliance'
+  | 'threat-detection'
+  | 'system'
+  | 'intrusion-attempt'
+  | 'data-leakage'
+  | 'access-control';
+
+// NEW: Support for Podman-based isolation services
+export interface PodmanSecurityConfig {
+  id: string;
+  name: string;
+  rootless: boolean;
+  selinuxEnabled: boolean;
+  networkIsolation: boolean;
+  encryptedStorage: boolean;
+  encryptionType: 'ML-KEM-1024' | 'AES-256-GCM' | 'ChaCha20-Poly1305';
+  volumes: Array<{
+    name: string;
+    mountPath: string;
+    encrypted: boolean;
+    size: string;
+  }>;
+  seccompProfile: 'default' | 'strict' | 'custom';
+  capabilities: string[];
+  cpuQuota: number;
+  memoryLimit: string;
+  aiSecurityMonitoring: boolean;
+  created: string;
+  lastUpdated: string;
+}
+
+// NEW: AI-Driven biometric security
+export interface BiometricSecurityConfig {
+  id: string;
+  enabled: boolean;
+  methods: Array<'face' | 'fingerprint' | 'voice' | 'iris' | 'behavior'>;
+  requiredFactors: number;
+  aiVerification: boolean;
+  aiModelType: 'local' | 'secure-enclave' | 'tpm-backed';
+  falseAcceptRate: number; // percentage
+  falseRejectRate: number; // percentage
+  antiSpoofingEnabled: boolean;
+  localStorageOnly: boolean;
+  encryptionType: 'ML-KEM-1024' | 'AES-256-GCM';
+  lastUpdated: string;
+  tpmProtected: boolean;
+  offlineModeEnabled: boolean;
+}
+
+// NEW: Zero Trust AI Access Control
+export interface ZeroTrustAIConfig {
+  id: string;
+  enabled: boolean;
+  continuousVerification: boolean;
+  contextBasedAccess: boolean;
+  riskBasedAuthentication: boolean;
+  aiThreatMonitoring: boolean;
+  jitAccess: boolean; // Just-In-Time Access
+  microsegmentation: boolean;
+  devicesVerified: boolean;
+  lastUpdated: string;
+  policies: Array<{
+    id: string;
+    name: string;
+    resources: string[];
+    conditions: Record<string, any>;
+    actions: 'allow' | 'deny' | 'challenge';
+  }>;
+  aiDecisionExplainability: boolean;
+  anomalyThreshold: number; // 0-100
+}
+
+// NEW: AI-Driven P2P Sync Configuration
+export interface P2PSecureSyncConfig {
+  id: string;
+  enabled: boolean;
+  webrtcEnabled: boolean;
+  encryptionType: 'ML-KEM-1024' | 'hybrid';
+  signatureType: 'Falcon-1024' | 'CRYSTALS-Dilithium';
+  peerDiscovery: 'local' | 'dht' | 'centralized' | 'starknet';
+  maxPeers: number;
+  zkVerification: boolean;
+  starkNetVerified: boolean;
+  syncStrategy: 'immediate' | 'scheduled' | 'intelligent';
+  aiPrivacyAnalysis: boolean;
+  bandwidthLimit: number; // in KB/s
+  lastSynced: string;
+  offlineModeEnabled: boolean;
+}
+
+// NEW: AI-Secured USB Backup Configuration
+export interface SecureUSBBackupConfig {
+  id: string;
+  enabled: boolean;
+  encryptionType: 'ML-KEM-1024' | 'AES-256-GCM';
+  zkVerification: boolean;
+  allowedDevices: string[];
+  backupSchedule: 'manual' | 'daily' | 'weekly' | 'intelligent';
+  aiVerifiedRestore: boolean;
+  failsafeKeyEnabled: boolean;
+  lastBackup: string;
+  compressionEnabled: boolean;
+  redundancyLevel: number; // 1-3
+  tpmVerification: boolean;
+  emergencyAccessEnabled: boolean;
+}
+
+// NEW: TPM-Based Authentication Configuration
+export interface TPMAuthenticationConfig {
+  id: string;
+  enabled: boolean;
+  tpmVersion: '1.2' | '2.0';
+  biometricLinked: boolean;
+  offlineAuthEnabled: boolean;
+  backupKeyExists: boolean;
+  starkNetRegistered: boolean;
+  pcrConfiguration: number[];
+  sealedKeyData: boolean;
+  runtimeVerification: boolean;
+  secureBootRequired: boolean;
+  lastVerification: string;
+  recoveryMechanismEnabled: boolean;
+}
+
+// NEW: IPFS Failover Configuration
+export interface IPFSFailoverConfig {
+  id: string;
+  enabled: boolean;
+  backupSchedule: 'hourly' | 'daily' | 'weekly' | 'intelligent';
+  encryptionType: 'ML-KEM-1024' | 'AES-256-GCM';
+  replicationFactor: number;
+  zkVerification: boolean;
+  pinningServices: string[];
+  verifiedGateways: string[];
+  intelligentFailover: boolean;
+  lastBackup: string;
+  lastFailoverTest: string;
+  dataMergeStrategy: 'conservative' | 'aggressive' | 'ai-optimized';
+  aiDataPrioritization: boolean;
+}
+
+// NEW: P2P Governance Configuration
+export interface P2PGovernanceConfig {
+  id: string;
+  enabled: boolean;
+  messagingEncryption: 'ML-KEM-1024' | 'hybrid';
+  offlineVotingEnabled: boolean;
+  zkProofVerification: boolean;
+  starkNetIntegration: boolean;
+  votingMechanisms: Array<'simple-majority' | 'quadratic' | 'conviction' | 'liquid'>;
+  proposalThreshold: number;
+  executionAutomation: boolean;
+  multiSigThreshold: number;
+  lastProposal: string;
+  aiGovernanceAnalytics: boolean;
+  permissionLevel: 'open' | 'permissioned' | 'hybrid';
+}
+
