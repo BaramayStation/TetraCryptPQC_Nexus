@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -292,11 +291,6 @@ const AISecurityMonitoring: React.FC = () => {
                   <Progress 
                     value={100 - threatDetection.score} 
                     className="h-2"
-                    indicator={
-                      threatDetection.score > 60 ? "bg-red-500" : 
-                      threatDetection.score > 30 ? "bg-yellow-500" : 
-                      "bg-green-500"
-                    }
                   />
                 </div>
                 

@@ -117,3 +117,33 @@ export async function verifyStorageStatus(cid: string): Promise<{
 export function getIPFSGatewayUrl(cid: string): string {
   return `https://ipfs.io/ipfs/${cid}`;
 }
+
+/**
+ * Check if IPFS connection is active
+ * @returns Promise with boolean indicating if IPFS is accessible
+ */
+export async function checkIPFSStatus(): Promise<boolean> {
+  console.log("🔹 Simulating IPFS connectivity check for development");
+  
+  // In production, this would attempt to connect to IPFS:
+  // try {
+  //   const ipfs = createIPFS({ url: 'https://ipfs.infura.io:5001/api/v0' });
+  //   await ipfs.id();
+  //   return true;
+  // } catch (error) {
+  //   console.error("IPFS connection failed:", error);
+  //   return false;
+  // }
+  
+  return Math.random() > 0.1; // Simulate that IPFS is usually available
+}
+
+/**
+ * Load data from IPFS by CID
+ * This is an alias for retrieveFromIPFS to maintain consistency with component usage
+ * @param cid The content identifier to load
+ * @returns Promise with the retrieved data
+ */
+export async function loadFromIPFS(cid: string): Promise<string> {
+  return retrieveFromIPFS(cid);
+}
