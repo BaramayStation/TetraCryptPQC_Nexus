@@ -10,21 +10,12 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
 import { getUserProfile } from "@/lib/storage";
 import { scanForThreats, generateComplianceReport } from "@/lib/crypto";
-import EnterpriseSecurityAnalysis from "@/components/enterprise/EnterpriseSecurityAnalysis";
-import SecurityDashboard from "@/components/dashboard/SecurityDashboard";
+import { SecurityThreatIntelligence } from "@/lib/storage-types";
 import { Shield, AlertTriangle, Lock, FileCheck, Bell, RefreshCw } from "lucide-react";
 
-// Define SecurityThreatIntelligence interface to fix type errors
-interface SecurityThreatIntelligence {
-  id: string;
-  source: string;
-  detectedAt: string;
-  severity: string;
-  affectedSystems: string[];
-  description: string;
-  mitigationSteps: string[];
-  status: string;
-}
+// Import the necessary components with proper props
+import SecurityDashboard from "@/components/dashboard/SecurityDashboard";
+import EnterpriseSecurityAnalysis from "@/components/enterprise/EnterpriseSecurityAnalysis";
 
 // Dashboard component
 const Dashboard = () => {
@@ -41,7 +32,7 @@ const Dashboard = () => {
     const loadData = async () => {
       try {
         // Fix the scanForThreats call to pass no arguments
-        const threatResults = await scanForThreats("");
+        const threatResults = await scanForThreats();
         setThreats(threatResults as SecurityThreatIntelligence[]);
         setThreatCount(threatResults.length);
 
@@ -102,7 +93,7 @@ const Dashboard = () => {
           </TabsList>
           
           <TabsContent value="overview" className="space-y-4">
-            {/* Correctly pass props to the SecurityDashboard component */}
+            {/* Passing props to SecurityDashboard component */}
             {userProfile && <SecurityDashboard 
               userProfile={userProfile}
               complianceScore={complianceScore} 
@@ -111,9 +102,9 @@ const Dashboard = () => {
             />}
           </TabsContent>
           
-          {/* Fix the props for the EnterpriseSecurityAnalysis component */}
           <TabsContent value="threats" className="space-y-4">
             {threats && threats.length > 0 ? (
+              /* Passing threats prop to EnterpriseSecurityAnalysis */
               <EnterpriseSecurityAnalysis threats={threats} />
             ) : (
               <GlassContainer className="p-6 text-center">

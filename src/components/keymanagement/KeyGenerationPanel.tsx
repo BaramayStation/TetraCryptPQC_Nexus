@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Key, Lock, AlertTriangle, Copy, Download, CheckCircle } from "lucide-react";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
+import { PQCKey } from "@/lib/crypto";
 
 // Simulated PQC key generation functions (would connect to actual implementations)
 const generateMLKEM = async (strength: string) => {
@@ -77,14 +78,16 @@ const KeyGenerationPanel = () => {
               publicKey: "initial",
               privateKey: "initial",
               strength: "256-bit",
-              standard: "NIST FIPS 205"
+              standard: "NIST FIPS 205",
+              created: new Date().toISOString()
             },
             signature: {
               algorithm: "SLH-DSA-Dilithium5",
               publicKey: "initial",
               privateKey: "initial",
               strength: "256-bit",
-              standard: "NIST FIPS 206"
+              standard: "NIST FIPS 206",
+              created: new Date().toISOString()
             }
           };
         }

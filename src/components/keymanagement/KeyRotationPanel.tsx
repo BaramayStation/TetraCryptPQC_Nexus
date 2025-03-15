@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { GlassContainer } from "@/components/ui/glass-container";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Key, RefreshCw, Lock, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -52,15 +52,20 @@ const KeyRotationPanel = () => {
       }
       
       // Generate new keys
-      let newKey;
+      let newKey: PQCKey;
       if (type === "kem") {
         newKey = await generateMLKEMKeypair();
+        // Ensure created property exists
+        if (!newKey.created) {
+          newKey.created = new Date().toISOString();
+        }
       } else {
         newKey = await generateSLHDSAKeypair();
+        // Ensure created property exists
+        if (!newKey.created) {
+          newKey.created = new Date().toISOString();
+        }
       }
-      
-      // Add creation timestamp
-      newKey.created = new Date().toISOString();
       
       // Update profile
       if (type === "kem") {
