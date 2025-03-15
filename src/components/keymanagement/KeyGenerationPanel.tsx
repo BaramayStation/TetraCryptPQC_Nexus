@@ -71,7 +71,22 @@ const KeyGenerationPanel = () => {
       const profile = getUserProfile();
       if (profile) {
         if (!profile.keyPairs) {
-          profile.keyPairs = {};
+          profile.keyPairs = {
+            pqkem: {
+              algorithm: "ML-KEM-1024",
+              publicKey: "initial",
+              privateKey: "initial",
+              strength: "256-bit",
+              standard: "NIST FIPS 205"
+            },
+            signature: {
+              algorithm: "SLH-DSA-Dilithium5",
+              publicKey: "initial",
+              privateKey: "initial",
+              strength: "256-bit",
+              standard: "NIST FIPS 206"
+            }
+          };
         }
         
         if (activeAlgorithm === "kem") {

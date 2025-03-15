@@ -1,331 +1,378 @@
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { GlassContainer } from "@/components/ui/glass-container";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Shield, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { GlassContainer } from "@/components/ui/glass-container";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Shield, Key, RefreshCw, Lock, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
+import { generateMLKEMKeypair, generateSLHDSAKeypair } from "@/lib/pqcrypto";
 
 const KeyRotationPanel = () => {
   const { toast } = useToast();
-  const [isRotating, setIsRotating] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [rotatedKey, setRotatedKey] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"kem" | "signature">("kem");
+  const [isRotating, setIsRotating] = useState<boolean>(false);
+  const [profile, setProfile] = useState(() => getUserProfile());
   
-  const profile = getUserProfile();
-  const kemKey = profile?.keyPairs?.pqkem;
-  const signatureKey = profile?.keyPairs?.signature;
+  // Check if keys exist and add created timestamp if missing
+  if (profile?.keyPairs?.pqkem && !profile.keyPairs.pqkem.created) {
+    profile.keyPairs.pqkem.created = new Date().toISOString();
+  }
   
-  // Calculate days since creation for each key
-  const calculateDaysSinceCreation = (dateString?: string) => {
-    if (!dateString) return 0;
-    
-    const created = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - created.getTime());
+  if (profile?.keyPairs?.signature && !profile.keyPairs.signature.created) {
+    profile.keyPairs.signature.created = new Date().toISOString();
+  }
+  
+  const kemLastRotated = profile?.keyPairs?.pqkem?.created ? new Date(profile.keyPairs.pqkem.created) : null;
+  const signatureLastRotated = profile?.keyPairs?.signature?.created ? new Date(profile.keyPairs.signature.created) : null;
+  
+  const getDaysSinceRotation = (date: Date | null) => {
+    if (!date) return "Never";
+    const diffTime = Math.abs(new Date().getTime() - date.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
   
-  const kemKeyAge = calculateDaysSinceCreation(kemKey?.created);
-  const signatureKeyAge = calculateDaysSinceCreation(signatureKey?.created);
+  const kemDaysSinceRotation = getDaysSinceRotation(kemLastRotated);
+  const signatureDaysSinceRotation = getDaysSinceRotation(signatureLastRotated);
   
-  // Determine if rotation is needed (over 90 days)
-  const kemNeedsRotation = kemKeyAge > 90;
-  const signatureNeedsRotation = signatureKeyAge > 90;
-  
-  const rotateKEMKey = async () => {
-    setIsRotating(true);
-    setProgress(0);
-    setRotatedKey(null);
-    
+  const rotateKeys = async (type: "kem" | "signature") => {
     try {
-      // Simulate key rotation process
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(20);
+      setIsRotating(true);
       
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(40);
+      if (!profile || !profile.keyPairs) {
+        toast({
+          title: "Error",
+          description: "User profile or key pairs not found.",
+          variant: "destructive",
+        });
+        return;
+      }
       
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(60);
+      // Generate new keys
+      let newKey;
+      if (type === "kem") {
+        newKey = await generateMLKEMKeypair();
+      } else {
+        newKey = await generateSLHDSAKeypair();
+      }
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setProgress(80);
+      // Add creation timestamp
+      newKey.created = new Date().toISOString();
       
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(100);
-      
-      // Create new key with current date
-      if (profile && profile.keyPairs && profile.keyPairs.pqkem) {
-        const newKey = {
-          ...profile.keyPairs.pqkem,
-          publicKey: `MLKEM1024_${Math.random().toString(36).substring(2, 15)}`,
-          privateKey: `${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-          created: new Date().toISOString()
-        };
-        
+      // Update profile
+      if (type === "kem") {
         profile.keyPairs.pqkem = newKey;
-        saveUserProfile(profile);
-        setRotatedKey("ML-KEM");
-        
-        toast({
-          title: "ML-KEM Key Rotated Successfully",
-          description: "Your new key has been generated and is now active.",
-        });
+      } else {
+        profile.keyPairs.signature = newKey;
       }
+      
+      saveUserProfile(profile);
+      setProfile({...profile});
+      
+      toast({
+        title: "Keys Rotated Successfully",
+        description: `Your ${type === "kem" ? "ML-KEM" : "SLH-DSA"} keys have been rotated.`,
+      });
     } catch (error) {
-      console.error("Error rotating key:", error);
+      console.error("Key rotation error:", error);
       toast({
         title: "Key Rotation Failed",
-        description: "There was an error rotating your key. Please try again.",
+        description: "There was an error rotating your keys. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setTimeout(() => {
-        setIsRotating(false);
-      }, 500);
+      setIsRotating(false);
     }
   };
   
-  const rotateSignatureKey = async () => {
-    setIsRotating(true);
-    setProgress(0);
-    setRotatedKey(null);
-    
-    try {
-      // Simulate key rotation process
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(20);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(40);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(60);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setProgress(80);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setProgress(100);
-      
-      // Create new key with current date
-      if (profile && profile.keyPairs && profile.keyPairs.signature) {
-        const newKey = {
-          ...profile.keyPairs.signature,
-          publicKey: `SLHDSA5_${Math.random().toString(36).substring(2, 15)}`,
-          privateKey: `${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
-          created: new Date().toISOString()
-        };
-        
-        profile.keyPairs.signature = newKey;
-        saveUserProfile(profile);
-        setRotatedKey("SLH-DSA");
-        
-        toast({
-          title: "SLH-DSA Key Rotated Successfully",
-          description: "Your new key has been generated and is now active.",
-        });
-      }
-    } catch (error) {
-      console.error("Error rotating key:", error);
-      toast({
-        title: "Key Rotation Failed",
-        description: "There was an error rotating your key. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setTimeout(() => {
-        setIsRotating(false);
-      }, 500);
+  const getRotationStatus = (days: string | number) => {
+    if (days === "Never") return "warning";
+    if (typeof days === "number") {
+      if (days > 90) return "danger";
+      if (days > 30) return "warning";
+      return "safe";
     }
+    return "unknown";
   };
+  
+  const kemRotationStatus = getRotationStatus(kemDaysSinceRotation);
+  const signatureRotationStatus = getRotationStatus(signatureDaysSinceRotation);
 
   return (
     <GlassContainer className="p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Shield className="h-5 w-5 text-accent" />
-        <h2 className="text-xl font-semibold">Key Rotation Management</h2>
-      </div>
-      
-      <Alert className="mb-6 bg-accent/10 border-accent/20">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Key Rotation Best Practices</AlertTitle>
-        <AlertDescription>
-          NIST recommends rotating cryptographic keys periodically to minimize the risk of compromise.
-          For high-security environments, rotate keys every 90 days.
-        </AlertDescription>
-      </Alert>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>ML-KEM (FIPS 205)</span>
-              {kemNeedsRotation ? (
-                <Badge className="bg-yellow-500">Rotation Needed</Badge>
-              ) : (
-                <Badge className="bg-green-500">Active</Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Key Encapsulation Mechanism
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {kemKey ? (
-                <>
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">Algorithm</h3>
-                    <p className="text-sm">{kemKey.algorithm}</p>
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="h-5 w-5 text-accent" />
+          <h2 className="text-xl font-semibold">Key Rotation Management</h2>
+        </div>
+        
+        <p className="text-muted-foreground">
+          Regularly rotating your cryptographic keys is an important security practice.
+          It minimizes the impact of potential key compromise and ensures compliance with security policies.
+        </p>
+        
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "kem" | "signature")}>
+          <TabsList className="grid grid-cols-2 w-full md:w-auto">
+            <TabsTrigger value="kem">
+              <Key className="h-4 w-4 mr-2" />
+              ML-KEM Keys
+            </TabsTrigger>
+            <TabsTrigger value="signature">
+              <Lock className="h-4 w-4 mr-2" />
+              SLH-DSA Keys
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="kem" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Key className="h-5 w-5 text-accent" />
+                  ML-KEM Key Rotation Status
+                </CardTitle>
+                <CardDescription>
+                  NIST FIPS 205 compliant Key Encapsulation Mechanism
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border border-border rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Current Algorithm</h3>
+                      <Badge>{profile?.keyPairs?.pqkem?.algorithm || "Not Found"}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Security Strength</h3>
+                      <span className="text-sm">{profile?.keyPairs?.pqkem?.strength || "Unknown"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium">NIST Standard</h3>
+                      <Badge variant="outline">{profile?.keyPairs?.pqkem?.standard || "Unknown"}</Badge>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Created {kemKeyAge} days ago</span>
+                  <div className="p-4 border border-border rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Last Rotation</h3>
+                      <span className="text-sm">
+                        {kemLastRotated ? kemLastRotated.toLocaleDateString() : "Never"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Days Since Rotation</h3>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span className={`text-sm ${
+                          kemRotationStatus === "danger" ? "text-destructive" : 
+                          kemRotationStatus === "warning" ? "text-yellow-500" : 
+                          "text-green-500"
+                        }`}>
+                          {kemDaysSinceRotation === "Never" ? "Never" : `${kemDaysSinceRotation} days`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium">Status</h3>
+                      <Badge className={`${
+                        kemRotationStatus === "danger" ? "bg-destructive hover:bg-destructive" : 
+                        kemRotationStatus === "warning" ? "bg-yellow-500 hover:bg-yellow-600" : 
+                        "bg-green-500 hover:bg-green-600"
+                      }`}>
+                        {kemRotationStatus === "danger" ? "Rotation Overdue" : 
+                         kemRotationStatus === "warning" ? "Rotation Recommended" : 
+                         "Good Standing"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 border border-border rounded-md bg-muted/30">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">Key Rotation Recommendations</h3>
+                      <ul className="space-y-1 text-sm text-muted-foreground">
+                        <li>• Rotate ML-KEM keys every 30-90 days based on sensitivity</li>
+                        <li>• Generate new keys immediately if compromise is suspected</li>
+                        <li>• Ensure proper key transition when rotating production keys</li>
+                        <li>• Verify new keys are properly deployed before deactivating old keys</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  onClick={() => rotateKeys("kem")} 
+                  disabled={isRotating}
+                  className="w-full"
+                >
+                  {isRotating && activeTab === "kem" ? (
+                    <>Rotating Keys...</>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Rotate ML-KEM Keys
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="signature" className="space-y-4 mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-accent" />
+                  SLH-DSA Key Rotation Status
+                </CardTitle>
+                <CardDescription>
+                  NIST FIPS 206 compliant Digital Signature Algorithm
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border border-border rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Current Algorithm</h3>
+                      <Badge>{profile?.keyPairs?.signature?.algorithm || "Not Found"}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Security Strength</h3>
+                      <span className="text-sm">{profile?.keyPairs?.signature?.strength || "Unknown"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium">NIST Standard</h3>
+                      <Badge variant="outline">{profile?.keyPairs?.signature?.standard || "Unknown"}</Badge>
+                    </div>
                   </div>
                   
-                  {kemKeyAge > 60 && kemKeyAge <= 90 ? (
-                    <Alert className="bg-yellow-500/10 border-yellow-500/20">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                      <AlertDescription className="text-sm">
-                        This key will need rotation in {90 - kemKeyAge} days
-                      </AlertDescription>
-                    </Alert>
-                  ) : kemKeyAge > 90 ? (
-                    <Alert className="bg-red-500/10 border-red-500/20">
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
-                      <AlertDescription className="text-sm">
-                        This key is {kemKeyAge - 90} days past recommended rotation period
-                      </AlertDescription>
-                    </Alert>
-                  ) : null}
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">No ML-KEM key found</p>
+                  <div className="p-4 border border-border rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Last Rotation</h3>
+                      <span className="text-sm">
+                        {signatureLastRotated ? signatureLastRotated.toLocaleDateString() : "Never"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-sm font-medium">Days Since Rotation</h3>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        <span className={`text-sm ${
+                          signatureRotationStatus === "danger" ? "text-destructive" : 
+                          signatureRotationStatus === "warning" ? "text-yellow-500" : 
+                          "text-green-500"
+                        }`}>
+                          {signatureDaysSinceRotation === "Never" ? "Never" : `${signatureDaysSinceRotation} days`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium">Status</h3>
+                      <Badge className={`${
+                        signatureRotationStatus === "danger" ? "bg-destructive hover:bg-destructive" : 
+                        signatureRotationStatus === "warning" ? "bg-yellow-500 hover:bg-yellow-600" : 
+                        "bg-green-500 hover:bg-green-600"
+                      }`}>
+                        {signatureRotationStatus === "danger" ? "Rotation Overdue" : 
+                         signatureRotationStatus === "warning" ? "Rotation Recommended" : 
+                         "Good Standing"}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter>
-            {isRotating && rotatedKey === null ? (
-              <div className="w-full space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Rotating ML-KEM key...</span>
-                  <span>{progress}%</span>
+                
+                <div className="p-4 border border-border rounded-md bg-muted/30">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm font-medium mb-1">Key Rotation Recommendations</h3>
+                      <ul className="space-y-1 text-sm text-muted-foreground">
+                        <li>• Rotate SLH-DSA keys every 180-365 days for good security practices</li>
+                        <li>• Carefully manage certificate transitions when rotating signing keys</li>
+                        <li>• Keep old signature verification keys active during transition period</li>
+                        <li>• Update all verification points when rotating signature keys</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-                <Progress value={progress} className="h-2" />
-              </div>
-            ) : (
-              <Button 
-                className="w-full" 
-                disabled={!kemKey || isRotating}
-                onClick={rotateKEMKey}
-                variant={kemNeedsRotation ? "default" : "outline"}
-              >
-                {rotatedKey === "ML-KEM" ? (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Key Rotated Successfully
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Rotate ML-KEM Key
-                  </>
-                )}
-              </Button>
-            )}
-          </CardFooter>
-        </Card>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  onClick={() => rotateKeys("signature")} 
+                  disabled={isRotating}
+                  className="w-full"
+                >
+                  {isRotating && activeTab === "signature" ? (
+                    <>Rotating Keys...</>
+                  ) : (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Rotate SLH-DSA Keys
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
         
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>SLH-DSA (FIPS 206)</span>
-              {signatureNeedsRotation ? (
-                <Badge className="bg-yellow-500">Rotation Needed</Badge>
-              ) : (
-                <Badge className="bg-green-500">Active</Badge>
-              )}
-            </CardTitle>
-            <CardDescription>
-              Digital Signature Algorithm
-            </CardDescription>
+            <CardTitle>Key Rotation History</CardTitle>
+            <CardDescription>Record of previous key rotation events</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {signatureKey ? (
-                <>
-                  <div>
-                    <h3 className="text-sm font-medium mb-1">Algorithm</h3>
-                    <p className="text-sm">{signatureKey.algorithm}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>Created {signatureKeyAge} days ago</span>
-                  </div>
-                  
-                  {signatureKeyAge > 60 && signatureKeyAge <= 90 ? (
-                    <Alert className="bg-yellow-500/10 border-yellow-500/20">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                      <AlertDescription className="text-sm">
-                        This key will need rotation in {90 - signatureKeyAge} days
-                      </AlertDescription>
-                    </Alert>
-                  ) : signatureKeyAge > 90 ? (
-                    <Alert className="bg-red-500/10 border-red-500/20">
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
-                      <AlertDescription className="text-sm">
-                        This key is {signatureKeyAge - 90} days past recommended rotation period
-                      </AlertDescription>
-                    </Alert>
-                  ) : null}
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted-foreground">No SLH-DSA key found</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter>
-            {isRotating && rotatedKey === null ? (
-              <div className="w-full space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Rotating SLH-DSA key...</span>
-                  <span>{progress}%</span>
-                </div>
-                <Progress value={progress} className="h-2" />
-              </div>
-            ) : (
-              <Button 
-                className="w-full" 
-                disabled={!signatureKey || isRotating}
-                onClick={rotateSignatureKey}
-                variant={signatureNeedsRotation ? "default" : "outline"}
-              >
-                {rotatedKey === "SLH-DSA" ? (
-                  <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Key Rotated Successfully
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Rotate SLH-DSA Key
-                  </>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Algorithm</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {profile?.keyPairs?.pqkem?.created && (
+                  <TableRow>
+                    <TableCell>{new Date(profile.keyPairs.pqkem.created).toLocaleDateString()}</TableCell>
+                    <TableCell>{profile.keyPairs.pqkem.algorithm}</TableCell>
+                    <TableCell>Key Encapsulation</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Active
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </Button>
-            )}
-          </CardFooter>
+                {profile?.keyPairs?.signature?.created && (
+                  <TableRow>
+                    <TableCell>{new Date(profile.keyPairs.signature.created).toLocaleDateString()}</TableCell>
+                    <TableCell>{profile.keyPairs.signature.algorithm}</TableCell>
+                    <TableCell>Digital Signature</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Active
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                )}
+                {(!profile?.keyPairs?.pqkem?.created && !profile?.keyPairs?.signature?.created) && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground">
+                      No key rotation history available
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
         </Card>
       </div>
     </GlassContainer>
